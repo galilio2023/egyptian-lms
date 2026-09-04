@@ -16,7 +16,7 @@ export function useWatermarkCanvas({
   studentPhone,
 }: UseWatermarkCanvasOptions) {
   const watermarkPos = useRef({ x: 50, y: 50, vx: 1.4, vy: 1.1 });
-  const lastJitterTime = useRef<number>(Date.now());
+  const lastJitterTime = useRef<number>(0);
 
   const updateCanvasSize = useCallback(() => {
     if (containerRef.current && canvasRef.current) {

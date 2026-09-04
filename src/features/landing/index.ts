@@ -6,3 +6,4 @@ export { FeaturesGridSection } from "./components/features-grid-section";
 export { HonorBoardSection } from "./components/honor-board-section";
 export { CoursesCatalogSection } from "./components/courses-catalog-section";
 export { AdventureQuizzesSection } from "./components/adventure-quizzes-section";
+export { MascotChampionCard } from "./components/mascot-champion-card";
