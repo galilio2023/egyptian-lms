@@ -16,6 +16,7 @@ import {
   ToyAlligatorGatorSvg,
   ToyMagmaAppleSvg
 } from "@/components/ui/illustrated-icons";
+import { MascotChampionCard } from "./mascot-champion-card";
 
 export const HeroSection: React.FC = () => {
   return (
@@ -48,59 +49,38 @@ export const HeroSection: React.FC = () => {
 
           {/* Hero Mascot Champions Spotlight */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 py-2">
-            {/* 1. Dino */}
-            <div className="flex items-center gap-3 p-3 sm:p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-emerald-300 shadow-xl shadow-emerald-500/15 hover:scale-105 transition-all text-right w-full sm:w-auto">
-              <div className="w-16 h-16 sm:w-18 sm:h-18 drop-shadow-lg shrink-0 animate-float-slow">
-                <ToyDinoDinoSvg className="w-full h-full" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
-                  الديناصور داينو 🦕
-                </span>
-                <span className="text-sm font-black text-slate-900 block mt-0.5">
-                  &quot;Dino Loves Phonics!&quot;
-                </span>
-                <span className="text-[11px] text-purple-700 font-bold block">
-                  رفيقك في نطق الحروف والصوتيات
-                </span>
-              </div>
-            </div>
+            <MascotChampionCard
+              name="الديناصور داينو 🦕"
+              catchphrase="Dino Loves Phonics!"
+              description="رفيقك في نطق الحروف والصوتيات"
+              SvgIcon={ToyDinoDinoSvg}
+              badgeColorClass="text-emerald-800 bg-emerald-100"
+              borderColorClass="border-emerald-300"
+              shadowColorClass="shadow-emerald-500/15"
+              animationClass="animate-float-slow"
+            />
 
-            {/* 2. Magma Apple */}
-            <div className="flex items-center gap-3 p-3 sm:p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-red-400 shadow-xl shadow-red-500/20 hover:scale-105 transition-all text-right w-full sm:w-auto">
-              <div className="w-16 h-16 sm:w-18 sm:h-18 drop-shadow-lg shrink-0 animate-pulse-soft">
-                <ToyMagmaAppleSvg className="w-full h-full" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black text-red-900 bg-red-100 px-2.5 py-0.5 rounded-full inline-block">
-                  تفاحة الماجما 🍎🔥
-                </span>
-                <span className="text-sm font-black text-slate-900 block mt-0.5">
-                  &quot;Magma Super Power!&quot;
-                </span>
-                <span className="text-[11px] text-amber-600 font-bold block">
-                  طاقة وحماس التعلم الذكي
-                </span>
-              </div>
-            </div>
+            <MascotChampionCard
+              name="تفاحة الماجما 🍎🔥"
+              catchphrase="Magma Super Power!"
+              description="طاقة وحماس التعلم الذكي"
+              SvgIcon={ToyMagmaAppleSvg}
+              badgeColorClass="text-red-900 bg-red-100"
+              borderColorClass="border-red-400"
+              shadowColorClass="shadow-red-500/20"
+              animationClass="animate-pulse-soft"
+            />
 
-            {/* 3. Gator */}
-            <div className="flex items-center gap-3 p-3 sm:p-3.5 rounded-3xl bg-white/95 backdrop-blur-md border-2 border-lime-300 shadow-xl shadow-lime-500/15 hover:scale-105 transition-all text-right w-full sm:w-auto">
-              <div className="w-16 h-16 sm:w-18 sm:h-18 drop-shadow-lg shrink-0 animate-toy-wiggle">
-                <ToyAlligatorGatorSvg className="w-full h-full" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black text-lime-900 bg-lime-100 px-2.5 py-0.5 rounded-full inline-block">
-                  التمساح جيتور 🐊
-                </span>
-                <span className="text-sm font-black text-slate-900 block mt-0.5">
-                  &quot;Alligator Loves Words!&quot;
-                </span>
-                <span className="text-[11px] text-emerald-700 font-bold block">
-                  رفيقك في حفظ الكلمات والجرامر
-                </span>
-              </div>
-            </div>
+            <MascotChampionCard
+              name="التمساح جيتور 🐊"
+              catchphrase="Alligator Loves Words!"
+              description="رفيقك في حفظ الكلمات والجرامر"
+              SvgIcon={ToyAlligatorGatorSvg}
+              badgeColorClass="text-lime-900 bg-lime-100"
+              borderColorClass="border-lime-300"
+              shadowColorClass="shadow-lime-500/15"
+              animationClass="animate-toy-wiggle"
+            />
           </div>
 
           {/* CTA Buttons */}

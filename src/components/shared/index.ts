@@ -3,4 +3,6 @@ export * from "./data-table-card";
 export * from "./portal-top-bar";
 export * from "./search-filter-bar";
 export * from "./status-badge";
+export * from "./stat-card";
 export * from "./whatsapp-contact-link";
+export * from "@/entities/unit";
