@@ -1,0 +1,8 @@
+export { HeroSection } from "./components/hero-section";
+export { PreviewVideoSection } from "./components/preview-video-section";
+export { SampleLecturesSection } from "./components/sample-lectures-section";
+export { TeacherBioSection } from "./components/teacher-bio-section";
+export { FeaturesGridSection } from "./components/features-grid-section";
+export { HonorBoardSection } from "./components/honor-board-section";
+export { CoursesCatalogSection } from "./components/courses-catalog-section";
+export { AdventureQuizzesSection } from "./components/adventure-quizzes-section";
