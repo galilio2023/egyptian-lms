@@ -1,26 +1,206 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf5ff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #f3e8ff;
+  --secondary-foreground: #4c1d95;
+  --muted: #faf5ff;
+  --muted-foreground: #6b7280;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --border: #e9d5ff;
+  --ring: #8b5cf6;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --font-arabic: 'Cairo', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Cairo', sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #fdf4ff 0%, #f5f3ff 40%, #f0fdf4 100%);
+  color: #0f172a;
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+  text-align: right;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
+
+/* Vibrant Colorful Card Components */
+.modern-card {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.07), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-card:hover {
+  transform: translateY(-3px);
+  border-color: #c084fc;
+  box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+}
+
+/* Glassmorphic Rainbow Glow Cards */
+.glass-glow-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 40px -8px rgba(168, 85, 247, 0.12), 0 0 0 1px rgba(192, 132, 252, 0.2);
+  transition: all 0.3s ease;
+}
+
+.glass-glow-card:hover {
+  box-shadow: 0 24px 50px -10px rgba(168, 85, 247, 0.22), 0 0 0 2px rgba(192, 132, 252, 0.4);
+}
+
+/* Beautiful Candy Gradient Buttons & Highlights */
+.bg-gradient-vibrant {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+}
+
+.bg-gradient-emerald-cyan {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+}
+
+.bg-gradient-amber-rose {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #f43f5e 100%);
+}
+
+.bg-gradient-rainbow {
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b);
+}
+
+/* Text Gradient Highlights */
+.text-gradient-purple {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 70%, #b45309 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdf4ff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #c084fc, #818cf8);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #a855f7, #6366f1);
+}
+
+/* Playful Floating Kids Toys Animations - Hardware Accelerated 60fps */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) rotate(3deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, 12px, 0) rotate(-3deg);
+  }
+}
+
+@keyframes toy-wiggle {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate3d(0, -4px, 0) rotate(-5deg) scale(1.04);
+  }
+  75% {
+    transform: translate3d(0, -4px, 0) rotate(5deg) scale(1.04);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) scale(1.06);
+    opacity: 1;
+  }
+}
+
+.animate-float-slow {
+  will-change: transform;
+  animation: float-slow 4.5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  will-change: transform;
+  animation: float-reverse 5s ease-in-out infinite;
+}
+
+.animate-toy-wiggle {
+  will-change: transform;
+  animation: toy-wiggle 6s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  will-change: transform;
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* Reduced Motion Support for Battery Saving & Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow,
+  .animate-float-reverse,
+  .animate-toy-wiggle,
+  .animate-pulse-soft {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+

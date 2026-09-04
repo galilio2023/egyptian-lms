@@ -1,0 +1,27 @@
+{
+  "name": "أكاديمية إيليت للغة الإنجليزية | Elite Academy",
+  "short_name": "Elite Academy",
+  "description": "المنصة التعليمية الذكية لتعليم وتأسيس اللغة الإنجليزية للأبطال الصغار مع مستر أحمد عبد الرحمن",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf5ff",
+  "theme_color": "#7c3aed",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": [
+    "education",
+    "kids"
+  ]
+}
