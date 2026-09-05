@@ -25,6 +25,7 @@ export function CanvasPenGrader({
     submission.feedbackNotes || "أحسنت يا بطل! خط جميل وإجابات نموذجية ممتازة 🌟👏"
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [savedAnnotations, setSavedAnnotations] = useState<Record<number, string>>({});
 
   const totalPages = Math.max(1, submission.studentImages.length);
   const currentImage = submission.studentImages[currentPageIndex];
@@ -51,6 +52,14 @@ export function CanvasPenGrader({
     setIsSaving(true);
     try {
       const annotatedImages: Array<{ pageIndex: number; dataUrl: string }> = [];
+      
+      Object.entries(savedAnnotations).forEach(([indexStr, dataUrl]) => {
+        const idx = parseInt(indexStr, 10);
+        if (idx !== currentPageIndex) {
+          annotatedImages.push({ pageIndex: idx, dataUrl });
+        }
+      });
+
       const canvas = canvasRef.current;
       if (canvas) {
         annotatedImages.push({
@@ -138,7 +147,16 @@ export function CanvasPenGrader({
             <GraderPagination
               currentPageIndex={currentPageIndex}
               totalPages={totalPages}
-              onPageChange={setCurrentPageIndex}
+              onPageChange={(newIndex) => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                  setSavedAnnotations((prev) => ({
+                    ...prev,
+                    [currentPageIndex]: canvas.toDataURL("image/jpeg", 0.85),
+                  }));
+                }
+                setCurrentPageIndex(newIndex);
+              }}
             />
           </div>
 

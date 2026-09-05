@@ -40,22 +40,45 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="flex flex-col sm:flex-row items-center gap-3">
-        <input
-          type="text"
-          value={voucherCodeInput}
-          onChange={(e) => onVoucherCodeChange(e.target.value.toUpperCase())}
-          placeholder="مثال: ELITE-GR1-998271"
-          className="w-full sm:flex-1 px-4 py-2.5 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-hidden font-mono font-bold text-sm tracking-wider uppercase text-slate-800 bg-purple-50/30"
-          disabled={isRedeeming}
-        />
-        <button
-          type="submit"
-          disabled={isRedeeming}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all shrink-0 disabled:opacity-50 cursor-pointer"
-        >
-          {isRedeeming ? "جاري الشحن..." : "تفعيل الكارت فورياً"}
-        </button>
+      <form onSubmit={onSubmit} className="flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch gap-3">
+          <div className="flex w-full sm:flex-1 gap-2">
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="one-time-code"
+              autoCapitalize="characters"
+              value={voucherCodeInput}
+              onChange={(e) => onVoucherCodeChange(e.target.value.toUpperCase())}
+              placeholder="ادخل الكود المطبوع على الكارت هنا"
+              className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-hidden text-base font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30"
+              disabled={isRedeeming}
+            />
+            <label className="flex items-center justify-center w-14 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 cursor-pointer shrink-0 transition-colors" title="مسح كارت الشحن بالكاميرا">
+              <input 
+                type="file" 
+                accept="image/*" 
+                capture="environment" 
+                className="hidden" 
+                onChange={(e) => { 
+                  if(e.target.files?.length) alert("ميزة قراءة الكود بالكاميرا ستتوفر قريباً! برجاء كتابة الكود يدوياً مؤقتاً."); 
+                  e.target.value = '';
+                }} 
+              />
+              <span className="text-2xl">📷</span>
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={isRedeeming}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm shadow-md shadow-indigo-600/20 transition-all shrink-0 disabled:opacity-50 cursor-pointer"
+          >
+            {isRedeeming ? "جاري الشحن..." : "تفعيل الكارت فورياً"}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 font-medium px-1">
+          الكود مطبوع أسفل طبقة الحك الفضية على كارت السنتر
+        </p>
       </form>
     </div>
   );

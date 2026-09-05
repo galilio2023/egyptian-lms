@@ -58,8 +58,8 @@ export function ManualTransferForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!referenceNumber.trim()) {
-      toast.error("يرجى إدخال رقم العملية أو رقم المحفظة المحول منها.");
+    if (!referenceNumber.trim() && !receiptImageBase64) {
+      toast.error("يرجى إدخال رقم العملية أو إرفاق صورة الإيصال.");
       return;
     }
 
@@ -133,16 +133,19 @@ export function ManualTransferForm({
       </div>
 
       {/* Reference Number Input */}
-      <div className="space-y-1 text-right">
-        <label htmlFor="refNumberInput" className="text-xs font-semibold text-slate-700">
-          رقم العملية أو رقم الموبايل المحول منه:
+      <div className="space-y-2 text-right pt-2">
+        <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-medium text-right space-y-1">
+          <span className="font-black block">💡 أين أجد رقم العملية؟</span>
+          <p>رقم العملية موجود في أعلى أو أسفل إيصال التحويل. إذا لم تجده، يكفي رفع صورة الإيصال فقط وسيتم قراءته آلياً.</p>
+        </div>
+        <label htmlFor="refNumberInput" className="text-xs font-semibold text-slate-700 block">
+          رقم العملية (اختياري - يساعد في تسريع التأكيد):
         </label>
         <input
           id="refNumberInput"
           type="text"
           dir="ltr"
           inputMode="tel"
-          required
           disabled={isLoading}
           placeholder="010xxxxxxxx أو رقم العملية"
           value={referenceNumber}

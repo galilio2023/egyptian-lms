@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Volume2, Sparkles } from "lucide-react";
+import { Volume2, Sparkles, Mic } from "lucide-react";
 import { PhonicsSpeechSvg } from "@/components/ui/illustrated-icons";
 
 interface PhonicsItem {
@@ -33,6 +33,9 @@ const PHONICS_DATA: PhonicsItem[] = [
 export function PhonicsSoundBoard() {
   const [activeTab, setActiveTab] = useState<"all" | "digraphs" | "vowels">("all");
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [practiceItemId, setPracticeItemId] = useState<string | null>(null);
+  const [practiceResult, setPracticeResult] = useState<{score: number; transcript: string} | null>(null);
 
   const speakText = useCallback((word: string, soundId: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -59,6 +62,57 @@ export function PhonicsSoundBoard() {
     };
 
     window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const startPractice = useCallback((item: PhonicsItem) => {
+    if (typeof window === "undefined" || !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      setPracticeResult({ score: 0, transcript: "" });
+      return;
+    }
+    
+    setPracticeItemId(item.id);
+    setPracticeResult(null);
+    setIsListening(true);
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 3;
+    
+    recognition.onresult = (event: any) => {
+      const results = event.results[0];
+      let bestMatch = 0;
+      const expectedWord = item.exampleWord.toLowerCase();
+      
+      for (let i = 0; i < results.length; i++) {
+        const transcript = results[i].transcript.toLowerCase().trim();
+        if (transcript === expectedWord || transcript.includes(expectedWord)) {
+          bestMatch = Math.max(bestMatch, 3);
+        } else if (transcript.split(" ").some((w: string) => w.startsWith(expectedWord.substring(0, 2)))) {
+          bestMatch = Math.max(bestMatch, 2);
+        } else {
+          bestMatch = Math.max(bestMatch, 1);
+        }
+      }
+      
+      const transcript = results[0].transcript;
+      setPracticeResult({ score: bestMatch, transcript });
+      setIsListening(false);
+      setPracticeItemId(null);
+    };
+    
+    recognition.onerror = () => {
+      setIsListening(false);
+      setPracticeItemId(null);
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    
+    recognition.start();
   }, []);
 
   const filteredItems = activeTab === "all" 
@@ -115,6 +169,11 @@ export function PhonicsSoundBoard() {
         </div>
       </div>
 
+      <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-bold text-right flex items-center gap-2">
+        <Mic className="w-4 h-4 text-emerald-600 shrink-0" />
+        <span>جديد! اضغط على زر المايكروفون 🎤 بجانب أي كلمة وانطقها بصوتك لتحصل على نجوم التقييم الفوري</span>
+      </div>
+
       {/* Grid of Sound Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
         {filteredItems.map((item) => {
@@ -152,16 +211,63 @@ export function PhonicsSoundBoard() {
                   </span>
                   <span className="text-[10px] text-slate-500 font-semibold block">{item.translation}</span>
                 </div>
-                <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
-                  isCurrent ? "bg-amber-500 text-white" : "bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white"
-                }`}>
-                  <Volume2 className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
+                    isCurrent ? "bg-amber-500 text-white" : "bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white"
+                  }`}>
+                    <Volume2 className="w-3.5 h-3.5" />
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startPractice(item);
+                    }}
+                    disabled={isListening}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                      practiceItemId === item.id && isListening
+                        ? "bg-rose-500 text-white animate-pulse shadow-md"
+                        : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                    }`}
+                    title="دورك! انطق الكلمة"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </button>
           );
         })}
       </div>
+
+      {practiceResult && (
+        <div className={`p-4 rounded-2xl border-2 text-center space-y-2 transition-all ${
+          practiceResult.score >= 3
+            ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+            : practiceResult.score >= 2
+            ? "bg-amber-50 border-amber-300 text-amber-900"
+            : "bg-rose-50 border-rose-300 text-rose-900"
+        }`}>
+          <div className="text-2xl">
+            {practiceResult.score >= 3 ? "⭐⭐⭐" : practiceResult.score >= 2 ? "⭐⭐" : "⭐"}
+          </div>
+          <p className="text-sm font-black">
+            {practiceResult.score >= 3
+              ? "نطق أسطوري يا بطل! ممتاز جداً! 🎉"
+              : practiceResult.score >= 2
+              ? "جيد جداً! حاول مرة أخرى للحصول على 3 نجوم ✨"
+              : "حاول مرة أخرى يا بطل! استمع أولاً ثم انطق الكلمة 🗣️"}
+          </p>
+          {practiceResult.transcript && (
+            <p className="text-xs text-slate-500 font-mono">سمعنا: "{practiceResult.transcript}"</p>
+          )}
+          <button
+            onClick={() => setPracticeResult(null)}
+            className="text-xs font-bold text-slate-500 hover:text-slate-700 underline cursor-pointer"
+          >
+            إغلاق
+          </button>
+        </div>
+      )}
     </div>
   );
 }

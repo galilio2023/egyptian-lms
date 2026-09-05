@@ -1,6 +1,7 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
+import { toast } from "sonner";
 import { InteractiveQuizEngine } from "@/features/quiz-engine";
 import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { useSession } from "@/lib/auth/auth-client";
@@ -18,6 +19,20 @@ export default function QuizRoomPage({
 
   const studentName = session?.user?.name || "طالب بطل";
   const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
+  const [parentPhone, setParentPhone] = useState("01000000000");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/student/enrollments")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data?.profile?.parentPhoneNumber) {
+          setParentPhone(data.profile.parentPhoneNumber);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="min-h-screen text-slate-900 pb-16">
@@ -39,9 +54,14 @@ export default function QuizRoomPage({
           quiz={quiz}
           studentName={studentName}
           studentPhone={studentPhone}
-          parentPhone="01000000000"
+          parentPhone={parentPhone}
           onComplete={(score, passed) => {
             console.log("Quiz completed:", { score, passed });
+            if (passed) {
+              toast.success(`مبروك يا بطل! حصلت على ${score}% في الاختبار 🎉`);
+            } else {
+              toast("يمكنك إعادة المحاولة بعد مراجعة الدرس.");
+            }
           }}
         />
       </main>

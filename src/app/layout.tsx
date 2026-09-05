@@ -18,9 +18,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "أكاديمية إيليت التعليمية للأطفال | المنصة الذكية لتعليم وتأسيس اللغة الإنجليزية",
+  title: "المنصة التعليمية الذكية | منهج اللغة الإنجليزية للمراحل الابتدائية",
   description: "المنصة الرائدة والممتعة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية (Grade 1 - Grade 6). شرح كرتوني تفاعلي، مغامرات واختبارات بمكافآت، ومتابعة دورية لأولياء الأمور.",
-  keywords: ["أكاديمية إيليت للأطفال", "المنصة التعليمية الذكية", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
+  keywords: ["المنصة التعليمية الذكية", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Elite Academy",
+    title: "Educational Platform",
   },
 };
 

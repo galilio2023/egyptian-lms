@@ -18,31 +18,37 @@ export function useAntiCheat({
 
   useEffect(() => {
     if (isSubmitted) return;
+    let blurTimeout: NodeJS.Timeout | null = null;
     let graceTimeout: NodeJS.Timeout | null = null;
 
     const triggerSuspiciousLeave = () => {
-      if (graceTimeout) return;
-      graceTimeout = setTimeout(() => {
+      if (blurTimeout || graceTimeout) return;
+      
+      blurTimeout = setTimeout(() => {
         setTabSwitchWarnings((prev) => {
           const updated = prev + 1;
           onWarningSound();
-          if (updated >= 3) {
-            toast.error(
-              "⚠️ تنبيه أمني: مغادرة شاشة الاختبار 3 مرات! تم تسليم الاختبار تلقائياً منعاً للغش."
-            );
+          if (updated >= 5) {
+            toast.error("عفواً يا بطل! غادرت شاشة الاختبار 5 مرات. تم تسليم إجاباتك تلقائياً.");
             onAutoSubmit();
           } else {
-            toast.warning(
-              `⚠️ تحذير أمني: يرجى عدم مغادرة شاشة الاختبار أو التبديل بين النوافذ (${updated}/3).`
-            );
+            toast.warning(`انتبه يا بطل 🌟 يرجى البقاء في شاشة الاختبار للتركيز (${updated}/5).`);
           }
           return updated;
         });
-        graceTimeout = null;
-      }, 4000);
+      }, 3000);
+
+      graceTimeout = setTimeout(() => {
+        toast.error("عفواً يا بطل! غبت عن شاشة الاختبار لفترة طويلة. تم تسليم إجاباتك تلقائياً.");
+        onAutoSubmit();
+      }, 8000);
     };
 
     const cancelSuspiciousLeave = () => {
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
       if (graceTimeout) {
         clearTimeout(graceTimeout);
         graceTimeout = null;
