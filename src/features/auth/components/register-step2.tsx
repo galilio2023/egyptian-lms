@@ -48,7 +48,7 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             dir="ltr"
             required
             maxLength={11}
-            placeholder="01098765432"
+            placeholder="010xxxxxxxx"
             value={parentPhone}
             onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, ""))}
             className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"

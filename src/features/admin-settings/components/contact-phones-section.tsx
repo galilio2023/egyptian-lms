@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, ExternalLink } from "lucide-react";
+import { Phone, ExternalLink, Wallet } from "lucide-react";
 import { 
   WhatsAppBubbleSvg, 
   EgyptianPhoneSvg, 
@@ -93,12 +93,55 @@ export function ContactPhonesSection({ settings, onChange }: ContactPhonesSectio
               type="tel"
               dir="ltr"
               required
-              placeholder="01120004000"
+              placeholder="011xxxxxxxx"
               value={settings.inquiriesNumber}
               onChange={(e) => onChange("inquiriesNumber", e.target.value)}
               className="bg-purple-50/40 border-purple-200 text-xs font-mono font-bold"
             />
             <span className="text-[10px] text-slate-400 block pt-0.5">مخصص لاستقبال مكالمات الحجز</span>
+          </div>
+        </div>
+
+        {/* Payment Wallets & Transfer Details */}
+        <div className="mt-6 pt-5 border-t border-purple-100">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="w-4 h-4 text-purple-600" />
+            <h3 className="font-bold text-xs text-slate-800">حسابات التحويل المالي واستقبال الاشتراكات (إنستاباي وفودافون كاش)</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Vodafone Cash Number */}
+            <div className="space-y-1.5 text-right">
+              <label htmlFor="vodafoneCashNumber" className="text-xs font-bold text-slate-700">
+                رقم محفظة فودافون كاش / المحافظ الإلكترونية
+              </label>
+              <Input
+                id="vodafoneCashNumber"
+                type="tel"
+                dir="ltr"
+                placeholder="010xxxxxxxx"
+                value={settings.vodafoneCashNumber || ""}
+                onChange={(e) => onChange("vodafoneCashNumber", e.target.value)}
+                className="bg-purple-50/40 border-purple-200 text-xs font-mono font-bold text-left"
+              />
+              <span className="text-[10px] text-slate-400 block pt-0.5">يظهر لولي الأمر عند اختيار التحويل اليدوي</span>
+            </div>
+
+            {/* InstaPay Address */}
+            <div className="space-y-1.5 text-right">
+              <label htmlFor="instapayAddress" className="text-xs font-bold text-slate-700">
+                عنوان حساب إنستاباي (InstaPay Address / IPA)
+              </label>
+              <Input
+                id="instapayAddress"
+                type="text"
+                dir="ltr"
+                placeholder="username@instapay"
+                value={settings.instapayAddress || ""}
+                onChange={(e) => onChange("instapayAddress", e.target.value)}
+                className="bg-purple-50/40 border-purple-200 text-xs font-mono font-bold text-left"
+              />
+              <span className="text-[10px] text-slate-400 block pt-0.5">مثال: name@instapay للتحويل المباشر</span>
+            </div>
           </div>
         </div>
       </CardContent>

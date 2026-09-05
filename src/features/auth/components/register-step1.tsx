@@ -55,7 +55,7 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
             dir="ltr"
             required
             maxLength={11}
-            placeholder="01012345678"
+            placeholder="010xxxxxxxx"
             value={studentPhone}
             onChange={(e) => setStudentPhone(e.target.value.replace(/\D/g, ""))}
             className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"

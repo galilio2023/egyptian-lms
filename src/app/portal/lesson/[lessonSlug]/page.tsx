@@ -78,8 +78,8 @@ export default function LessonPlayerPage({
     setIsCheckoutOpen(false);
   };
 
-  const studentName = session?.user?.name || "أحمد محمود الخولي";
-  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01012345678";
+  const studentName = session?.user?.name || "طالب بطل";
+  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
   const isAccessible = isEnrolled || Boolean(lesson.isFreePreview);
 
   return (

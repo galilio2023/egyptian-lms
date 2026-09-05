@@ -65,7 +65,7 @@ export function HomeworkSubmissionModal({
         <div className="space-y-5">
           {/* Instructions Box */}
           <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 space-y-1 text-right">
-            <span className="font-black block text-amber-900">تعليمات مستر أحمد:</span>
+            <span className="font-black block text-amber-900">تعليمات المعلم المشرف:</span>
             <p className="leading-relaxed font-medium">{assignment.instructions}</p>
           </div>
 
@@ -120,7 +120,7 @@ export function HomeworkSubmissionModal({
           isOpen={viewAnnotatedModal}
           onClose={() => setViewAnnotatedModal(false)}
           maxWidth="3xl"
-          title="تصحيح مستر أحمد عبد الرحمن ✓"
+          title="تصحيح المعلم المشرف ✓"
         >
           <div className="max-h-[75vh] overflow-auto flex items-center justify-center bg-slate-950 rounded-2xl p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}

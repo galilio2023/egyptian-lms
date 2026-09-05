@@ -31,12 +31,12 @@ async function seed() {
 
   let adminUserId = existingAdmin?.id;
   if (!adminUserId) {
-    const adminId = "admin-ahmed-abdelrahman";
+    const adminId = "admin-primary";
     await db.insert(schema.user).values({
       id: adminId,
-      name: "مستر أحمد عبد الرحمن",
+      name: "المشرف الأكاديمي",
       phoneNumber: adminPhone,
-      email: `${adminPhone}@elite-academy.edu.eg`,
+      email: `admin@elite-academy.edu.eg`,
       emailVerified: true,
       role: "admin",
       createdAt: new Date(),
@@ -215,9 +215,13 @@ async function seed() {
       academyNameEnglish: INITIAL_PLATFORM_SETTINGS.academyNameEnglish,
       teacherNameArabic: INITIAL_PLATFORM_SETTINGS.teacherNameArabic,
       teacherNameEnglish: INITIAL_PLATFORM_SETTINGS.teacherNameEnglish,
+      teacherTitle: INITIAL_PLATFORM_SETTINGS.teacherTitle,
+      teacherBio: INITIAL_PLATFORM_SETTINGS.teacherBio,
       whatsappNumber: INITIAL_PLATFORM_SETTINGS.whatsappNumber,
       hotlineNumber: INITIAL_PLATFORM_SETTINGS.hotlineNumber,
       inquiriesNumber: INITIAL_PLATFORM_SETTINGS.inquiriesNumber,
+      vodafoneCashNumber: INITIAL_PLATFORM_SETTINGS.vodafoneCashNumber,
+      instapayAddress: INITIAL_PLATFORM_SETTINGS.instapayAddress,
       heroVideoUrl: INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
       sampleLectures: INITIAL_PLATFORM_SETTINGS.sampleLectures,
     });

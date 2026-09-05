@@ -86,7 +86,7 @@ export async function GET(_request: NextRequest) {
         gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
         gradeSlug: "grade-1",
         xpPoints: 450,
-        parentPhoneNumber: "01098765432",
+        parentPhoneNumber: "01000000000",
         governorate: "cairo",
       },
       enrolledUnitIds: [],

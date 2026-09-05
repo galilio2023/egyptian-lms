@@ -47,7 +47,7 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
           </h1>
           
           <p className="text-xs sm:text-sm text-purple-100 max-w-xl font-medium leading-relaxed">
-            واصل مغامراتك التعليمية مع مستر أحمد عبد الرحمن، احصل على النقاط واجتز الاختبارات لترقية بطلك!
+            واصل مغامراتك التعليمية الشيقة، احصل على النقاط واجتز الاختبارات لترقية بطلك!
           </p>
 
           {/* XP Level Progress Bar */}

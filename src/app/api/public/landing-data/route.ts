@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { INITIAL_UNITS, INITIAL_GRADES, INITIAL_PLATFORM_SETTINGS } from "@/lib/db/mock-data";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 export async function GET() {
   try {
@@ -69,31 +70,7 @@ export async function GET() {
       .limit(20);
 
     // 3. Fetch dynamic platform settings (branding, phones, carousel lectures)
-    let settings = INITIAL_PLATFORM_SETTINGS;
-    try {
-      const [dbSettings] = await db
-        .select()
-        .from(schema.platformSettings)
-        .where(eq(schema.platformSettings.id, "default"))
-        .limit(1);
-
-      if (dbSettings) {
-        settings = {
-          id: dbSettings.id,
-          academyNameArabic: dbSettings.academyNameArabic,
-          academyNameEnglish: dbSettings.academyNameEnglish,
-          teacherNameArabic: dbSettings.teacherNameArabic,
-          teacherNameEnglish: dbSettings.teacherNameEnglish,
-          whatsappNumber: dbSettings.whatsappNumber,
-          hotlineNumber: dbSettings.hotlineNumber,
-          inquiriesNumber: dbSettings.inquiriesNumber,
-          heroVideoUrl: dbSettings.heroVideoUrl,
-          sampleLectures: dbSettings.sampleLectures || INITIAL_PLATFORM_SETTINGS.sampleLectures,
-        };
-      }
-    } catch {
-      // Fallback to initial settings
-    }
+    const settings = await getPlatformSettings();
 
     return NextResponse.json({
       success: true,

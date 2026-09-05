@@ -14,9 +14,9 @@ import type { InteractiveQuizEngineProps, ServerGradeResult } from "../types";
 
 export function InteractiveQuizEngine({
   quiz,
-  studentName = "أحمد محمود الخولي",
-  parentPhone = "01098765432",
-  studentPhone = "01012345678",
+  studentName = "طالب بطل",
+  parentPhone = "01000000000",
+  studentPhone = "01000000000",
   onComplete,
 }: InteractiveQuizEngineProps) {
   const [currentIndex, setCurrentIndex] = useState(0);

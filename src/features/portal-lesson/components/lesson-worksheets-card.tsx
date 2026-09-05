@@ -22,7 +22,7 @@ export function LessonWorksheetsCard({ pdfAttachmentUrl }: LessonWorksheetsCardP
           <div>
             <h2 className="text-xl font-black text-slate-900">الملزمة والواجب المنزلي الملون</h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              قم بتحميل الملزمة والاطلاع على أسئلة الواجب بعد إنهاء مشاهدة المحاضرة مع مستر أحمد.
+              قم بتحميل الملزمة والاطلاع على أسئلة الواجب بعد إنهاء مشاهدة المحاضرة.
             </p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function LessonWorksheetsCard({ pdfAttachmentUrl }: LessonWorksheetsCardP
             1. كرر النطق الصوتي
           </span>
           <p className="text-emerald-700/90 font-medium leading-relaxed">
-            ردد الكلمات بصوت واضح مع مستر أحمد أثناء الشرح لتثبيت مخارج الحروف.
+            ردد الكلمات بصوت واضح مع المعلم أثناء الشرح لتثبيت مخارج الحروف.
           </p>
         </div>
 

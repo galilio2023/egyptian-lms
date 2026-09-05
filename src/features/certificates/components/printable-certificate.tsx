@@ -16,6 +16,9 @@ export interface PrintableCertificateProps {
   scorePercentage: number;
   gradeLevel?: string;
   issuedDate?: string;
+  instructorName?: string;
+  instructorTitle?: string;
+  academyName?: string;
   onClose?: () => void;
 }
 
@@ -26,6 +29,9 @@ export function PrintableCertificate({
   scorePercentage,
   gradeLevel = "الصف الأول الابتدائي (Grade 1)",
   issuedDate = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }),
+  instructorName = "المعلم المشرف",
+  instructorTitle = "المشرف الأكاديمي وكبير المعلمين",
+  academyName = "أكاديمية إيليت",
   onClose,
 }: PrintableCertificateProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
@@ -35,7 +41,7 @@ export function PrintableCertificate({
   };
 
   const whatsappMessage = encodeURIComponent(
-    `🌟 شهادة تفوق واجتياز بطل أكاديمية إيليت 🌟\nالطالب البطل: ${studentName}\nالمرحلة: ${gradeLevel}\nالاختبار: ${quizTitle}\nالنسبة المئوية: ${scorePercentage}% مع مرتبة الشرف 🏆\nإشراف: مستر أحمد عبد الرحمن`
+    `🌟 شهادة تفوق واجتياز بطل ${academyName} 🌟\nالطالب البطل: ${studentName}\nالمرحلة: ${gradeLevel}\nالاختبار: ${quizTitle}\nالنسبة المئوية: ${scorePercentage}% مع مرتبة الشرف 🏆\nإشراف: ${instructorName}`
   );
 
   return (
@@ -47,7 +53,7 @@ export function PrintableCertificate({
           <div className="flex items-center gap-2.5">
             <ChampionCupSvg className="w-6 h-6 text-amber-300 drop-shadow" />
             <div>
-              <h2 className="text-sm sm:text-base font-black">شهادة تفوق بطل أكاديمية إيليت 🎓</h2>
+              <h2 className="text-sm sm:text-base font-black">شهادة تفوق بطل {academyName} 🎓</h2>
               <span className="text-[11px] text-purple-200 block">جاهزة للطباعة بجودة عالية A4 أو المشاركة مع العائلة</span>
             </div>
           </div>
@@ -161,8 +167,8 @@ export function PrintableCertificate({
                 {/* Lecturer Signature */}
                 <div className="text-left">
                   <span className="text-[10px] text-slate-400 font-bold block">المشرف العام والمحاضر:</span>
-                  <span className="text-sm font-black text-purple-900 block">مستر أحمد عبد الرحمن</span>
-                  <span className="text-[9px] text-purple-600 font-semibold block">خبير مناهج اللغة الإنجليزية</span>
+                  <span className="text-sm font-black text-purple-900 block">{instructorName}</span>
+                  <span className="text-[9px] text-purple-600 font-semibold block">{instructorTitle}</span>
                 </div>
               </div>
             </div>

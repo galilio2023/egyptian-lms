@@ -19,8 +19,8 @@ export interface ProtectedVideoPlayerProps {
 
 export function ProtectedVideoPlayer({
   src,
-  studentName = "بطل أكاديمية إيليت",
-  studentPhone = "01020003000",
+  studentName = "طالب المنصة التعليمية",
+  studentPhone = "01000000000",
   title = "المحاضرة التفاعلية",
 }: ProtectedVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);

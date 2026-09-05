@@ -60,6 +60,7 @@ export function AcademyBrandingSection({ settings, onChange }: AcademyBrandingSe
               id="teacherNameArabic"
               type="text"
               required
+              placeholder="مثال: أ. محمد إبراهيم"
               value={settings.teacherNameArabic}
               onChange={(e) => onChange("teacherNameArabic", e.target.value)}
               className="bg-purple-50/40 border-purple-200 text-xs font-bold"
@@ -76,9 +77,40 @@ export function AcademyBrandingSection({ settings, onChange }: AcademyBrandingSe
               type="text"
               dir="ltr"
               required
+              placeholder="e.g. Mr. Mohamed Ibrahim"
               value={settings.teacherNameEnglish}
               onChange={(e) => onChange("teacherNameEnglish", e.target.value)}
               className="bg-purple-50/40 border-purple-200 text-xs font-bold text-left"
+            />
+          </div>
+
+          {/* Teacher Title / Academic Position */}
+          <div className="space-y-1.5 text-right sm:col-span-2">
+            <label htmlFor="teacherTitle" className="text-xs font-bold text-slate-700">
+              المسمى الوظيفي والصفة الأكاديمية للمعلم
+            </label>
+            <Input
+              id="teacherTitle"
+              type="text"
+              placeholder="مثال: المشرف الأكاديمي وكبير معلمي اللغة الإنجليزية"
+              value={settings.teacherTitle || ""}
+              onChange={(e) => onChange("teacherTitle", e.target.value)}
+              className="bg-purple-50/40 border-purple-200 text-xs font-bold"
+            />
+          </div>
+
+          {/* Teacher Bio / Description for Landing Page */}
+          <div className="space-y-1.5 text-right sm:col-span-2">
+            <label htmlFor="teacherBio" className="text-xs font-bold text-slate-700">
+              النبذة التعريفية وسيرة المعلم (تظهر بوضوح في الصفحة الرئيسية للمنصة)
+            </label>
+            <textarea
+              id="teacherBio"
+              rows={3}
+              placeholder="اكتب نبذة مختصرة عن مؤهلات المعلم، سنوات الخبرة، والأساليب التعليمية المبتكرة..."
+              value={settings.teacherBio || ""}
+              onChange={(e) => onChange("teacherBio", e.target.value)}
+              className="w-full rounded-xl border border-purple-200 bg-purple-50/40 p-3 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 leading-relaxed"
             />
           </div>
         </div>

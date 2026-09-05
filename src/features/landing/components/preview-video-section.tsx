@@ -27,7 +27,7 @@ export const PreviewVideoSection: React.FC<PreviewVideoSectionProps> = ({ settin
           <ProtectedVideoPlayer
             src={settings.heroVideoUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"}
             studentName={`طالب ${settings.academyNameArabic} (نموذج تجريبي)`}
-            studentPhone={settings.whatsappNumber || "01020003000"}
+            studentPhone={settings.whatsappNumber || "01000000000"}
             title="نموذج شرح تفاعلي — Phonics & Letters"
           />
         </div>

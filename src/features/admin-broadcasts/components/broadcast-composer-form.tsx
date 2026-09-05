@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const DEFAULT_BROADCAST_MESSAGE =
-  "أولياء أمور طلاب أكاديمية إيليت الأعزاء 🌟\nنحيطكم علماً بأن اختبار الوحدة متاح الآن على المنصة، ونرجو من جميع الأبطال دخول الاختبار لمتابعة مستواهم.\nمع أطيب تمنيات مستر أحمد عبد الرحمن بالتفوق الدائم!";
+  "أولياء أمور طلابنا الأعزاء 🌟\nنحيطكم علماً بأن اختبار الوحدة متاح الآن على المنصة، ونرجو من جميع الأبطال دخول الاختبار لمتابعة مستواهم.\nمع أطيب تمنيات إدارة المنصة والمعلمين بالتفوق الدائم!";
 
 export function BroadcastComposerForm() {
   const [selectedGrade, setSelectedGrade] = useState("all");

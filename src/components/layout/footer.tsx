@@ -15,15 +15,18 @@ interface FooterProps {
   inquiriesNumber?: string;
   academyName?: string;
   teacherName?: string;
+  teacherNameArabic?: string;
 }
 
 export function Footer({
   whatsappNumber: customWhatsapp,
   hotlineNumber = "0225006000",
-  inquiriesNumber = "01120004000",
-  teacherName = "Mr. Ahmed Abdelrahman",
+  inquiriesNumber = "01100000000",
+  academyName = "أكاديمية إيليت",
+  teacherName = "Lead Instructor",
+  teacherNameArabic,
 }: FooterProps = {}) {
-  const whatsappNumber = customWhatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201020003000";
+  const whatsappNumber = customWhatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201000000000";
     
   return (
     <footer className="w-full bg-white/80 backdrop-blur-md border-t-2 border-purple-200/80 pt-16 pb-12 text-slate-600 relative overflow-hidden">
@@ -40,7 +43,7 @@ export function Footer({
               <EliteLogoBadge className="w-12 h-12 hover:scale-105 transition-transform" />
               <div>
                 <span className="text-xl font-black text-slate-900 block">
-                  أكاديمية <span className="text-gradient-purple">إيليت</span>
+                  {academyName}
                 </span>
                 <span className="text-xs text-purple-700 font-bold">{teacherName}</span>
               </div>
@@ -130,7 +133,7 @@ export function Footer({
                 rel="noopener noreferrer"
                 className="hover:scale-110 transition-transform drop-shadow-sm"
                 aria-label="YouTube"
-                title="قناة مستر أحمد على يوتيوب"
+                title={`قناة ${academyName} على يوتيوب`}
               >
                 <YouTubePlaySvg className="w-9 h-9" />
               </a>
@@ -161,7 +164,7 @@ export function Footer({
 
         {/* Bottom Rights */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
-          <p>© {new Date().getFullYear()} أكاديمية إيليت التعليمية للأطفال — جميع الحقوق محفوظة لمستر أحمد عبد الرحمن.</p>
+          <p>© {new Date().getFullYear()} {academyName} — جميع الحقوق محفوظة لـ {teacherNameArabic || teacherName || "إدارة المنصة"}.</p>
           <div className="flex items-center gap-1.5 text-xs text-purple-700 font-bold bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
             <span>المنصة الذكية الأولى لتأسيس اللغة الإنجليزية للأطفال 🌟</span>
           </div>

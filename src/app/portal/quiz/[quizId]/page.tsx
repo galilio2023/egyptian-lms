@@ -16,8 +16,8 @@ export default function QuizRoomPage({
   const { quizId } = use(params);
   const quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
 
-  const studentName = session?.user?.name || "أحمد محمود الخولي";
-  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01012345678";
+  const studentName = session?.user?.name || "طالب بطل";
+  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
 
   return (
     <div className="min-h-screen text-slate-900 pb-16">
@@ -39,7 +39,7 @@ export default function QuizRoomPage({
           quiz={quiz}
           studentName={studentName}
           studentPhone={studentPhone}
-          parentPhone="01098765432"
+          parentPhone="01000000000"
           onComplete={(score, passed) => {
             console.log("Quiz completed:", { score, passed });
           }}

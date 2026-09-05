@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,13 +112,14 @@ export async function POST(request: NextRequest) {
     let whatsappUrl: string | null = null;
 
     if (verifiedParentPhone) {
+      const settings = await getPlatformSettings();
       const rawTextMessage = 
-        `🌟 *تقرير تصحيح كراسة الواجب - أكاديمية إيليت*\n` +
+        `🌟 *تقرير تصحيح كراسة الواجب - ${settings.academyNameArabic}*\n` +
         `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
         `📝 *الواجب:* ${assignmentTitle || "كراسة التدريبات"}\n` +
         `🎯 *الدرجة المستحقة:* ${safeScore} من 10\n` +
         `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-        `✍️ *ملاحظات مستر أحمد:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
+        `✍️ *ملاحظات ${settings.teacherNameArabic}:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
         `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;
       const msg = encodeURIComponent(rawTextMessage);
 

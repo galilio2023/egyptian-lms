@@ -53,7 +53,7 @@ export function useAdminLiveSessions() {
         meetingUrl: data.meetingUrl,
         meetingPassword: data.meetingPassword,
         isLiveNow: false,
-        instructorName: "مستر أحمد عبد الرحمن",
+        instructorName: "المعلم المشرف",
       };
 
       setSessions((prev) => [newSession, ...prev]);
@@ -108,7 +108,7 @@ export function useAdminLiveSessions() {
 
   const sendWhatsAppBlast = (session: MockLiveSession) => {
     const text = encodeURIComponent(
-      `تنبيه هام من أكاديمية إيليت (مستر أحمد عبد الرحمن) 🔴\nبدأت الآن حصة المراجعة التفاعلية المباشرة:\n*${session.title}*\nالصف: ${session.gradeTitle}\nرابط الدخول المباشر: ${session.meetingUrl}\nكلمة المرور: ${session.meetingPassword}\nبالتوفيق لجميع أبطالنا!`
+      `تنبيه هام 🔴\nبدأت الآن حصة المراجعة التفاعلية المباشرة:\n*${session.title}*\nالمحاضر: ${session.instructorName || "المعلم المشرف"}\nالصف: ${session.gradeTitle}\nرابط الدخول المباشر: ${session.meetingUrl}\nكلمة المرور: ${session.meetingPassword}\nبالتوفيق لجميع أبطالنا!`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };

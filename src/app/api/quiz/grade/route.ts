@@ -8,6 +8,7 @@ import { eq, and, or, isNull, gt } from "drizzle-orm";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 // Deterministic seeded shuffle per student session matching quiz loader
 function seededShuffle<T>(arr: T[], seed: string): T[] {
@@ -282,14 +283,15 @@ export async function POST(request: NextRequest) {
     let parentNotification: { parentPhone: string; whatsappUrl: string; messageText: string } | null = null;
 
     if (verifiedParentPhone) {
+      const settings = await getPlatformSettings();
       const rawTextMessage = 
-        `🌟 *تقرير مستوى الطالب - أكاديمية إيليت*\n` +
+        `🌟 *تقرير مستوى الطالب - ${settings.academyNameArabic}*\n` +
         `👤 *اسم الطالب:* ${studentName}\n` +
         `📝 *الاختبار:* ${quiz.title}\n` +
         `🎯 *الدرجة:* ${correctCount} من ${totalQuestions} (%${percentage})\n` +
         `📊 *الحالة:* ${passed ? "اجتاز الاختبار بنجاح وامتياز 🎉" : "يحتاج إلى مراجعة المحاضرة وإعادة المحاولة 💪"}\n` +
         `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-        `👨‍🏫 *المشرف:* مستر أحمد عبد الرحمن`;
+        `👨‍🏫 *المشرف:* ${settings.teacherNameArabic}`;
       const whatsappMessage = encodeURIComponent(rawTextMessage);
 
       try {

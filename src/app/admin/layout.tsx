@@ -20,7 +20,7 @@ export default function AdminLayout({
     userRole === "assistant" &&
     (pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/security"));
 
-  const adminDisplayName = session?.user?.name || "مستر أحمد عبد الرحمن";
+  const adminDisplayName = session?.user?.name || "المشرف الأكاديمي";
   const adminRoleTitle =
     userRole === "admin"
       ? "مدير النظام العام"

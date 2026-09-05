@@ -13,7 +13,15 @@ import {
   CartoonCloseCrossSvg
 } from "@/components/ui/illustrated-icons";
 
-export function Header() {
+interface HeaderProps {
+  academyName?: string;
+  teacherName?: string;
+}
+
+export function Header({
+  academyName = "أكاديمية إيليت",
+  teacherName = "Lead Instructor",
+}: HeaderProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -39,10 +47,10 @@ export function Header() {
             <EliteLogoBadge className="w-11 h-11 sm:w-12 sm:h-12 group-hover:scale-105 transition-transform drop-shadow-sm" />
             <div className="flex flex-col">
               <span className="text-sm sm:text-base font-black tracking-tight text-slate-900 leading-none">
-                أكاديمية <span className="text-gradient-purple">إيليت</span>
+                {academyName}
               </span>
               <span className="text-[10px] sm:text-[11px] text-purple-700 font-bold mt-0.5">
-                Mr. Ahmed Abdelrahman
+                {teacherName}
               </span>
             </div>
           </Link>
