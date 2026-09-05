@@ -1425,6 +1425,114 @@ export function CartoonCloseCrossSvg({ className = "w-8 h-8" }: SvgProps) {
   );
 }
 
+// 35. Toy Spider-Hero SVG (Vibrant Superhero Web Mask with Iconic Slanted White Eyes)
+export function ToySpiderHeroSvg({ className = "w-12 h-12" }: SvgProps) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" className={className}>
+      <defs>
+        <linearGradient id="spiderRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#F87171" />
+          <stop offset="30%" stopColor="#EF4444" />
+          <stop offset="80%" stopColor="#DC2626" />
+          <stop offset="100%" stopColor="#991B1B" />
+        </linearGradient>
+        <linearGradient id="spiderBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="50%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#1E40AF" />
+        </linearGradient>
+        <linearGradient id="spiderEyeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="80%" stopColor="#F8FAFC" />
+          <stop offset="100%" stopColor="#E2E8F0" />
+        </linearGradient>
+      </defs>
+
+      {/* Hero Floor Glow Shadow */}
+      <ellipse cx="50" cy="90" rx="30" ry="6" fill="#FEE2E2" opacity="0.8" />
+
+      {/* Superhero Suit Shoulders (Royal Blue) */}
+      <path
+        d="M20 74C20 66 32 60 50 60C68 60 80 66 80 74C80 84 66 88 50 88C34 88 20 84 20 74Z"
+        fill="url(#spiderBlueGrad)"
+      />
+
+      {/* Red V-Neck Chest Plate */}
+      <path
+        d="M38 65L50 82L62 65C58 63 54 62 50 62C46 62 42 63 38 65Z"
+        fill="url(#spiderRedGrad)"
+      />
+
+      {/* Little Spider Emblem on Chest */}
+      <ellipse cx="50" cy="72" rx="2" ry="3" fill="#0F172A" />
+      <path
+        d="M47 70L44 67 M47 72L43 72 M47 74L44 76 M53 70L56 67 M53 72L57 72 M53 74L56 76"
+        stroke="#0F172A"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+
+      {/* Mask Head Shape (Cute Chibi Superhero) */}
+      <path
+        d="M50 14C32 14 22 26 22 47C22 66 35 78 50 80C65 78 78 66 78 47C78 26 68 14 50 14Z"
+        fill="url(#spiderRedGrad)"
+        stroke="#B91C1C"
+        strokeWidth="1.5"
+      />
+
+      {/* Web Grid: Radiating Web Spokes */}
+      <line x1="50" y1="14" x2="50" y2="80" stroke="#1E1B4B" strokeWidth="1.5" strokeLinecap="round" opacity="0.65" />
+      <line x1="50" y1="48" x2="26" y2="24" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+      <line x1="50" y1="48" x2="74" y2="24" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+      <line x1="50" y1="48" x2="22" y2="47" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+      <line x1="50" y1="48" x2="78" y2="47" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+      <line x1="50" y1="48" x2="30" y2="72" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+      <line x1="50" y1="48" x2="70" y2="72" stroke="#1E1B4B" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+
+      {/* Web Grid: Concentric Connecting Curves */}
+      <path d="M38 27C44 31 56 31 62 27" fill="none" stroke="#1E1B4B" strokeWidth="1.2" opacity="0.55" />
+      <path d="M30 38C42 44 58 44 70 38" fill="none" stroke="#1E1B4B" strokeWidth="1.2" opacity="0.55" />
+      <path d="M34 65C42 61 58 61 66 65" fill="none" stroke="#1E1B4B" strokeWidth="1.2" opacity="0.55" />
+
+      {/* Iconic Slanted Spider Eyes - Left Eye */}
+      {/* Outer Black Bevel */}
+      <path
+        d="M48 44C45 42 36 38 29 42C26 47 28 58 43 56C47 55 49 46 48 44Z"
+        fill="#0F172A"
+      />
+      {/* Inner Glossy White Lens */}
+      <path
+        d="M46 45C44 43 36 40 31 43C29 47 31 55 42 53C45 52 47 46 46 45Z"
+        fill="url(#spiderEyeGrad)"
+      />
+      {/* Left Eye Glint */}
+      <ellipse cx="36" cy="46" rx="3.5" ry="1.5" transform="rotate(-15 36 46)" fill="#FFFFFF" />
+
+      {/* Iconic Slanted Spider Eyes - Right Eye */}
+      {/* Outer Black Bevel */}
+      <path
+        d="M52 44C55 42 64 38 71 42C74 47 72 58 57 56C53 55 51 46 52 44Z"
+        fill="#0F172A"
+      />
+      {/* Inner Glossy White Lens */}
+      <path
+        d="M54 45C56 43 64 40 69 43C71 47 69 55 58 53C55 52 53 46 54 45Z"
+        fill="url(#spiderEyeGrad)"
+      />
+      {/* Right Eye Glint */}
+      <ellipse cx="64" cy="46" rx="3.5" ry="1.5" transform="rotate(15 64 46)" fill="#FFFFFF" />
+
+      {/* Forehead Light Shine */}
+      <ellipse cx="50" cy="20" rx="14" ry="3.5" fill="#FFFFFF" opacity="0.3" />
+
+      {/* Action Stars & Super Sparkles */}
+      <polygon points="82,18 84,22 88,23 85,26 86,30 82,28 78,30 79,26 76,23 80,22" fill="#FBBF24" />
+      <polygon points="18,32 20,35 23,36 21,38 22,41 18,39 15,41 16,38 13,36 16,35" fill="#FBBF24" />
+    </svg>
+  );
+}
+
+
 
 
 

@@ -12,7 +12,7 @@ import {
   ChampionCupSvg, 
   XpGemSvg,
   ToyDinoDinoSvg,
-  ToyAlligatorGatorSvg,
+  ToySpiderHeroSvg,
   ToyMagmaAppleSvg,
   ToyStackingBlocksSvg
 } from "@/components/ui/illustrated-icons";
@@ -51,8 +51,8 @@ export function AdventureQuizzesSection() {
               {/* Background Mascot Watermark */}
               <div className="absolute -bottom-4 -start-4 opacity-10 group-hover:opacity-20 transition-opacity w-28 h-28 pointer-events-none">
                 {adv.theme === "zoo" && <ToyDinoDinoSvg className="w-full h-full" />}
-                {adv.theme === "spiderman" && <ToyMagmaAppleSvg className="w-full h-full" />}
-                {adv.theme === "fruits" && <ToyAlligatorGatorSvg className="w-full h-full" />}
+                {adv.theme === "spiderman" && <ToySpiderHeroSvg className="w-full h-full" />}
+                {adv.theme === "fruits" && <ToyMagmaAppleSvg className="w-full h-full" />}
                 {adv.theme === "numbers" && <ToyStackingBlocksSvg className="w-full h-full" />}
               </div>
 
@@ -71,8 +71,8 @@ export function AdventureQuizzesSection() {
               {/* Central Mascot Icon */}
               <div className="w-20 h-20 mx-auto rounded-3xl bg-white shadow-md p-3 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/80 my-2">
                 {adv.theme === "zoo" && <ToyDinoDinoSvg className="w-full h-full drop-shadow" />}
-                {adv.theme === "spiderman" && <ToyMagmaAppleSvg className="w-full h-full drop-shadow" />}
-                {adv.theme === "fruits" && <ToyAlligatorGatorSvg className="w-full h-full drop-shadow" />}
+                {adv.theme === "spiderman" && <ToySpiderHeroSvg className="w-full h-full drop-shadow" />}
+                {adv.theme === "fruits" && <ToyMagmaAppleSvg className="w-full h-full drop-shadow" />}
                 {adv.theme === "numbers" && <ToyStackingBlocksSvg className="w-full h-full drop-shadow" />}
               </div>
 
