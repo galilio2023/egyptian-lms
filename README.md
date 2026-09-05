@@ -1,13 +1,13 @@
 <p align="center">
   <a href="https://github.com/galilio2023/egyptian-lms">
-    <img src="./public/logo-full.svg" alt="Elite Academy Logo" width="520" />
+    <img src="./public/logo-full.svg" alt="Egyptian LMS Logo" width="520" />
   </a>
 </p>
 
-<h1 align="center">🌟 نظام أكاديمية إيليت التعليمية — Elite Academy LMS</h1>
+<h1 align="center">🌟 Egyptian LMS — المنصة التعليمية الذكية للمناهج المصرية</h1>
 
 <p align="center">
-  <strong>The Enterprise-Grade, Anti-Piracy & White-Label EdTech Platform Engineered for the Egyptian Education Ecosystem.</strong><br/>
+  <strong>The Enterprise-Grade, Anti-Piracy & White-Label EdTech Platform for Egyptian Academies, Teachers & Tutors.</strong><br/>
   <em>Next.js 16.3 (Turbopack) • React 19 • Tailwind CSS v4 • Drizzle ORM • Better Auth • Bunny.net DRM • MOETE AI Intake • Paymob & InstaPay</em>
 </p>
 
