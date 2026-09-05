@@ -1,13 +1,13 @@
 <p align="center">
   <a href="https://github.com/galilio2023/egyptian-lms">
-    <img src="./public/logo-full.svg" alt="Egyptian LMS Logo" width="520" />
+    <img src="./public/logo-full.svg" alt="Egyptian LMS Platform Logo" width="520" />
   </a>
 </p>
 
 <h1 align="center">🌟 Egyptian LMS — المنصة التعليمية الذكية للمناهج المصرية</h1>
 
 <p align="center">
-  <strong>The Enterprise-Grade, Anti-Piracy & White-Label EdTech Platform for Egyptian Academies, Teachers & Tutors.</strong><br/>
+  <strong>The Enterprise-Grade, Anti-Piracy & 100% White-Label EdTech Platform for Egyptian Academies, Teachers & Educational Centers.</strong><br/>
   <em>Next.js 16.3 (Turbopack) • React 19 • Tailwind CSS v4 • Drizzle ORM • Better Auth • Bunny.net DRM • MOETE AI Intake • Paymob & InstaPay</em>
 </p>
 
@@ -23,16 +23,58 @@
 
 ---
 
-## 📌 Repository Overview
+## 📖 What is Egyptian LMS?
 
-| Property | Value |
-| :--- | :--- |
-| **Repository** | `galilio2023/egyptian-lms` |
-| **Primary Domain** | Primary English Education (Grade 1 – Grade 6) • Connect & Connect Plus Tracks |
-| **Architecture** | White-Label Ready • 100% Dynamic Academy Branding & Instructor Abstraction |
-| **Market Target** | Egyptian Education Ecosystem (Egyptian Telecoms, Local Wallets, InstaPay, WhatsApp) |
-| **Design Language** | Modern Arabic-First (RTL), High-Density Cairo Typography, Playful Gamified UI |
-| **Security Posture** | Zero-Trust Webhooks (HMAC-SHA512), Single-Device Binding, Canvas DRM Watermarking, Strict RBAC |
+**Egyptian LMS** is a specialized, production-ready Learning Management System built specifically for the Egyptian educational ecosystem (primary education: Grade 1 through Grade 6, covering **Connect** and **Connect Plus** tracks).
+
+Unlike generic Western LMS platforms, Egyptian LMS solves the real challenges faced by Egyptian teachers, tutors, and private educational centers:
+1. **Egyptian Telecom Mobile Sign-in:** Children register using 11-digit Egyptian phone numbers (`010`, `011`, `012`, `015`) — no email address required.
+2. **Aggressive Anti-Piracy:** Real-time bouncing canvas watermarking (student's name, phone, and IP) over DRM-protected HLS video streams, combined with hardware single-device locks.
+3. **Local Payment Triad:** Native support for Paymob (Vodafone Cash, Orange Money, Etisalat Cash, WE Pay, Meeza debit cards), InstaPay manual transfers with OCR receipt verification, and printable cryptographic scratch cards (كروت الشحن).
+4. **Automated WhatsApp Parent Loop:** Instant automated notifications to parents for exam scores, homework feedback, and attendance.
+5. **AI Ministry Curriculum Intake:** 1-click parsing of official Ministry textbooks (PDFs) into structured lessons, phonics rules, vocabulary, and interactive exams.
+6. **100% White-Label Abstraction:** Any teacher or academy can instantly brand and customize the entire platform without touching a single line of code.
+
+---
+
+## 🏢 White-Label Abstraction: How Teacher & Academy Names Work
+
+The codebase is engineered with **complete white-label abstraction**. There are **no hardcoded teacher names or academy locks** in the core application logic.
+
+### 🔍 Default Placeholder Identity
+In a fresh installation or development environment, the platform uses neutral default placeholders:
+* **Default Academy Name:** `أكاديمية إيليت / Elite Academy`
+* **Default Instructor Name:** `المعلم المشرف / Lead Instructor`
+* **Default Instructor Title:** `المشرف الأكاديمي وكبير المعلمين / Lead Academic Supervisor`
+
+### ⚙️ How to Customize Your Academy & Teacher Identity
+Any teacher or academy can personalize the entire platform in under 60 seconds from the Admin Dashboard:
+
+```
+Admin Dashboard -> الإعدادات (Settings) -> هوية الأكاديمية والمعلم (/admin/settings)
+```
+
+1. **Navigate to `/admin/settings`** (requires Admin or Teacher role).
+2. **Update the Branding Fields:**
+   * **اسم الأكاديمية بالعربية (Academy Name - Arabic):** e.g., `أكاديمية التميز`, `أكاديمية النور`, or your tutoring center name.
+   * **Academy Name in English:** e.g., `Al-Noor Academy`, `Future Leaders`.
+   * **اسم المعلم المشرف (Instructor Name - Arabic & English):** Your real name (e.g., `أ. محمد عبدالسلام`, `Mr. Mohamed`).
+   * **المسمى الوظيفي (Teacher Title):** e.g., `مؤسس أكاديمية التفوق وخبير تدريس مناهج كونكت`.
+   * **النبذة التعريفية وسيرة المعلم (Instructor Bio):** Your academic credentials, years of experience, and teaching philosophy.
+   * **أرقام التواصل والتحصيل:**
+     * Primary WhatsApp Number (for floating support and parent notifications)
+     * Hotline & Inquiries Phone Numbers
+     * Vodafone Cash / Mobile Wallet collection number
+     * InstaPay payment address (`username@instapay`)
+3. **Click "حفظ كافة التغييرات" (Save All Changes).**
+
+### 🔄 Where Your Customized Identity Automatically Propagates:
+Once saved, your custom branding updates dynamically across the entire application:
+* 🌐 **Landing Page:** Site Header, Hero subtitle, Teacher Biography section, and Footer.
+* 🎓 **Student Portal:** Navigation headers, student welcome messages, and dynamic greeting banners.
+* 📜 **Printable Certificates:** Official graduation and excellence certificates generated with your customized teacher signature and academy seal.
+* 📲 **WhatsApp Notifications:** Automated messages dispatched to parents will carry your academy's name and teacher sign-off.
+* 💳 **Checkout Modals:** Student payment sheets display your designated InstaPay address and Vodafone Cash wallet number.
 
 ---
 
@@ -42,7 +84,7 @@
 flowchart TB
     subgraph ClientLayer ["📱 Multi-Platform Client Layer"]
         S["👦 Student Portal\n(Mobile / Tablet / PC)"]
-        P["👨‍👩‍👧 Parent WhatsApp\n(Real-Time Loop)"]
+        P["👨‍👩‍👧 Parent WhatsApp\n(Automated Loop)"]
         T["👨‍🏫 Teacher & Assistant CMS\n(/admin Backoffice)"]
     end
 
@@ -57,6 +99,7 @@ flowchart TB
         QUIZ["Interactive Anti-Cheat Quiz Engine\n(Tab-Blur Detection + Auto-Expiry)"]
         PEN["Canvas Pen Grader Studio\n(Multi-Page Canvas + Audio Notes)"]
         AI["MOETE Curriculum AI Intake Engine\n(PDF Parser + Connect Presets)"]
+        SET["Dynamic Platform Settings Hub\n(/admin/settings White-Label)"]
         WA["Automated WhatsApp Gateway\n(HTTPS, Redacted Logs, 10s Timeout)"]
     end
 
@@ -76,6 +119,7 @@ flowchart TB
     S --> QUIZ --> DB
     S --> PEN --> DB
     T --> AI --> DB
+    T --> SET --> DB
     API --> PaymentTriad --> DB
     API --> WA --> P
     T --> PEN
@@ -84,25 +128,20 @@ flowchart TB
 
 ---
 
-## 🌟 Core Pillars & Key Features
+## 🌟 Core Feature Modules
 
-### 1. 🎨 Dynamic White-Label & Teacher Abstraction Engine
-* **Zero Hardcoded Names:** The entire LMS is fully abstracted and white-label ready. All branding identity—including Academy Name (Arabic & English), Lead Teacher/Instructor Name, Title, Biography, and Hotline/WhatsApp contact lines—is managed dynamically via the Admin Dashboard (`/admin/settings`).
-* **Dynamic Payment Numbers:** Dedicated configuration for InstaPay addresses and Vodafone Cash / Mobile Wallet collection numbers.
-* **Curated Animated Preview Carousel:** Interactive in-page modal video player showcasing child-friendly, animated phonics and vocabulary lessons without external YouTube redirects.
-
-### 2. 🤖 Egyptian Ministry Curriculum (MOETE) PDF Intake & AI Parser
-* **1-Click Textbook Intake (`/admin/curriculum`):** Allows teachers to upload official Egyptian Ministry of Education (MOETE) student books, teacher guides, or worksheets (PDFs).
+### 1. 🤖 Egyptian Ministry Curriculum (MOETE) PDF Intake & AI Parser
+* **1-Click Textbook Intake (`/admin/curriculum`):** Upload official Egyptian Ministry of Education (MOETE) student books, teacher guides, or worksheets (PDFs).
 * **Dual-Mode AI Engine:** Integrates with Google Gemini / OpenAI for live extraction, and includes a comprehensive built-in knowledge base of **Connect** and **Connect Plus** standards (Grades 1 through 6).
 * **Automated Structure Generation:** Auto-extracts core vocabulary with Egyptian Arabic translations, phonics patterns, grammar rules, structured lessons, and gamified multiple-choice quizzes with explanations.
 * **Integrity & Quality Scoring:** Real-time validator inspects extracted units for pedagogical completeness, calculates an educational quality score (0–100), and validates questions before committing to the database.
 
-### 3. 📱 Egyptian Mobile-First Authentication & Anti-Sharing
+### 2. 📱 Egyptian Mobile-First Authentication & Anti-Sharing
 * **Zero-Friction Phone Sign-in:** Eliminates email requirements for elementary students. Registration and login rely directly on 11-digit Egyptian mobile numbers (`010`, `011`, `012`, `015`).
-* **Hardware Single-Device Lock (فك حظر الجهاز):** Automatically binds a student’s account to their active device fingerprint. Simultaneous logins on another phone or computer are locked instantly until reset by authorized staff.
+* **Hardware Single-Device Lock (فك حظر الجهاز):** Automatically binds a student’s account to their active device fingerprint. Simultaneous logins on another phone or computer are locked instantly until reset by authorized staff from `/admin/students`.
 * **Parent-Student Mobile Association:** Captures the guardian’s WhatsApp phone number at registration to maintain an automated parent-communication loop.
 
-### 4. 🎥 Anti-Piracy Video Streaming & Dynamic Canvas Watermark
+### 3. 🎥 Anti-Piracy Video Streaming & Dynamic Canvas Watermark
 * **Bunny.net / Cloudflare Stream HLS:** Adaptive bitrate streaming with automatic quality switching.
 * **Bouncing Dynamic DRM Watermark:** A dedicated `<canvas>` overlays every video player frame, continuously animating the student's registered name, Egyptian phone number, and IP timestamp across the viewport to deter screen recording and piracy.
 * **Egyptian Data-Saver Mode (باقة التوفير 📶):** One-click toggle that caps video quality to 360p/480p to conserve cellular data quotas for students on limited mobile bundles.
@@ -123,17 +162,17 @@ sequenceDiagram
     Note over Video,Canvas: If Screen Recording Attempted: Student Identifier Permanently Embedded
 ```
 
-### 5. 📝 Interactive Anti-Cheat Exam Engine
+### 4. 📝 Interactive Anti-Cheat Exam Arena
 * **Tab-Switch & Blur Sentry:** Monitors focus changes in real time. Switching away from the exam triggers strike warnings, with automatic forced submission upon 3 infractions.
 * **Elapsed-Time Draft Recovery:** Draft answers and remaining countdown seconds are stored locally with tamper-proof timestamps. If a student closes the tab or refreshes, elapsed seconds are deducted, preventing indefinite timer pauses.
 * **Immediate Audio-Visual Celebration:** Features confetti animations, chime sound effects, XP/Streak rewards, and instant automated WhatsApp score dispatches to parents.
 
-### 6. ✍️ Canvas Pen Grader & Oral Phonics Voice Notes
+### 5. ✍️ Digital Canvas Pen Grader & Oral Phonics Voice Notes
 * **Teacher Canvas Pen Grader (`/admin/homework`):** Enables teachers and assistants to grade uploaded student homework sheets directly on an interactive canvas using digital pen strokes, highlighter tools, and customizable stamps.
 * **Student Oral Phonics Recording:** Students can attach audio voice notes directly inside their homework submissions for oral reading and phonics assessment.
 * **1-Click Fast-Queue Presets:** Pre-configured grading templates allow assistants to evaluate hundreds of submissions per hour with automated encouragement phrases.
 
-### 7. 💳 The Egyptian Payment Triad
+### 6. 💳 The Egyptian Payment Triad
 * **Paymob Automated Webhook:** Instant fulfillment for Vodafone Cash, Orange Money, Etisalat Cash, WE Pay, and Meeza debit cards with strict HMAC-SHA512 cryptographic verification.
 * **InstaPay & Manual Wallet Queue:** Parents who transfer funds manually via InstaPay or telecom wallets upload a receipt screenshot. Assistants review the queue with zoom tools, 1-click approvals, and instant activation.
 * **Cryptographic Scratch Vouchers (كروت الشحن):** Center-based distribution using locally generated vector QR code scratch cards with cryptographic collision-resistant codes.
@@ -198,7 +237,8 @@ src/
 │   │   ├── orders/                    # InstaPay Receipt Verification Queue
 │   │   ├── quizzes/                   # Question Bank & Exam Builder
 │   │   ├── security/                  # Real-Time Security Audit Logs
-│   │   └── settings/                  # White-Label Branding & Carousel Hub
+│   │   ├── settings/                  # White-Label Branding & Carousel Hub
+│   │   └── students/                  # Student Directory & 1-Click Device Unlock
 │   ├── api/                           # Secure Next.js API Route Handlers
 │   │   ├── admin/actions/             # RBAC Protected Admin Operations
 │   │   ├── admin/curriculum/intake/   # MOETE PDF Intake & Commit Handlers
@@ -219,6 +259,7 @@ src/
 │   └── ui/                            # Button, Badge, Modal, Illustrated Icons
 ├── features/                          # Domain-Driven Feature Modules
 │   ├── admin-curriculum/              # Tus uploaders, unit managers, AI intake modal
+│   ├── admin-settings/                # White-label branding & phone management
 │   ├── canvas-grader/                 # Digital ink correction canvas
 │   ├── homework/                      # Voice note recorder & submission
 │   ├── live-sessions/                 # Attendance widgets & Zoom links
@@ -289,7 +330,7 @@ WHATSAPP_API_TOKEN="your_whatsapp_gateway_token"
 # Push schema directly to your development database
 pnpm run db:push
 
-# Optional: Seed initial Grade 1-6 units, lessons, and mock data
+# Optional: Seed initial Grade 1-6 units, lessons, and default settings
 pnpm run db:seed
 ```
 
@@ -298,6 +339,7 @@ pnpm run db:seed
 pnpm dev
 ```
 Navigate to [http://localhost:3000](http://localhost:3000) to view the portal.
+To access the Admin Settings and brand the platform with your name and academy, navigate to [http://localhost:3000/admin/settings](http://localhost:3000/admin/settings).
 
 ---
 
