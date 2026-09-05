@@ -166,7 +166,7 @@ export function ValidationAlert({
 
           {/* Quality Score */}
           {validation.score !== undefined && (
-            <div className={`p-3 rounded-xl ${colors.badge.replace("text-", "").replace("bg-", "bg-")} bg-opacity-10`}>
+            <div className="p-3 rounded-xl bg-white/70 border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <span className={`text-xs font-bold ${colors.text}`}>جودة المحتوى</span>
                 <div className="flex items-center gap-2">

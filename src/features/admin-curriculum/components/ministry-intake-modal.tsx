@@ -20,6 +20,8 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { INITIAL_GRADES } from "@/lib/db/mock-data";
 import { ParsedCurriculumUnit, CurriculumTrack } from "@/lib/ai/curriculum-intake-parser";
+import { validateParsedCurriculum } from "@/lib/ai/curriculum-validator";
+import { ValidationAlert } from "./validation-alert";
 
 interface MinistryIntakeModalProps {
   isOpen: boolean;
@@ -51,6 +53,16 @@ export function MinistryIntakeModal({
   const [unitTitleArabic, setUnitTitleArabic] = useState("");
   const [unitPrice, setUnitPrice] = useState<number>(250);
   const [unitDescription, setUnitDescription] = useState("");
+
+  const validation = parsedData
+    ? validateParsedCurriculum({
+        ...parsedData,
+        titleEnglish: unitTitleEnglish,
+        titleArabic: unitTitleArabic,
+        description: unitDescription,
+        suggestedPriceEgp: unitPrice,
+      })
+    : null;
 
   const resetState = () => {
     setStep("upload");
@@ -430,6 +442,9 @@ export function MinistryIntakeModal({
               </span>
             </div>
 
+            {/* Quality & Validation Alert */}
+            {validation && <ValidationAlert validation={validation} />}
+
             {/* Navigation Tabs */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
               <button
@@ -677,6 +692,7 @@ export function MinistryIntakeModal({
                 variant="vibrant"
                 size="sm"
                 onClick={handleCommit}
+                disabled={Boolean(validation && !validation.valid)}
                 className="shadow-lg shadow-purple-500/25"
               >
                 <Award className="w-4 h-4 me-1.5" />
