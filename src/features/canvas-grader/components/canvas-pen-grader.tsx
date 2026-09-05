@@ -12,6 +12,7 @@ import type { ToolType, CanvasPenGraderProps } from "../types";
 export function CanvasPenGrader({
   submission,
   isOpen,
+  hasNextSubmission = false,
   onClose,
   onSaveGrade,
 }: CanvasPenGraderProps) {
@@ -25,7 +26,7 @@ export function CanvasPenGrader({
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  const totalPages = submission.studentImages.length;
+  const totalPages = Math.max(1, submission.studentImages.length);
   const currentImage = submission.studentImages[currentPageIndex];
 
   const {
@@ -46,9 +47,7 @@ export function CanvasPenGrader({
     brushSize,
   });
 
-  if (!isOpen) return null;
-
-  const handleSaveAndNotify = async () => {
+  const handleSaveAndNotify = async (advanceNext = false) => {
     setIsSaving(true);
     try {
       const annotatedImages: Array<{ pageIndex: number; dataUrl: string }> = [];
@@ -61,22 +60,29 @@ export function CanvasPenGrader({
       }
 
       if (onSaveGrade) {
-        onSaveGrade({
-          submissionId: submission.id,
-          score,
-          feedbackNotes,
-          annotatedImages,
-        });
+        onSaveGrade(
+          {
+            submissionId: submission.id,
+            score,
+            feedbackNotes,
+            annotatedImages,
+          },
+          advanceNext
+        );
       }
 
       toast.success("✅ تم حفظ تصحيح كراسة الواجب ورصد الدرجة بنجاح!");
-      onClose();
+      if (!advanceNext) {
+        onClose();
+      }
     } catch {
       toast.error("حدث خطأ أثناء حفظ التصحيح.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md animate-in fade-in-50">
@@ -138,9 +144,11 @@ export function CanvasPenGrader({
             feedbackNotes={feedbackNotes}
             isSaving={isSaving}
             totalPages={totalPages}
+            hasNextSubmission={hasNextSubmission}
             onChangeScore={setScore}
             onChangeNotes={setFeedbackNotes}
-            onSave={handleSaveAndNotify}
+            onSave={() => handleSaveAndNotify(false)}
+            onSaveNext={() => handleSaveAndNotify(true)}
           />
         </div>
       </div>

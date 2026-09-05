@@ -35,6 +35,10 @@ export interface MockLesson {
   pdfTitle?: string;
   isFreePreview: boolean;
   orderIndex: number;
+  prerequisiteType?: 'none' | 'previous_quiz_passed' | 'previous_homework_submitted';
+  prerequisiteLessonId?: string;
+  isPrerequisiteBlocked?: boolean;
+  prerequisiteMessage?: string;
 }
 
 export interface MockQuestion {
@@ -147,6 +151,7 @@ export interface MockHomeworkSubmission {
   parentPhone: string;
   gradeTitle: string;
   studentImages: Array<{ pageNumber: number; imageUrl: string }>;
+  audioVoiceNoteUrl?: string;
   status: 'submitted' | 'in_review' | 'graded' | 'rejected';
   score?: number;
   maxScore: number;

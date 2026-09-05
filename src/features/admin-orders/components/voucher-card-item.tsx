@@ -27,13 +27,27 @@ export const VoucherCardItem: React.FC<VoucherCardItemProps> = ({ voucher }) => 
         </span>
       </div>
 
-      {/* Scratch-off Silver Foil Mockup */}
-      <div className="py-3 text-center">
-        <span className="text-[9px] text-slate-400 font-bold block mb-1">
-          امسح هنا برفق لإظهار كود التفعيل:
-        </span>
-        <div className="p-2.5 rounded-xl bg-slate-200 border-2 border-dashed border-slate-400 inline-block min-w-[200px] shadow-inner font-mono font-black text-sm tracking-widest text-slate-900 select-all">
-          {voucher.code}
+      {/* Scratch-off Silver Foil Mockup & QR Scan */}
+      <div className="py-2.5 flex items-center justify-between gap-3">
+        <div className="flex-1 text-center">
+          <span className="text-[9px] text-slate-400 font-bold block mb-1">
+            امسح هنا برفق لإظهار كود التفعيل:
+          </span>
+          <div className="p-2 rounded-xl bg-slate-200 border-2 border-dashed border-slate-400 inline-block w-full max-w-[190px] shadow-inner font-mono font-black text-xs sm:text-sm tracking-widest text-slate-900 select-all">
+            {voucher.code}
+          </div>
+        </div>
+
+        {/* QR Code for instant phone camera scanning */}
+        <div className="flex flex-col items-center shrink-0 border border-purple-200 bg-white p-1 rounded-xl shadow-xs print:border-slate-800">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(voucher.code)}`}
+            alt="QR Code"
+            className="w-12 h-12 print:w-14 print:h-14 object-contain"
+            loading="lazy"
+          />
+          <span className="text-[7px] text-slate-500 font-bold mt-0.5">امسح للرمز 📷</span>
         </div>
       </div>
 

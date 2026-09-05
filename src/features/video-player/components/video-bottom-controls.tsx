@@ -8,7 +8,8 @@ import {
   Maximize, 
   RotateCcw, 
   RotateCw, 
-  Gauge 
+  Gauge,
+  Wifi
 } from "lucide-react";
 
 interface VideoBottomControlsProps {
@@ -20,12 +21,14 @@ interface VideoBottomControlsProps {
   duration: number;
   playbackSpeed: number;
   quality: string;
+  isDataSaver?: boolean;
   onTogglePlay: () => void;
   onToggleMute: () => void;
   onSeek: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSkipTime: (seconds: number) => void;
   onCycleSpeed: () => void;
   onToggleQuality: () => void;
+  onToggleDataSaver?: () => void;
   onToggleFullScreen: () => void;
 }
 
@@ -44,12 +47,14 @@ export function VideoBottomControls({
   duration,
   playbackSpeed,
   quality,
+  isDataSaver = false,
   onTogglePlay,
   onToggleMute,
   onSeek,
   onSkipTime,
   onCycleSpeed,
   onToggleQuality,
+  onToggleDataSaver,
   onToggleFullScreen,
 }: VideoBottomControlsProps) {
   return (
@@ -138,6 +143,23 @@ export function VideoBottomControls({
           >
             {quality}
           </button>
+
+          {/* Data Saver Mode (باقة التوفير) */}
+          {onToggleDataSaver && (
+            <button
+              type="button"
+              onClick={onToggleDataSaver}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1 cursor-pointer ${
+                isDataSaver
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30"
+                  : "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+              }`}
+              title={isDataSaver ? "وضع توفير باقة النت مفعل (اضغط للإلغاء)" : "تفعيل باقة التوفير لتقليل استهلاك النت"}
+            >
+              <Wifi className={`w-3.5 h-3.5 ${isDataSaver ? "text-emerald-200" : "text-slate-400"}`} />
+              <span className="hidden sm:inline">{isDataSaver ? "التوفير ✓" : "توفير الباقة"}</span>
+            </button>
+          )}
 
           <button
             type="button"

@@ -7,6 +7,24 @@ import * as schema from "@/lib/db/schema";
 import { eq, and, or, isNull, gt } from "drizzle-orm";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+
+// Deterministic seeded shuffle per student session matching quiz loader
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  const a = [...arr];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  for (let i = a.length - 1; i > 0; i--) {
+    hash = (hash << 5) - hash + i;
+    hash |= 0;
+    const j = Math.abs(hash) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -157,7 +175,15 @@ export async function POST(request: NextRequest) {
             .from(schema.quizQuestion)
             .where(eq(schema.quizQuestion.quizId, dbQuiz.id));
 
-          if (dbQuestions.length > 0) {
+          // Deterministic student seed matching quiz loader
+          const studentSeed = `${targetUserId || clientIp || "guest"}_${dbQuiz.id}`;
+          let selectedQuestions = dbQuestions;
+          if (dbQuiz.poolSize && dbQuiz.poolSize > 0 && dbQuiz.poolSize < dbQuestions.length) {
+            const shuffled = seededShuffle(dbQuestions, studentSeed);
+            selectedQuestions = shuffled.slice(0, dbQuiz.poolSize);
+          }
+
+          if (selectedQuestions.length > 0) {
             quiz = {
               id: dbQuiz.id,
               unitId: dbQuiz.unitId || "",
@@ -165,7 +191,7 @@ export async function POST(request: NextRequest) {
               title: dbQuiz.title,
               timeLimitMinutes: dbQuiz.timeLimitMinutes,
               passPercentage: dbQuiz.passPercentage,
-              questions: dbQuestions.map((q) => ({
+              questions: selectedQuestions.map((q) => ({
                 id: q.id,
                 text: q.questionText,
                 audioUrl: q.questionAudioUrl || undefined,
@@ -247,15 +273,28 @@ export async function POST(request: NextRequest) {
 
     // Prepare WhatsApp Message for Parent
     const cleanParentPhone = parentPhone.replace(/\D/g, "");
-    const whatsappMessage = encodeURIComponent(
+    const rawTextMessage = 
       `🌟 *تقرير مستوى الطالب - أكاديمية إيليت*\n` +
       `👤 *اسم الطالب:* ${studentName}\n` +
       `📝 *الاختبار:* ${quiz.title}\n` +
       `🎯 *الدرجة:* ${correctCount} من ${totalQuestions} (%${percentage})\n` +
       `📊 *الحالة:* ${passed ? "اجتاز الاختبار بنجاح وامتياز 🎉" : "يحتاج إلى مراجعة المحاضرة وإعادة المحاولة 💪"}\n` +
       `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-      `👨‍🏫 *المشرف:* مستر أحمد عبد الرحمن`
-    );
+      `👨‍🏫 *المشرف:* مستر أحمد عبد الرحمن`;
+    const whatsappMessage = encodeURIComponent(rawTextMessage);
+
+    // Automated server-side dispatch to parent
+    let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
+    if (cleanParentPhone) {
+      try {
+        whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
+          to: cleanParentPhone,
+          message: rawTextMessage,
+        });
+      } catch (err) {
+        console.warn("Automated WhatsApp dispatch note:", err);
+      }
+    }
 
     const remainingAttempts = Math.max(0, maxAttempts - (existingAttempts.length + 1));
 
@@ -270,10 +309,11 @@ export async function POST(request: NextRequest) {
       remainingAttempts,
       maxAttempts,
       results,
+      whatsappAutoDelivery,
       parentNotification: {
         parentPhone: cleanParentPhone || parentPhone,
         whatsappUrl: `https://wa.me/2${cleanParentPhone || parentPhone}?text=${whatsappMessage}`,
-        messageText: decodeURIComponent(whatsappMessage),
+        messageText: rawTextMessage,
       },
     });
   } catch (error: unknown) {

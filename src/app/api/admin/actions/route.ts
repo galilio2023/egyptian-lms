@@ -26,6 +26,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "all";
 
+    // RBAC: Assistants cannot view financial overview KPIs or platform settings
+    const isAssistant = userRole === "assistant";
+    const ASSISTANT_RESTRICTED_TYPES = ["settings"];
+    if (isAssistant && ASSISTANT_RESTRICTED_TYPES.includes(type)) {
+      return NextResponse.json(
+        { error: "عذراً، لا يمكن لحساب المساعد الوصول إلى هذا القسم." },
+        { status: 403 }
+      );
+    }
+
     let ordersData: Array<Record<string, unknown>> = [];
     let studentsData: Array<Record<string, unknown>> = [];
     let curriculumData: Array<Record<string, unknown>> = [];
@@ -318,7 +328,8 @@ export async function GET(request: NextRequest) {
           totalStudents: studentCountRes?.value || 0,
           totalUnits: unitCountRes?.value || 0,
           pendingOrders: pendingOrdersRes?.value || 0,
-          totalRevenueEgp: Number(revenueRes?.total || 0),
+          // RBAC: Hide revenue figures from assistant accounts
+          totalRevenueEgp: isAssistant ? 0 : Number(revenueRes?.total || 0),
         };
       } catch (err) {
         console.warn("Overview stats DB note:", err);
@@ -395,6 +406,30 @@ export async function POST(request: NextRequest) {
 
     if (!action) {
       return NextResponse.json({ error: "الإجراء غير محدد" }, { status: 400 });
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // RBAC: Assistants are restricted from destructive / financial actions
+    // ──────────────────────────────────────────────────────────
+    const ADMIN_TEACHER_ONLY_ACTIONS = [
+      "delete_unit",
+      "create_unit",
+      "delete_lesson",
+      "delete_question",
+      "update_settings",
+      "generate_secure_vouchers",
+      "save_vouchers",
+      "delete_live_session",
+      "send_broadcast",
+      "ban_student",
+      "unban_student",
+    ];
+
+    if (userRole === "assistant" && ADMIN_TEACHER_ONLY_ACTIONS.includes(action)) {
+      return NextResponse.json(
+        { error: "عذراً، هذا الإجراء يتطلب صلاحيات المعلم أو مدير النظام. حساب المساعد لا يملك صلاحية تنفيذ هذا الأمر." },
+        { status: 403 }
+      );
     }
 
     switch (action) {
@@ -613,13 +648,15 @@ export async function POST(request: NextRequest) {
       }
 
       case "create_lesson": {
-        const { unitId, title, videoId, videoDurationSeconds, pdfAttachmentUrl, isFreePreview } = payload as {
+        const { unitId, title, videoId, videoDurationSeconds, pdfAttachmentUrl, isFreePreview, prerequisiteType, prerequisiteLessonId } = payload as {
           unitId: string;
           title: string;
           videoId: string;
           videoDurationSeconds?: number;
           pdfAttachmentUrl?: string;
           isFreePreview?: boolean;
+          prerequisiteType?: string;
+          prerequisiteLessonId?: string;
         };
 
         const lessonSlug = `lesson-${Date.now()}`;
@@ -632,6 +669,8 @@ export async function POST(request: NextRequest) {
           videoDurationSeconds: videoDurationSeconds || 1200,
           pdfAttachmentUrl: pdfAttachmentUrl || null,
           isFreePreview: Boolean(isFreePreview),
+          prerequisiteType: prerequisiteType || "none",
+          prerequisiteLessonId: prerequisiteLessonId || null,
           orderIndex: 1,
         }).returning();
 

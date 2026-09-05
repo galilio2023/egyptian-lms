@@ -9,7 +9,8 @@ export interface CanvasPenGraderProps {
     score: number;
     feedbackNotes: string;
     annotatedImages: Array<{ pageIndex: number; dataUrl: string }>;
-  }) => void;
+  }, andAdvanceNext?: boolean) => void;
+  hasNextSubmission?: boolean;
 }
 
 export type ToolType = "pen" | "highlighter" | "check" | "cross" | "star" | "eraser";

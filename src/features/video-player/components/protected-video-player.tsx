@@ -57,8 +57,30 @@ export function ProtectedVideoPlayer({
     return null;
   });
 
+  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("elite_data_saver") === "true" ? "low" : "auto";
+    }
+    return "auto";
+  });
+
+  const toggleDataSaver = () => {
+    const nextMode = qualityMode === "low" ? "auto" : "low";
+    setQualityMode(nextMode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("elite_data_saver", nextMode === "low" ? "true" : "false");
+    }
+    if (nextMode === "low") {
+      toast.success("تم تفعيل وضع توفير باقة النت 📶", {
+        description: "سيتم خفض جودة الفيديو لتوفير استهلاك الجيجابايت.",
+      });
+    } else {
+      toast.info("تم العودة إلى الجودة التلقائية ⚡");
+    }
+  };
+
   // HLS stream management
-  const { hlsRef } = useHlsStream(videoRef, src);
+  const { hlsRef } = useHlsStream(videoRef, src, { qualityMode });
 
   // Watermark canvas
   const { updateCanvasSize } = useWatermarkCanvas({
@@ -306,6 +328,7 @@ export function ProtectedVideoPlayer({
         duration={duration}
         playbackSpeed={playbackSpeed}
         quality={quality}
+        isDataSaver={qualityMode === "low"}
         onTogglePlay={togglePlay}
         onToggleMute={() => {
           if (videoRef.current) {
@@ -317,6 +340,7 @@ export function ProtectedVideoPlayer({
         onSkipTime={skipTime}
         onCycleSpeed={cycleSpeed}
         onToggleQuality={toggleQuality}
+        onToggleDataSaver={toggleDataSaver}
         onToggleFullScreen={toggleFullScreen}
       />
     </div>

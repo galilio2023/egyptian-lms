@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,22 +75,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate WhatsApp Notification URL
+    // Generate WhatsApp Notification Message
     const cleanPhone = (parentPhone || "01098765432").replace(/\D/g, "");
-    const msg = encodeURIComponent(
+    const rawTextMessage = 
       `🌟 *تقرير تصحيح كراسة الواجب - أكاديمية إيليت*\n` +
       `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
       `📝 *الواجب:* ${assignmentTitle || "كراسة التدريبات"}\n` +
       `🎯 *الدرجة المستحقة:* ${score} من 10\n` +
       `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
       `✍️ *ملاحظات مستر أحمد:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
-      `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`
-    );
+      `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;
+    const msg = encodeURIComponent(rawTextMessage);
+
+    // Automated server-side dispatch to parent
+    let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
+    if (cleanPhone) {
+      try {
+        whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
+          to: cleanPhone,
+          message: rawTextMessage,
+        });
+      } catch (err) {
+        console.warn("Automated WhatsApp homework dispatch note:", err);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       message: "تم حفظ درجات وتصحيح الواجب بنجاح وإرسال التنبيه.",
       earnedXp,
+      whatsappAutoDelivery,
       whatsappUrl: `https://wa.me/2${cleanPhone}?text=${msg}`,
     });
   } catch (err) {

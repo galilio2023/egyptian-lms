@@ -31,17 +31,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { assignmentId, studentImages } = body as {
+    const { assignmentId, studentImages, audioVoiceNoteUrl } = body as {
       assignmentId: string;
-      studentImages: Array<{ pageNumber: number; imageUrl: string }>;
+      studentImages?: Array<{ pageNumber: number; imageUrl: string }>;
+      audioVoiceNoteUrl?: string;
     };
 
-    if (!assignmentId || !Array.isArray(studentImages) || studentImages.length === 0) {
+    const hasImages = Array.isArray(studentImages) && studentImages.length > 0;
+    const hasAudio = Boolean(audioVoiceNoteUrl && typeof audioVoiceNoteUrl === "string");
+
+    if (!assignmentId || (!hasImages && !hasAudio)) {
       return NextResponse.json(
-        { error: "بيانات تسليم الواجب غير مكتملة. يجب إرفاق صورة واحدة على الأقل." },
+        { error: "بيانات تسليم الواجب غير مكتملة. يجب إرفاق صورة واحدة على الأقل أو تسجيل صوتي." },
         { status: 400 }
       );
     }
+
+    const effectiveImages = hasImages ? studentImages! : [];
 
     const userId = session.user.id;
     const studentName = session.user.name || "طالب أكاديمية إيليت";
@@ -104,11 +110,12 @@ export async function POST(request: NextRequest) {
           .limit(1);
 
         if (existingPending) {
-          // Update the pending submission with latest uploaded pages
+          // Update the pending submission with latest uploaded pages and voice note
           await db
             .update(schema.homeworkSubmission)
             .set({
-              studentImages,
+              studentImages: effectiveImages,
+              audioVoiceNoteUrl: audioVoiceNoteUrl || null,
               createdAt: new Date(),
             })
             .where(eq(schema.homeworkSubmission.id, existingPending.id));
@@ -120,7 +127,8 @@ export async function POST(request: NextRequest) {
             .values({
               assignmentId,
               userId,
-              studentImages,
+              studentImages: effectiveImages,
+              audioVoiceNoteUrl: audioVoiceNoteUrl || null,
               status: "submitted",
             })
             .returning({ id: schema.homeworkSubmission.id });
@@ -145,7 +153,8 @@ export async function POST(request: NextRequest) {
       studentPhone,
       parentPhone: "01098765432",
       gradeTitle: unitTitle,
-      studentImages,
+      studentImages: effectiveImages,
+      audioVoiceNoteUrl: audioVoiceNoteUrl || undefined,
       status: "submitted",
       maxScore,
       submittedAt: "الآن",
@@ -153,7 +162,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "تم تسليم كراسة الواجب بنجاح وجاري المراجعة والتصحيح بواسطة فريق المعلم.",
+      message: audioVoiceNoteUrl 
+        ? "تم تسليم كراسة الواجب والملاحظة الصوتية بنجاح وجاري المراجعة والتصحيح بواسطة فريق المعلم 🎙️📜"
+        : "تم تسليم كراسة الواجب بنجاح وجاري المراجعة والتصحيح بواسطة فريق المعلم.",
       submission: createdSubmission,
     });
   } catch (err) {

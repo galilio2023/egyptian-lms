@@ -78,6 +78,17 @@ export function LiveSessionWidget({
 
   const isLive = session.isLiveNow || timeLeft.isPast;
 
+  const handleJoinMeeting = (e: React.MouseEvent) => {
+    e.preventDefault();
+    fetch("/api/live-sessions/attend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: session.id }),
+    }).catch(() => {});
+    toast.success("تم تسجيل حضورك في الحصة بنجاح 🔴");
+    window.open(session.meetingUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="modern-card p-6 bg-gradient-to-br from-purple-900 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-2xl border-2 border-purple-500/30 relative overflow-hidden space-y-5">
       {/* Background Decorative Element */}
@@ -163,10 +174,8 @@ export function LiveSessionWidget({
           </div>
         )}
 
-        <a
-          href={session.meetingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={handleJoinMeeting}
           className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer ${
             isLive 
               ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-105 animate-bounce" 
@@ -174,9 +183,9 @@ export function LiveSessionWidget({
           }`}
         >
           <Video className="w-4 h-4" />
-          <span>{isLive ? "دخول غرفة البث المباشر الآن 🔴" : "فتح رابط الغرفة على Zoom 🚀"}</span>
+          <span>{isLive ? "دخول غرفة البث المباشر وتسجيل الحضور 🔴" : "فتح رابط الغرفة على Zoom 🚀"}</span>
           <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        </button>
       </div>
 
       {/* Student Question Submission for Live Q&A */}

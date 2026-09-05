@@ -30,6 +30,27 @@ export function InteractiveQuizEngine({
 
   const { isSpeaking, playChimeSound, speakEnglishText } = useQuizAudio();
 
+  const draftStorageKey = `elite_quiz_draft_${quiz.id}_${studentPhone || "guest"}`;
+
+  // Restore draft answers and time on mount if internet dropped or page refreshed
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.answers && Object.keys(parsed.answers).length > 0) {
+          setSelectedAnswers(parsed.answers);
+          if (typeof parsed.timeLeft === "number" && parsed.timeLeft > 5) {
+            setTimeLeft(parsed.timeLeft);
+          }
+          toast.info("تم استرجاع إجاباتك السابقة تلقائياً لحمايتها من انقطاع الاتصال 🛡️");
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [draftStorageKey]);
+
   useEffect(() => {
     if (startTimeRef.current === null) {
       startTimeRef.current = Date.now();
@@ -38,7 +59,18 @@ export function InteractiveQuizEngine({
 
   useEffect(() => {
     selectedAnswersRef.current = selectedAnswers;
-  }, [selectedAnswers]);
+    // Auto-save draft on every answer change
+    if (!isSubmitted && Object.keys(selectedAnswers).length > 0) {
+      try {
+        localStorage.setItem(
+          draftStorageKey,
+          JSON.stringify({ answers: selectedAnswers, timeLeft, updatedAt: Date.now() })
+        );
+      } catch {
+        // ignore storage quota error
+      }
+    }
+  }, [selectedAnswers, timeLeft, isSubmitted, draftStorageKey]);
 
   const handleSubmitQuiz = useCallback(
     async (forcedAnswers?: Record<string, string>) => {
@@ -75,6 +107,9 @@ export function InteractiveQuizEngine({
         if (data && typeof data.score === "number") {
           setGradeResult(data);
           setIsSubmitted(true);
+          try {
+            localStorage.removeItem(draftStorageKey);
+          } catch {}
 
           if (data.passed) {
             playChimeSound("complete");
@@ -98,7 +133,7 @@ export function InteractiveQuizEngine({
         setIsSubmitting(false);
       }
     },
-    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound]
+    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound, draftStorageKey]
   );
 
   // Anti-cheat monitoring
@@ -140,6 +175,9 @@ export function InteractiveQuizEngine({
   };
 
   const handleRetake = () => {
+    try {
+      localStorage.removeItem(draftStorageKey);
+    } catch {}
     setIsSubmitted(false);
     setGradeResult(null);
     setSelectedAnswers({});

@@ -68,8 +68,60 @@ export async function GET(
         .where(eq(schema.lesson.unitId, dbUnit.id))
         .orderBy(schema.lesson.orderIndex);
 
-      const formattedLessons = dbLessons.map((l) => {
-        const canAccessContent = Boolean(l.isFreePreview || isEnrolled);
+      // Fetch passed quizzes and submitted homework for current user in this unit
+      const userPassedQuizLessonIds = new Set<string>();
+      const userSubmittedHwLessonIds = new Set<string>();
+
+      if (currentUserId && isEnrolled) {
+        try {
+          const passedAttempts = await db
+            .select({ lessonId: schema.quiz.lessonId })
+            .from(schema.quizAttempt)
+            .innerJoin(schema.quiz, eq(schema.quizAttempt.quizId, schema.quiz.id))
+            .where(
+              and(
+                eq(schema.quizAttempt.userId, currentUserId),
+                eq(schema.quizAttempt.passed, true)
+              )
+            );
+          passedAttempts.forEach((p) => {
+            if (p.lessonId) userPassedQuizLessonIds.add(p.lessonId);
+          });
+
+          const userSubmissions = await db
+            .select({ lessonId: schema.homeworkAssignment.lessonId })
+            .from(schema.homeworkSubmission)
+            .innerJoin(
+              schema.homeworkAssignment,
+              eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id)
+            )
+            .where(eq(schema.homeworkSubmission.userId, currentUserId));
+          userSubmissions.forEach((s) => {
+            if (s.lessonId) userSubmittedHwLessonIds.add(s.lessonId);
+          });
+        } catch (e) {
+          console.warn("Unit lesson prereq check note:", e);
+        }
+      }
+
+      const formattedLessons = dbLessons.map((l, idx) => {
+        let isPrerequisiteBlocked = false;
+        let prerequisiteMessage = "";
+
+        if (isEnrolled && !l.isFreePreview && l.prerequisiteType && l.prerequisiteType !== "none") {
+          const targetLessonId = l.prerequisiteLessonId || (idx > 0 ? dbLessons[idx - 1].id : null);
+          if (targetLessonId) {
+            if (l.prerequisiteType === "previous_quiz_passed" && !userPassedQuizLessonIds.has(targetLessonId)) {
+              isPrerequisiteBlocked = true;
+              prerequisiteMessage = "يجب اجتياز كويز المحاضرة السابقة أولاً 🔒";
+            } else if (l.prerequisiteType === "previous_homework_submitted" && !userSubmittedHwLessonIds.has(targetLessonId)) {
+              isPrerequisiteBlocked = true;
+              prerequisiteMessage = "يجب تسليم واجب المحاضرة السابقة أولاً 🔒";
+            }
+          }
+        }
+
+        const canAccessContent = Boolean((l.isFreePreview || isEnrolled) && !isPrerequisiteBlocked);
         const rawVideoUrl = l.videoId?.startsWith("http")
           ? l.videoId
           : "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
@@ -79,10 +131,14 @@ export async function GET(
           unitId: l.unitId,
           title: l.title,
           slug: l.slug,
+          orderIndex: l.orderIndex,
           videoDuration: `${Math.round((l.videoDurationSeconds || 1200) / 60)} دقيقة`,
           videoUrl: canAccessContent ? rawVideoUrl : null,
           pdfAttachmentUrl: canAccessContent ? (l.pdfAttachmentUrl || null) : null,
           isFreePreview: l.isFreePreview,
+          prerequisiteType: l.prerequisiteType,
+          isPrerequisiteBlocked,
+          prerequisiteMessage,
         };
       });
 

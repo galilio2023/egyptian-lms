@@ -11,6 +11,8 @@ export interface LessonDetailsFormProps {
   onIsFreePreviewChange: (v: boolean) => void;
   pdfAttachmentUrl: string;
   onPdfAttachmentUrlChange: (v: string) => void;
+  prerequisiteType?: string;
+  onPrerequisiteTypeChange?: (v: string) => void;
   disabled?: boolean;
 }
 
@@ -23,6 +25,8 @@ export const LessonDetailsForm: React.FC<LessonDetailsFormProps> = ({
   onIsFreePreviewChange,
   pdfAttachmentUrl,
   onPdfAttachmentUrlChange,
+  prerequisiteType,
+  onPrerequisiteTypeChange,
   disabled = false,
 }) => {
   return (
@@ -66,6 +70,23 @@ export const LessonDetailsForm: React.FC<LessonDetailsFormProps> = ({
           onChange={(e) => onIsFreePreviewChange(e.target.checked)}
           className="w-5 h-5 accent-purple-600 rounded cursor-pointer"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+          <span>شرط فتح المحاضرة للطالب (Prerequisite Drip)</span>
+          <span className="text-[10px] text-purple-600 font-bold">تسلسل المنهج</span>
+        </label>
+        <select
+          disabled={disabled}
+          value={prerequisiteType || "none"}
+          onChange={(e) => onPrerequisiteTypeChange?.(e.target.value)}
+          className="w-full px-3.5 py-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
+        >
+          <option value="none">بدون قيود - المحاضرة متاحة فور الاشتراك</option>
+          <option value="previous_quiz_passed">إلزام الطالب باجتياز كويز المحاضرة السابقة أولاً 📝</option>
+          <option value="previous_homework_submitted">إلزام الطالب برفع وتسليم واجب المحاضرة السابقة أولاً ✍️</option>
+        </select>
       </div>
 
       <div className="space-y-1.5">
