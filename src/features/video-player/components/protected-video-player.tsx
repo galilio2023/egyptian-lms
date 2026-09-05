@@ -42,31 +42,24 @@ export function ProtectedVideoPlayer({
 
   const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
 
-  const [savedTime, setSavedTime] = useState<number | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const time = parseFloat(stored);
-          if (time > 5) return time;
-        }
-      } catch {
-        // Ignore storage read error
-      }
-    }
-    return null;
-  });
+  const [savedTime, setSavedTime] = useState<number | null>(null);
+  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">("auto");
 
-  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("elite_data_saver") === "true" ? "low" : "auto";
-      } catch {
-        return "auto";
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const time = parseFloat(stored);
+        if (time > 5) setSavedTime(time);
       }
+      const dataSaver = localStorage.getItem("elite_data_saver");
+      if (dataSaver === "true") {
+        setQualityMode("low");
+      }
+    } catch {
+      // Ignore storage read error
     }
-    return "auto";
-  });
+  }, [storageKey]);
 
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, { qualityMode });

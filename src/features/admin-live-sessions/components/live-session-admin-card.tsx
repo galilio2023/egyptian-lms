@@ -67,7 +67,7 @@ export const LiveSessionAdminCard: React.FC<LiveSessionAdminCardProps> = ({
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-purple-700">
               <Calendar className="w-4 h-4" />
-              <span>الموعد: {new Date(session.scheduledAt).toLocaleString("ar-EG")}</span>
+              <span suppressHydrationWarning>الموعد: {new Date(session.scheduledAt).toLocaleString("ar-EG")}</span>
             </span>
             <span className="text-slate-500">المدة: {session.durationMinutes} دقيقة</span>
           </div>

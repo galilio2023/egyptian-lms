@@ -164,7 +164,7 @@ export function Footer({
 
         {/* Bottom Rights */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
-          <p>© {new Date().getFullYear()} {academyName} — جميع الحقوق محفوظة لـ {teacherNameArabic || teacherName || "إدارة المنصة"}.</p>
+          <p suppressHydrationWarning>© {new Date().getFullYear()} {academyName} — جميع الحقوق محفوظة لـ {teacherNameArabic || teacherName || "إدارة المنصة"}.</p>
           <div className="flex items-center gap-1.5 text-xs text-purple-700 font-bold bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
             <span>المنصة الذكية الأولى لتأسيس اللغة الإنجليزية للأطفال 🌟</span>
           </div>

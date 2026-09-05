@@ -44,8 +44,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="rtl" className={cairoFont.variable}>
-      <body className={`min-h-screen text-slate-900 antialiased ${cairoFont.className}`}>
+    <html lang="ar" dir="rtl" className={cairoFont.variable} suppressHydrationWarning>
+      <body
+        className={`min-h-screen text-slate-900 antialiased ${cairoFont.className}`}
+        suppressHydrationWarning
+      >
         {children}
         <Toaster richColors position="top-center" dir="rtl" />
       </body>
