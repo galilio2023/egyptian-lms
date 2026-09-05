@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/galilio2023/egyptian-lms">
-    <img src="./public/logo-full.svg" alt="Egyptian LMS Platform Logo" width="520" />
+    <img src="./public/logo.png" alt="Egyptian LMS Platform Logo" width="520" />
   </a>
 </p>
 
@@ -182,48 +182,6 @@ sequenceDiagram
 
 ---
 
-## 🔒 Security Hardening Matrix (CodeRabbit Audit Fixes)
-
-All 17 issues identified during the comprehensive CodeRabbit code review have been resolved, verified with zero build regressions, and documented below:
-
-| ID | Advisory | Severity | Mitigation Implemented | File Reference |
-|:---|:---|:---:|:---|:---|
-| **#4** | Paymob Webhook Bypass (CWE-347) | 🔴 Critical | Enforced HMAC-signed `gatewayOrderId` lookup prior to merchant fallback. | [`paymob/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/webhooks/paymob/route.ts) |
-| **#5** | Assistant Overview RBAC (CWE-862) | 🟡 Minor | Added `overview` to `ASSISTANT_RESTRICTED_TYPES` in admin API. | [`admin/actions/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/admin/actions/route.ts) |
-| **#6** | Lesson Order Race Condition | 🟠 Major | Wrapped `orderIndex` in atomic transaction with `SELECT FOR UPDATE` unit lock. | [`admin/actions/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/admin/actions/route.ts) |
-| **#7** | Homework Submission Validation | 🟠 Major | Added strict UUID format validation (400) and missing record guard (404). | [`homework/grade/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/homework/grade/route.ts) |
-| **#8** | Audio Voice Note SSRF (CWE-918) | 🟠 Major | Validated audio URLs against safe base64 audio URIs and trusted CDN storage. | [`homework/submit/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/homework/submit/route.ts) |
-| **#9** | Live Session Attendance UUID | 🟠 Major | Enforced UUID validation (400) to block arbitrary audit event generation. | [`live-sessions/attend/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/live-sessions/attend/route.ts) |
-| **#10**| Pre-Live Early Attendance Race | 🟠 Major | Blocked attendance recording outside the active 15-minute session window. | [`live-sessions/attend/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/live-sessions/attend/route.ts) |
-| **#11**| Information Disclosure (CWE-209) | 🟡 Minor | Omitted internal `error.message` from attendance API responses. | [`live-sessions/attend/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/live-sessions/attend/route.ts) |
-| **#12**| Unsatisfiable Prerequisite Lock | 🟠 Major | Gated prerequisites only when the required quiz/homework actually exists. | [`lesson/[lessonSlug]/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/public/lesson/[lessonSlug]/route.ts) |
-| **#13**| Quiz Parent IDOR (CWE-639) | 🟠 Major | Restricted parent notification data to authenticated `session.user.id`. | [`quiz/grade/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/quiz/grade/route.ts) |
-| **#14**| Webhook Audit DoS (CWE-400) | 🟠 Major | Added sliding-window rate limiting on invalid HMAC audit writes. | [`rate-limiter.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/lib/security/rate-limiter.ts) |
-| **#15**| Unauthenticated Fallback (CWE-347)| 🟠 Major | Required signed `gatewayOrderId` binding on merchant-order fallbacks. | [`paymob/route.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/app/api/webhooks/paymob/route.ts) |
-| **#16**| Stream Memory Leak on Unmount | 🟠 Major | Added `isMountedRef` and `pendingStreamRef` track cleanup in voice recorder. | [`voice-note-recorder.tsx`](file:///C:/Users/PC/Desktop/egyptian-lms/src/features/homework/components/voice-note-recorder.tsx) |
-| **#17**| Stale Quiz Draft Time Recovery | 🟠 Major | Subtracted elapsed wall-clock seconds from draft time; auto-submitted expired. | [`interactive-quiz-engine.tsx`](file:///C:/Users/PC/Desktop/egyptian-lms/src/features/quiz-engine/components/interactive-quiz-engine.tsx) |
-| **#18**| Storage Exception Crashes | 🟡 Minor | Wrapped browser `localStorage` reads/writes in safe `try/catch` fallbacks. | [`protected-video-player.tsx`](file:///C:/Users/PC/Desktop/egyptian-lms/src/features/video-player/components/protected-video-player.tsx) |
-| **#19**| Native HLS Ineffective Data-Saver | 🟠 Major | Reset `qualityMode` to `auto` and hid controls when HLS.js is unavailable. | [`protected-video-player.tsx`](file:///C:/Users/PC/Desktop/egyptian-lms/src/features/video-player/components/protected-video-player.tsx) |
-| **#20**| Schema Type Safety (`any` escape) | 🟠 Major | Replaced `any` escape with `AnyPgColumn` for self-referencing foreign keys. | [`schema.ts`](file:///C:/Users/PC/Desktop/egyptian-lms/src/lib/db/schema.ts) |
-
----
-
-## 🛠️ Technology Stack Breakdown
-
-```
-egyptian-lms/
-├── Core Framework      -> Next.js 16.3.4 (Turbopack Engine, App Router)
-├── UI Library          -> React 19.2.8 + React DOM 19
-├── Styling System      -> Tailwind CSS v4.3.3 + Cairo Font + Lucide Icons
-├── Database Layer      -> Neon Serverless PostgreSQL + Drizzle ORM 0.45.2
-├── Auth Engine         -> Better Auth 1.7.2 (Egyptian Phone + Single Device Plugin)
-├── Media & DRM         -> Bunny.net Stream HLS + Dynamic Canvas Watermark
-├── AI Curriculum Engine-> Dual-Mode MOETE Parser (Gemini 1.5 / GPT-4o + Presets)
-├── Payment Gateways    -> Paymob (Card & Wallets) + InstaPay + Local QR Vouchers
-├── Notifications       -> Automated WhatsApp Bot (UltraMsg / WasAPI)
-├── Testing & Quality   -> TypeScript 5.0 (Strict Mode) + ESLint 9 + Turbopack
-```
-
 ---
 
 ## 📂 Project Structure
@@ -346,13 +304,7 @@ To access the Admin Settings and brand the platform with your name and academy, 
 
 ---
 
-## 🏷️ Repository Topics & Tags
 
-For repository classification, discoverability, and SEO:
-
-`nextjs16` • `react19` • `lms` • `edtech` • `egypt` • `arabic` • `drizzle-orm` • `better-auth` • `paymob` • `instapay` • `anti-piracy` • `video-watermark` • `hls-streaming` • `canvas-grader` • `ai-curriculum` • `pdf-parser` • `whatsapp-notifications` • `tailwind-v4` • `turbopack` • `security-hardened` • `white-label`
-
----
 
 ## 📄 License & Attribution
 
