@@ -22,8 +22,9 @@ export function EliteLogoBadge({ className = "w-10 h-10", size }: SvgProps) {
           <stop offset="100%" stopColor="#EC4899" />
         </linearGradient>
         <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1E1B4B" />
-          <stop offset="100%" stopColor="#312E81" />
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="50%" stopColor="#8B5CF6" />
+          <stop offset="100%" stopColor="#6D28D9" />
         </linearGradient>
         <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FDE047" />
@@ -31,11 +32,11 @@ export function EliteLogoBadge({ className = "w-10 h-10", size }: SvgProps) {
           <stop offset="100%" stopColor="#D97706" />
         </linearGradient>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#8B5CF6" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#8B5CF6" floodOpacity="0.3" />
         </filter>
       </defs>
 
-      {/* Outer rounded pill backdrop */}
+      {/* Outer rounded pill backdrop (Vibrant violet-pink) */}
       <rect width="100" height="100" rx="28" fill="url(#bgGrad)" filter="url(#glow)" />
       
       {/* Decorative stars / glimmers */}
@@ -43,22 +44,25 @@ export function EliteLogoBadge({ className = "w-10 h-10", size }: SvgProps) {
       <circle cx="80" cy="30" r="3" fill="#FDE047" opacity="0.9" />
       <path d="M78 20L80 25L85 27L80 29L78 34L76 29L71 27L76 25Z" fill="#FDE047" />
 
+      {/* Open Book Base in soft white */}
+      <path d="M50 78 C40 75 28 74 20 77 V64 C28 62 40 63 50 66 Z" fill="#FFFFFF" opacity="0.8" />
+      <path d="M50 78 C60 75 72 74 80 77 V64 C72 62 60 63 50 66 Z" fill="#FFFFFF" opacity="0.8" />
+
       {/* Graduation Cap Rhombus Diamond */}
       <path
         d="M50 30L82 43L50 56L18 43Z"
         fill="url(#capGrad)"
-        stroke="#A5B4FC"
-        strokeWidth="1.5"
+        stroke="#FDE047"
+        strokeWidth="1.8"
       />
-      {/* Cap Under-Brim Shadow */}
+      {/* Cap Under-Brim */}
       <path
         d="M32 50V63C32 67 40 71 50 71C60 71 68 67 68 63V50C62 55 56 57 50 57C44 57 38 55 32 50Z"
-        fill="#1E1B4B"
-        opacity="0.95"
+        fill="#6D28D9"
       />
       <path
         d="M32 50C38 55 44 57 50 57C56 57 62 55 68 50V54C68 58 60 62 50 62C40 62 32 58 32 54Z"
-        fill="#4338CA"
+        fill="#7C3AED"
       />
 
       {/* Golden Button and Tassel */}
