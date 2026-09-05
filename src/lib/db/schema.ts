@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex, AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -119,6 +119,8 @@ export const lesson = pgTable('lesson', {
   pdfAttachmentUrl: text('pdf_attachment_url'),
   isFreePreview: boolean('is_free_preview').default(false).notNull(),
   orderIndex: integer('order_index').default(0).notNull(),
+  prerequisiteType: text('prerequisite_type').default('none').notNull(), // 'none' | 'previous_quiz_passed' | 'previous_homework_submitted'
+  prerequisiteLessonId: uuid('prerequisite_lesson_id').references((): AnyPgColumn => lesson.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('lesson_unit_id_idx').on(table.unitId),
@@ -133,6 +135,7 @@ export const quiz = pgTable('quiz', {
   timeLimitMinutes: integer('time_limit_minutes').default(15).notNull(),
   passPercentage: integer('pass_percentage').default(60).notNull(),
   maxAttempts: integer('max_attempts').default(3).notNull(),
+  poolSize: integer('pool_size'), // إذا تم تحديده، يتم تقديم عدد محدود عشوائي من الأسئلة لكل طالب
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -359,6 +362,7 @@ export const homeworkSubmission = pgTable('homework_submission', {
   assignmentId: uuid('assignment_id').references(() => homeworkAssignment.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }).notNull(),
   studentImages: jsonb('student_images').$type<StudentUploadedPage[]>().notNull(),
+  audioVoiceNoteUrl: text('audio_voice_note_url'),
   status: homeworkStatusEnum('status').default('submitted').notNull(),
   score: integer('score'),
   feedbackNotes: text('feedback_notes'),
@@ -387,6 +391,17 @@ export const liveSession = pgTable('live_session', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('live_session_grade_id_idx').on(table.gradeId),
+]);
+
+export const liveSessionAttendance = pgTable('live_session_attendance', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  sessionId: uuid('session_id').references(() => liveSession.id, { onDelete: 'cascade' }).notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }).notNull(),
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+}, (table) => [
+  index('live_attendance_session_id_idx').on(table.sessionId),
+  index('live_attendance_user_id_idx').on(table.userId),
+  uniqueIndex('live_attendance_session_user_idx').on(table.sessionId, table.userId),
 ]);
 
 export const homeworkAssignmentRelations = relations(homeworkAssignment, ({ one, many }) => ({
@@ -460,6 +475,7 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'quiz_max_attempts_blocked',
   'rate_limit_triggered',
   'unauthorized_portal_access',
+  'live_session_attended',
   'user_banned',
 ]);
 

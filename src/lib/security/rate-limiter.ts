@@ -69,6 +69,11 @@ export const RATE_LIMIT_PRESETS: Record<string, RateLimitConfig> = {
     maxRequests: 60,
     windowMs: 60 * 1000,
   },
+  // Paymob webhook invalid HMAC audit writes: max 5 audit events per 2 minutes per IP (bounds DB writes against DoS CWE-400)
+  paymobInvalidHmac: {
+    maxRequests: 5,
+    windowMs: 2 * 60 * 1000,
+  },
 };
 
 /**

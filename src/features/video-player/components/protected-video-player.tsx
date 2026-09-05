@@ -57,8 +57,53 @@ export function ProtectedVideoPlayer({
     return null;
   });
 
+  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem("elite_data_saver") === "true" ? "low" : "auto";
+      } catch {
+        return "auto";
+      }
+    }
+    return "auto";
+  });
+
   // HLS stream management
-  const { hlsRef } = useHlsStream(videoRef, src);
+  const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, { qualityMode });
+
+  // Reset quality mode to auto if native HLS is used (Issue #19)
+  useEffect(() => {
+    if (!isHlsSupported && qualityMode === "low") {
+      setQualityMode("auto");
+    }
+  }, [isHlsSupported, qualityMode]);
+
+  const toggleDataSaver = () => {
+    if (!isHlsSupported) {
+      toast.info("التحكم بجودة البث غير مدعوم على المشغل الأصلي لهذا الجهاز/المتصفح.");
+      setQualityMode("auto");
+      try {
+        localStorage.removeItem("elite_data_saver");
+      } catch {}
+      return;
+    }
+    const nextMode = qualityMode === "low" ? "auto" : "low";
+    setQualityMode(nextMode);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("elite_data_saver", nextMode === "low" ? "true" : "false");
+      } catch {
+        // ignore storage write errors (Issue #18)
+      }
+    }
+    if (nextMode === "low") {
+      toast.success("تم تفعيل وضع توفير باقة النت 📶", {
+        description: "سيتم خفض جودة الفيديو لتوفير استهلاك الجيجابايت.",
+      });
+    } else {
+      toast.info("تم العودة إلى الجودة التلقائية ⚡");
+    }
+  };
 
   // Watermark canvas
   const { updateCanvasSize } = useWatermarkCanvas({
@@ -188,6 +233,10 @@ export function ProtectedVideoPlayer({
   };
 
   const toggleQuality = () => {
+    if (qualityMode === "low") {
+      toast.info("وضع توفير باقة النت مفعّل حالياً. قم بإلغاء توفير الباقة أولاً للتبديل اليدوي بين الجودات.");
+      return;
+    }
     if (!hlsRef.current) {
       setQuality((q) => (q === "Auto" ? "1080p" : "Auto"));
       return;
@@ -306,6 +355,7 @@ export function ProtectedVideoPlayer({
         duration={duration}
         playbackSpeed={playbackSpeed}
         quality={quality}
+        isDataSaver={isHlsSupported && qualityMode === "low"}
         onTogglePlay={togglePlay}
         onToggleMute={() => {
           if (videoRef.current) {
@@ -317,6 +367,7 @@ export function ProtectedVideoPlayer({
         onSkipTime={skipTime}
         onCycleSpeed={cycleSpeed}
         onToggleQuality={toggleQuality}
+        onToggleDataSaver={isHlsSupported ? toggleDataSaver : undefined}
         onToggleFullScreen={toggleFullScreen}
       />
     </div>

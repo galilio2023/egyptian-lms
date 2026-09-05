@@ -26,6 +26,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "all";
 
+    // RBAC: Assistants cannot view financial overview KPIs, platform settings, security logs, or aggregate all data
+    const isAssistant = userRole === "assistant";
+    const ASSISTANT_RESTRICTED_TYPES = ["settings", "security_logs", "all", "overview"];
+    if (isAssistant && ASSISTANT_RESTRICTED_TYPES.includes(type)) {
+      return NextResponse.json(
+        { error: "عذراً، لا يمكن لحساب المساعد الوصول إلى هذا القسم أو طلب البيانات المجمعة." },
+        { status: 403 }
+      );
+    }
+
     let ordersData: Array<Record<string, unknown>> = [];
     let studentsData: Array<Record<string, unknown>> = [];
     let curriculumData: Array<Record<string, unknown>> = [];
@@ -259,6 +269,7 @@ export async function GET(request: NextRequest) {
             studentPhone: schema.user.phoneNumber,
             parentPhone: schema.studentProfile.parentPhoneNumber,
             studentImages: schema.homeworkSubmission.studentImages,
+            audioVoiceNoteUrl: schema.homeworkSubmission.audioVoiceNoteUrl,
             annotatedImages: schema.homeworkSubmission.annotatedImages,
             status: schema.homeworkSubmission.status,
             score: schema.homeworkSubmission.score,
@@ -281,6 +292,7 @@ export async function GET(request: NextRequest) {
           parentPhone: s.parentPhone || "010xxxxxxxx",
           gradeTitle: "Grade 1",
           studentImages: s.studentImages as Array<{ pageNumber: number; imageUrl: string }>,
+          audioVoiceNoteUrl: s.audioVoiceNoteUrl || null,
           annotatedImages: (s.annotatedImages as Array<{ pageIndex: number; dataUrl: string }>) || undefined,
           status: s.status,
           score: s.score ?? undefined,
@@ -318,7 +330,8 @@ export async function GET(request: NextRequest) {
           totalStudents: studentCountRes?.value || 0,
           totalUnits: unitCountRes?.value || 0,
           pendingOrders: pendingOrdersRes?.value || 0,
-          totalRevenueEgp: Number(revenueRes?.total || 0),
+          // RBAC: Hide revenue figures from assistant accounts
+          totalRevenueEgp: isAssistant ? 0 : Number(revenueRes?.total || 0),
         };
       } catch (err) {
         console.warn("Overview stats DB note:", err);
@@ -395,6 +408,34 @@ export async function POST(request: NextRequest) {
 
     if (!action) {
       return NextResponse.json({ error: "الإجراء غير محدد" }, { status: 400 });
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // RBAC: Assistants are restricted from destructive / financial actions
+    // ──────────────────────────────────────────────────────────
+    const ADMIN_TEACHER_ONLY_ACTIONS = [
+      "approve_order",
+      "reject_order",
+      "reset_device",
+      "toggle_ban",
+      "ban_student",
+      "unban_student",
+      "delete_unit",
+      "create_unit",
+      "delete_lesson",
+      "delete_question",
+      "update_settings",
+      "generate_secure_vouchers",
+      "save_vouchers",
+      "delete_live_session",
+      "send_broadcast",
+    ];
+
+    if (userRole === "assistant" && ADMIN_TEACHER_ONLY_ACTIONS.includes(action)) {
+      return NextResponse.json(
+        { error: "عذراً، هذا الإجراء يتطلب صلاحيات المعلم أو مدير النظام. حساب المساعد لا يملك صلاحية تنفيذ هذا الأمر." },
+        { status: 403 }
+      );
     }
 
     switch (action) {
@@ -613,27 +654,49 @@ export async function POST(request: NextRequest) {
       }
 
       case "create_lesson": {
-        const { unitId, title, videoId, videoDurationSeconds, pdfAttachmentUrl, isFreePreview } = payload as {
+        const { unitId, title, videoId, videoDurationSeconds, pdfAttachmentUrl, isFreePreview, prerequisiteType, prerequisiteLessonId } = payload as {
           unitId: string;
           title: string;
           videoId: string;
           videoDurationSeconds?: number;
           pdfAttachmentUrl?: string;
           isFreePreview?: boolean;
+          prerequisiteType?: string;
+          prerequisiteLessonId?: string;
         };
 
         const lessonSlug = `lesson-${Date.now()}`;
-        const [inserted] = await db.insert(schema.lesson).values({
-          unitId,
-          title: title.trim(),
-          slug: lessonSlug,
-          videoProvider: "bunny",
-          videoId: videoId.trim(),
-          videoDurationSeconds: videoDurationSeconds || 1200,
-          pdfAttachmentUrl: pdfAttachmentUrl || null,
-          isFreePreview: Boolean(isFreePreview),
-          orderIndex: 1,
-        }).returning();
+        const inserted = await db.transaction(async (tx) => {
+          // Row-level lock on the parent unit to serialize concurrent lesson allocations for the same unit
+          try {
+            await tx.execute(sql`SELECT id FROM ${schema.courseUnit} WHERE id = ${unitId} FOR UPDATE`);
+          } catch {
+            // Ignore if unit row locking not supported
+          }
+
+          const [maxOrder] = await tx
+            .select({ maxOrder: sql<number>`COALESCE(MAX(${schema.lesson.orderIndex}), 0)` })
+            .from(schema.lesson)
+            .where(eq(schema.lesson.unitId, unitId));
+
+          const nextOrderIndex = Number(maxOrder?.maxOrder || 0) + 1;
+
+          const [newLesson] = await tx.insert(schema.lesson).values({
+            unitId,
+            title: title.trim(),
+            slug: lessonSlug,
+            videoProvider: "bunny",
+            videoId: videoId.trim(),
+            videoDurationSeconds: videoDurationSeconds || 1200,
+            pdfAttachmentUrl: pdfAttachmentUrl || null,
+            isFreePreview: Boolean(isFreePreview),
+            prerequisiteType: prerequisiteType || "none",
+            prerequisiteLessonId: prerequisiteLessonId || null,
+            orderIndex: nextOrderIndex,
+          }).returning();
+
+          return newLesson;
+        });
 
         return NextResponse.json({
           success: true,

@@ -9,6 +9,7 @@ import { useHomeworkSubmission } from "../hooks/use-homework-submission";
 import { SubmissionFilePicker } from "./submission-file-picker";
 import { SubmissionThumbnailGrid } from "./submission-thumbnail-grid";
 import { GradedFeedbackCard } from "./graded-feedback-card";
+import { VoiceNoteRecorder } from "./voice-note-recorder";
 
 export interface HomeworkSubmissionModalProps {
   assignment: MockHomeworkAssignment;
@@ -27,6 +28,8 @@ export function HomeworkSubmissionModal({
 }: HomeworkSubmissionModalProps) {
   const {
     images,
+    audioVoiceNoteUrl,
+    setAudioVoiceNoteUrl,
     isSubmitting,
     viewAnnotatedModal,
     setViewAnnotatedModal,
@@ -88,11 +91,18 @@ export function HomeworkSubmissionModal({
                 disabled={isSubmitting}
               />
 
+              {/* Voice Note Oral Phonics / Reading Component */}
+              <VoiceNoteRecorder
+                audioUrl={audioVoiceNoteUrl}
+                onAudioChange={setAudioVoiceNoteUrl}
+                disabled={isSubmitting}
+              />
+
               <Button
                 type="submit"
                 variant="vibrant"
                 size="lg"
-                disabled={isSubmitting || images.length === 0}
+                disabled={isSubmitting || (images.length === 0 && !audioVoiceNoteUrl)}
                 isLoading={isSubmitting}
                 className="w-full shadow-lg shadow-purple-600/25"
               >

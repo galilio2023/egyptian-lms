@@ -12,6 +12,7 @@ export const EVENT_TYPE_OPTIONS = [
   { value: "voucher_redeem_success", label: "كود شحن ناجح (Voucher Success)" },
   { value: "quiz_max_attempts_blocked", label: "تجاوز محاولات الاختبار (Quiz Blocked)" },
   { value: "rate_limit_triggered", label: "تجاوز معدل الطلب العام (Rate Limit)" },
+  { value: "live_session_attended", label: "حضور حصة بث مباشر (Live Session Attended)" },
   { value: "user_banned", label: "حساب محظور (Banned)" },
 ];
 

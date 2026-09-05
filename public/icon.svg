@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <!-- Vibrant Brand Gradient (No dark background) -->
+    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+
+    <!-- Warm Radiant Gold Gradient -->
+    <linearGradient id="favGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFBEB" />
+      <stop offset="25%" stop-color="#FDE047" />
+      <stop offset="70%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <!-- Diamond Cap Face Gradient -->
+    <linearGradient id="favCapTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#FEF08A" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="favGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#8B5CF6" floodOpacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- NO DARK BACKGROUND: Transparent Root Canvas -->
+
+  <!-- Vibrant Squircle Badge (Matches Elite Academy Brand Identity) -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#favBg)" filter="url(#favGlow)" />
+
+  <!-- Inner Soft Light Border Rim -->
+  <rect x="3.5" y="3.5" width="57" height="57" rx="14.5" fill="none" stroke="#FFFFFF" stroke-width="1.2" stroke-opacity="0.4" />
+
+  <!-- 1. Golden Star of Excellence at Apex -->
+  <path d="M32 8 L33.8 12.8 L38.8 13.3 L35 16.8 L36.1 21.8 L32 19.2 L27.9 21.8 L29 16.8 L25.2 13.3 L30.2 12.8 Z" 
+        fill="#FFFFFF" />
+  <path d="M32 9 L33.5 13 L37.8 13.4 L34.6 16.3 L35.5 20.5 L32 18.3 L28.5 20.5 L29.4 16.3 L26.2 13.4 L30.5 13 Z" 
+        fill="url(#favGold)" />
+
+  <!-- 2. Cap Diamond Shadow -->
+  <path d="M32 23 L55 33 L32 43 L9 33 Z" fill="#4338CA" opacity="0.4" transform="translate(0, 2)" />
+
+  <!-- 3. Graduation Cap Mortarboard Diamond Top (Bright Gold & White, High Contrast) -->
+  <path d="M32 23 L55 33 L32 43 L9 33 Z" 
+        fill="url(#favCapTop)" 
+        stroke="#FFFFFF" 
+        stroke-width="1.5" 
+        stroke-linejoin="round" />
+
+  <!-- 4. Cap Skull / Base Band -->
+  <path d="M20 38 V46 C20 51 25 54.5 32 54.5 C39 54.5 44 51 44 46 V38 C39 41 35 42 32 42 C29 42 25 41 20 38 Z" 
+        fill="#FFFFFF" />
+  <path d="M21.5 39.5 V45.5 C21.5 49 26 52.5 32 52.5 C38 52.5 42.5 49 42.5 45.5 V39.5 C38 41.5 34.5 42 32 42 C29.5 42 26 41.5 21.5 39.5 Z" 
+        fill="url(#favGold)" />
+
+  <!-- 5. Center Golden Button -->
+  <circle cx="32" cy="33" r="3.2" fill="#FFFFFF" />
+  <circle cx="32" cy="33" r="2.2" fill="#D97706" />
+
+  <!-- 6. Golden Swinging Tassel -->
+  <path d="M32 33 C39 34 46 36 49 42 C50 44 50 48 48 51" 
+        stroke="#FFFFFF" 
+        stroke-width="3" 
+        stroke-linecap="round" 
+        fill="none" />
+  <path d="M32 33 C39 34 46 36 49 42 C50 44 50 48 48 51" 
+        stroke="url(#favGold)" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        fill="none" />
+  <circle cx="48" cy="51" r="2.5" fill="#FDE047" stroke="#FFFFFF" stroke-width="0.8" />
+
+  <!-- 7. Decorative Glimmers -->
+  <circle cx="12" cy="14" r="1.5" fill="#FFFFFF" opacity="0.95" />
+  <circle cx="52" cy="16" r="2" fill="#FDE047" opacity="0.95" />
+</svg>

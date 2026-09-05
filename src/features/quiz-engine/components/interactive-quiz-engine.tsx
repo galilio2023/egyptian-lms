@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import { useSession } from "@/lib/auth/auth-client";
 import { useQuizAudio } from "../hooks/use-quiz-audio";
 import { useAntiCheat } from "../hooks/use-anti-cheat";
 import { QuizActiveHeader } from "./quiz-active-header";
@@ -30,15 +31,9 @@ export function InteractiveQuizEngine({
 
   const { isSpeaking, playChimeSound, speakEnglishText } = useQuizAudio();
 
-  useEffect(() => {
-    if (startTimeRef.current === null) {
-      startTimeRef.current = Date.now();
-    }
-  }, []);
-
-  useEffect(() => {
-    selectedAnswersRef.current = selectedAnswers;
-  }, [selectedAnswers]);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const draftStorageKey = userId ? `elite_quiz_draft_${quiz.id}_${userId}` : null;
 
   const handleSubmitQuiz = useCallback(
     async (forcedAnswers?: Record<string, string>) => {
@@ -75,6 +70,11 @@ export function InteractiveQuizEngine({
         if (data && typeof data.score === "number") {
           setGradeResult(data);
           setIsSubmitted(true);
+          if (draftStorageKey) {
+            try {
+              localStorage.removeItem(draftStorageKey);
+            } catch {}
+          }
 
           if (data.passed) {
             playChimeSound("complete");
@@ -98,8 +98,62 @@ export function InteractiveQuizEngine({
         setIsSubmitting(false);
       }
     },
-    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound]
+    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound, draftStorageKey]
   );
+
+  // Restore draft answers and subtract elapsed time on mount (Issue #17)
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    try {
+      const saved = localStorage.getItem(draftStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.answers && Object.keys(parsed.answers).length > 0) {
+          setSelectedAnswers(parsed.answers);
+          selectedAnswersRef.current = parsed.answers;
+
+          const elapsedSeconds = Math.floor(
+            (Date.now() - Number(parsed.updatedAt || Date.now())) / 1000
+          );
+          const savedTimeLeft = typeof parsed.timeLeft === "number" ? parsed.timeLeft : quiz.timeLimitMinutes * 60;
+          const remainingTime = Math.max(0, savedTimeLeft - elapsedSeconds);
+          setTimeLeft(remainingTime);
+
+          if (remainingTime <= 0) {
+            toast.warning("انتهى وقت الاختبار أثناء إغلاق الصفحة! جاري تسليم إجاباتك المحفوظة ⏳");
+            setTimeout(() => {
+              handleSubmitQuiz(parsed.answers);
+            }, 300);
+          } else {
+            toast.info("تم استرجاع إجاباتك السابقة والوقت المتبقي تلقائياً 🛡️");
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [draftStorageKey, quiz.timeLimitMinutes, handleSubmitQuiz]);
+
+  useEffect(() => {
+    if (startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+    }
+  }, []);
+
+  useEffect(() => {
+    selectedAnswersRef.current = selectedAnswers;
+    // Auto-save draft on every answer change only if authenticated
+    if (draftStorageKey && !isSubmitted && Object.keys(selectedAnswers).length > 0) {
+      try {
+        localStorage.setItem(
+          draftStorageKey,
+          JSON.stringify({ answers: selectedAnswers, timeLeft, updatedAt: Date.now() })
+        );
+      } catch {
+        // ignore storage quota error
+      }
+    }
+  }, [selectedAnswers, timeLeft, isSubmitted, draftStorageKey]);
 
   // Anti-cheat monitoring
   const { tabSwitchWarnings, resetWarnings } = useAntiCheat({
@@ -140,6 +194,11 @@ export function InteractiveQuizEngine({
   };
 
   const handleRetake = () => {
+    if (draftStorageKey) {
+      try {
+        localStorage.removeItem(draftStorageKey);
+      } catch {}
+    }
     setIsSubmitted(false);
     setGradeResult(null);
     setSelectedAnswers({});

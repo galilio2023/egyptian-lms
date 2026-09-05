@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Royal Violet to Indigo Gradient -->
+    <linearGradient id="elitePrimary" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stopColor="#8B5CF6" />
+      <stop offset="50%" stopColor="#7C3AED" />
+      <stop offset="100%" stopColor="#6366F1" />
+    </linearGradient>
+
+    <!-- Vibrant Cap Top Face Gradient (Bright, no dark background) -->
+    <linearGradient id="capTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#A78BFA" />
+      <stop offset="40%" stopColor="#8B5CF6" />
+      <stop offset="100%" stopColor="#6D28D9" />
+    </linearGradient>
+
+    <!-- Cap Under Brim Gradient -->
+    <linearGradient id="capUnder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#6D28D9" />
+      <stop offset="100%" stopColor="#5B21B6" />
+    </linearGradient>
+
+    <!-- Pure Gold Shimmer Gradient -->
+    <linearGradient id="goldShimmer" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FEF08A" />
+      <stop offset="35%" stopColor="#FBBF24" />
+      <stop offset="75%" stopColor="#F59E0B" />
+      <stop offset="100%" stopColor="#D97706" />
+    </linearGradient>
+
+    <!-- Book Page Gradient -->
+    <linearGradient id="bookPageLeft" x1="100%" y1="50%" x2="0%" y2="50%">
+      <stop offset="0%" stopColor="#EDE9FE" />
+      <stop offset="60%" stopColor="#FFFFFF" />
+      <stop offset="100%" stopColor="#F5F3FF" />
+    </linearGradient>
+    <linearGradient id="bookPageRight" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stopColor="#EDE9FE" />
+      <stop offset="60%" stopColor="#FFFFFF" />
+      <stop offset="100%" stopColor="#F5F3FF" />
+    </linearGradient>
+
+    <!-- Soft Ambient Glow (No dark colors) -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#8B5CF6" floodOpacity="0.25" />
+    </filter>
+
+    <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#F59E0B" floodOpacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- NO DARK BACKGROUND: Transparent root canvas -->
+
+  <!-- Subtle Radial Decorative Aura (Light Violet / Gold) -->
+  <circle cx="128" cy="128" r="116" stroke="url(#elitePrimary)" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.4" />
+  <circle cx="128" cy="128" r="104" stroke="#FBBF24" stroke-width="1" opacity="0.3" />
+
+  <!-- 1. Open Book of Knowledge (Base Foundation) -->
+  <g filter="url(#softGlow)">
+    <!-- Book Spine Ribbon Base -->
+    <path d="M128 172 V208" stroke="#7C3AED" stroke-width="4" stroke-linecap="round" />
+    
+    <!-- Left Page Cluster -->
+    <path d="M128 198 C104 190 62 186 36 195 C33 196 30 194 30 190 V142 C30 138 33 135 37 134 C64 126 104 130 128 140 Z" 
+          fill="url(#bookPageLeft)" stroke="#DDD6FE" stroke-width="2" />
+    <path d="M128 191 C106 184 68 181 40 188 V140 C68 133 106 136 128 143 Z" 
+          fill="#FFFFFF" opacity="0.9" />
+
+    <!-- Right Page Cluster -->
+    <path d="M128 198 C152 190 194 186 220 195 C223 196 226 194 226 190 V142 C226 138 223 135 219 134 C192 126 152 130 128 140 Z" 
+          fill="url(#bookPageRight)" stroke="#DDD6FE" stroke-width="2" />
+    <path d="M128 191 C150 184 188 181 216 188 V140 C188 133 150 136 128 143 Z" 
+          fill="#FFFFFF" opacity="0.9" />
+
+    <!-- Golden Book Bookmark Ribbon Hanging Down -->
+    <path d="M128 140 V216 L134 210 L140 216 V140 Z" fill="url(#goldShimmer)" filter="url(#goldGlow)" />
+  </g>
+
+  <!-- 2. Academic Graduation Cap (Mortarboard in Vibrant Violet / Amethyst) -->
+  <g filter="url(#softGlow)">
+    <!-- Cap Skull Base / Band -->
+    <path d="M84 100 V126 C84 138 103 146 128 146 C153 146 172 138 172 126 V100 C158 108 143 112 128 112 C113 112 98 108 84 100 Z" 
+          fill="url(#capUnder)" />
+    <path d="M88 122 C98 132 113 136 128 136 C143 136 158 132 168 122 V126 C168 136 150 144 128 144 C106 144 88 136 88 126 Z" 
+          fill="#7C3AED" />
+
+    <!-- 3D Mortarboard Top Diamond (Vibrant Violet / Indigo with Gold Rim) -->
+    <path d="M128 54 L214 88 L128 122 L42 88 Z" 
+          fill="url(#capTop)" 
+          stroke="url(#goldShimmer)" 
+          stroke-width="2.5" 
+          stroke-linejoin="round" />
+
+    <!-- Inner Diamond Light Accent -->
+    <path d="M128 62 L198 88 L128 114 L58 88 Z" 
+          stroke="#C4B5FD" 
+          stroke-width="1.2" 
+          opacity="0.6" 
+          stroke-linejoin="round" />
+
+    <!-- Golden Cap Apex Button -->
+    <ellipse cx="128" cy="88" rx="7" ry="5.5" fill="url(#goldShimmer)" filter="url(#goldGlow)" />
+
+    <!-- Golden Swinging Tassel Ribbon -->
+    <path d="M128 88 C148 90 170 96 178 110 C182 118 184 128 180 138" 
+          stroke="url(#goldShimmer)" 
+          stroke-width="3" 
+          stroke-linecap="round" 
+          fill="none" />
+    
+    <!-- Tassel Fringe Pendant -->
+    <g filter="url(#goldGlow)">
+      <circle cx="180" cy="140" r="3.5" fill="#FDE047" />
+      <path d="M176 142 L184 142 L186 160 C186 162 174 162 174 160 Z" fill="url(#goldShimmer)" />
+      <line x1="177" y1="160" x2="177" y2="164" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" />
+      <line x1="180" y1="160" x2="180" y2="165" stroke="#FDE047" stroke-width="1.5" stroke-linecap="round" />
+      <line x1="183" y1="160" x2="183" y2="164" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round" />
+    </g>
+  </g>
+
+  <!-- 3. Rising Crown of Excellence: Brilliant Golden 5-Point Star -->
+  <g filter="url(#goldGlow)">
+    <path d="M128 18 L133 33 L149 34 L136 44 L141 59 L128 49 L115 59 L120 44 L107 34 L123 33 Z" 
+          fill="url(#goldShimmer)" 
+          stroke="#FEF08A" 
+          stroke-width="1" />
+  </g>
+
+  <!-- 4. Playful Sparkles & Knowledge Glimmers (Bright White & Gold) -->
+  <!-- Top Left Sparkle -->
+  <path d="M68 40 L70 46 L76 48 L70 50 L68 56 L66 50 L60 48 L66 46 Z" fill="#FBBF24" opacity="0.9" />
+  <circle cx="68" cy="48" r="1.5" fill="#FFFFFF" />
+
+  <!-- Top Right Sparkle -->
+  <path d="M192 42 L193.5 48 L199.5 49.5 L193.5 51 L192 57 L190.5 51 L184.5 49.5 L190.5 48 Z" fill="#F59E0B" opacity="0.85" />
+  <circle cx="192" cy="49.5" r="1.2" fill="#FFFFFF" />
+
+  <!-- Left Lower Sparkle -->
+  <circle cx="34" cy="108" r="2.5" fill="#A78BFA" opacity="0.7" />
+  <circle cx="48" cy="74" r="2" fill="#FDE047" opacity="0.85" />
+
+  <!-- Right Lower Sparkle -->
+  <circle cx="224" cy="112" r="2.5" fill="#A78BFA" opacity="0.7" />
+  <circle cx="212" cy="76" r="2" fill="#FDE047" opacity="0.85" />
+</svg>

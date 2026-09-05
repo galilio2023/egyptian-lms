@@ -103,13 +103,38 @@ export default function AdminHomeworkPage() {
         onOpenGrader={setSelectedSubmission}
       />
 
-      {/* 4. Canvas Pen Grader Modal */}
+      {/* 4. Canvas Pen Grader Modal with Fast-Queue Mode */}
       {selectedSubmission && (
         <CanvasPenGrader
+          key={selectedSubmission.id}
           submission={selectedSubmission}
           isOpen={Boolean(selectedSubmission)}
+          hasNextSubmission={
+            filteredSubmissions.findIndex((s) => s.id === selectedSubmission.id) <
+            filteredSubmissions.length - 1
+          }
           onClose={() => setSelectedSubmission(null)}
-          onSaveGrade={saveGrade}
+          onSaveGrade={async (data, andAdvanceNext): Promise<boolean> => {
+            const success = await saveGrade(data);
+            if (!success) {
+              return false;
+            }
+
+            if (andAdvanceNext) {
+              const curIdx = filteredSubmissions.findIndex((s) => s.id === selectedSubmission.id);
+              // Find next pending or next item in queue
+              const nextSub = filteredSubmissions.slice(curIdx + 1).find((s) => s.status === "submitted") ||
+                              filteredSubmissions[curIdx + 1];
+              if (nextSub) {
+                setSelectedSubmission(nextSub);
+              } else {
+                setSelectedSubmission(null);
+              }
+            } else {
+              setSelectedSubmission(null);
+            }
+            return true;
+          }}
         />
       )}
     </div>

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, or, and, isNull, gt } from "drizzle-orm";
+import { eq, or, and, isNull, gt, inArray } from "drizzle-orm";
 import { INITIAL_UNITS, INITIAL_LESSONS, INITIAL_QUIZ } from "@/lib/db/mock-data";
 
 export async function GET(
@@ -68,8 +68,96 @@ export async function GET(
         .where(eq(schema.lesson.unitId, dbUnit.id))
         .orderBy(schema.lesson.orderIndex);
 
-      const formattedLessons = dbLessons.map((l) => {
-        const canAccessContent = Boolean(l.isFreePreview || isEnrolled);
+      // Fetch which lessons actually have quizzes or homework assignments
+      const unitLessonIds = dbLessons.map((l) => l.id);
+      const lessonsWithQuiz = new Set<string>();
+      const lessonsWithHw = new Set<string>();
+
+      if (unitLessonIds.length > 0) {
+        try {
+          const existingQuizzes = await db
+            .select({ lessonId: schema.quiz.lessonId })
+            .from(schema.quiz)
+            .where(inArray(schema.quiz.lessonId, unitLessonIds));
+          existingQuizzes.forEach((q) => {
+            if (q.lessonId) lessonsWithQuiz.add(q.lessonId);
+          });
+
+          const existingHw = await db
+            .select({ lessonId: schema.homeworkAssignment.lessonId })
+            .from(schema.homeworkAssignment)
+            .where(inArray(schema.homeworkAssignment.lessonId, unitLessonIds));
+          existingHw.forEach((h) => {
+            if (h.lessonId) lessonsWithHw.add(h.lessonId);
+          });
+        } catch (err) {
+          console.warn("Error fetching existing lesson quizzes/hw:", err);
+        }
+      }
+
+      // Fetch passed quizzes and submitted homework for current user in this unit
+      const userPassedQuizLessonIds = new Set<string>();
+      const userSubmittedHwLessonIds = new Set<string>();
+
+      if (currentUserId && isEnrolled) {
+        try {
+          const passedAttempts = await db
+            .select({ lessonId: schema.quiz.lessonId })
+            .from(schema.quizAttempt)
+            .innerJoin(schema.quiz, eq(schema.quizAttempt.quizId, schema.quiz.id))
+            .where(
+              and(
+                eq(schema.quizAttempt.userId, currentUserId),
+                eq(schema.quizAttempt.passed, true)
+              )
+            );
+          passedAttempts.forEach((p) => {
+            if (p.lessonId) userPassedQuizLessonIds.add(p.lessonId);
+          });
+
+          const userSubmissions = await db
+            .select({ lessonId: schema.homeworkAssignment.lessonId })
+            .from(schema.homeworkSubmission)
+            .innerJoin(
+              schema.homeworkAssignment,
+              eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id)
+            )
+            .where(eq(schema.homeworkSubmission.userId, currentUserId));
+          userSubmissions.forEach((s) => {
+            if (s.lessonId) userSubmittedHwLessonIds.add(s.lessonId);
+          });
+        } catch (e) {
+          console.warn("Unit lesson prereq check note:", e);
+        }
+      }
+
+      const formattedLessons = dbLessons.map((l, idx) => {
+        let isPrerequisiteBlocked = false;
+        let prerequisiteMessage = "";
+
+        if (isEnrolled && !l.isFreePreview && l.prerequisiteType && l.prerequisiteType !== "none") {
+          const targetLessonId = l.prerequisiteLessonId || (idx > 0 ? dbLessons[idx - 1].id : null);
+          if (targetLessonId) {
+            // Block only when the required artifact exists and is incomplete
+            if (
+              l.prerequisiteType === "previous_quiz_passed" &&
+              lessonsWithQuiz.has(targetLessonId) &&
+              !userPassedQuizLessonIds.has(targetLessonId)
+            ) {
+              isPrerequisiteBlocked = true;
+              prerequisiteMessage = "يجب اجتياز كويز المحاضرة السابقة أولاً 🔒";
+            } else if (
+              l.prerequisiteType === "previous_homework_submitted" &&
+              lessonsWithHw.has(targetLessonId) &&
+              !userSubmittedHwLessonIds.has(targetLessonId)
+            ) {
+              isPrerequisiteBlocked = true;
+              prerequisiteMessage = "يجب تسليم واجب المحاضرة السابقة أولاً 🔒";
+            }
+          }
+        }
+
+        const canAccessContent = Boolean((l.isFreePreview || isEnrolled) && !isPrerequisiteBlocked);
         const rawVideoUrl = l.videoId?.startsWith("http")
           ? l.videoId
           : "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
@@ -79,10 +167,14 @@ export async function GET(
           unitId: l.unitId,
           title: l.title,
           slug: l.slug,
+          orderIndex: l.orderIndex,
           videoDuration: `${Math.round((l.videoDurationSeconds || 1200) / 60)} دقيقة`,
           videoUrl: canAccessContent ? rawVideoUrl : null,
           pdfAttachmentUrl: canAccessContent ? (l.pdfAttachmentUrl || null) : null,
           isFreePreview: l.isFreePreview,
+          prerequisiteType: l.prerequisiteType,
+          isPrerequisiteBlocked,
+          prerequisiteMessage,
         };
       });
 

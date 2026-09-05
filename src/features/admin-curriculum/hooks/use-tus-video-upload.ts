@@ -32,6 +32,8 @@ export function useTusVideoUpload({ unit, onClose, onSuccess }: UseTusVideoUploa
   const [pdfAttachmentUrl, setPdfAttachmentUrl] = useState("");
   const [manualVideoId, setManualVideoId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [prerequisiteType, setPrerequisiteType] = useState<string>("none");
+  const [prerequisiteLessonId, setPrerequisiteLessonId] = useState<string>("");
 
   const tusUploadRef = useRef<tus.Upload | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -72,6 +74,8 @@ export function useTusVideoUpload({ unit, onClose, onSuccess }: UseTusVideoUploa
             videoDurationSeconds: (parseInt(lectureDuration) || 45) * 60,
             pdfAttachmentUrl: pdfAttachmentUrl.trim() || undefined,
             isFreePreview,
+            prerequisiteType: prerequisiteType || "none",
+            prerequisiteLessonId: prerequisiteLessonId.trim() || undefined,
           },
         },
         { showToast: false }
@@ -258,6 +262,10 @@ export function useTusVideoUpload({ unit, onClose, onSuccess }: UseTusVideoUploa
     setManualVideoId,
     selectedFile,
     setSelectedFile,
+    prerequisiteType,
+    setPrerequisiteType,
+    prerequisiteLessonId,
+    setPrerequisiteLessonId,
     uploadState,
     formatBytes,
     handleStartTusUpload,

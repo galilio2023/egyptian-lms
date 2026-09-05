@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 140" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Brand Violet to Purple Gradient -->
+    <linearGradient id="fullLogoViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#7C3AED" />
+      <stop offset="100%" stopColor="#4F46E5" />
+    </linearGradient>
+
+    <!-- Vibrant Cap Gradient -->
+    <linearGradient id="fullCapTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#A78BFA" />
+      <stop offset="50%" stopColor="#8B5CF6" />
+      <stop offset="100%" stopColor="#6D28D9" />
+    </linearGradient>
+
+    <linearGradient id="fullGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FEF08A" />
+      <stop offset="40%" stopColor="#FBBF24" />
+      <stop offset="100%" stopColor="#F59E0B" />
+    </linearGradient>
+
+    <filter id="fullShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#8B5CF6" floodOpacity="0.2" />
+    </filter>
+  </defs>
+
+  <!-- NO DARK BACKGROUND: Transparent root canvas -->
+
+  <!-- Brand Emblem (Left/Center Icon at x=10..130) -->
+  <g transform="translate(10, 8)" filter="url(#fullShadow)">
+    <!-- Aura Ring -->
+    <circle cx="62" cy="62" r="56" stroke="url(#fullLogoViolet)" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.4" />
+    
+    <!-- Open Book of Knowledge -->
+    <path d="M62 94 C48 90 28 88 15 93 C13 93 12 92 12 90 V66 C12 64 14 62 16 62 C29 58 48 60 62 65 Z" 
+          fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" />
+    <path d="M62 94 C76 90 96 88 109 93 C111 93 112 92 112 90 V66 C112 64 110 62 108 62 C95 58 76 60 62 65 Z" 
+          fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5" />
+    <path d="M62 65 V102 L65 99 L68 102 V65 Z" fill="url(#fullGold)" />
+
+    <!-- Cap Base Band -->
+    <path d="M40 48 V60 C40 66 50 70 62 70 C74 70 84 66 84 60 V48 C77 52 70 54 62 54 C54 54 47 52 40 48 Z" 
+          fill="#6D28D9" />
+
+    <!-- Cap Mortarboard Top -->
+    <path d="M62 24 L104 41 L62 58 L20 41 Z" 
+          fill="url(#fullCapTop)" stroke="url(#fullGold)" stroke-width="1.8" stroke-linejoin="round" />
+
+    <!-- Cap Button & Tassel -->
+    <circle cx="62" cy="41" r="3.5" fill="url(#fullGold)" />
+    <path d="M62 41 C72 42 83 45 87 52 C89 56 90 61 88 66" stroke="url(#fullGold)" stroke-width="2" stroke-linecap="round" fill="none" />
+    <circle cx="88" cy="67" r="2" fill="#FDE047" />
+    <path d="M86 68 L90 68 L91 76 L85 76 Z" fill="url(#fullGold)" />
+
+    <!-- Golden Star of Excellence -->
+    <path d="M62 6 L64.5 13.5 L72.5 14 L66 19 L68.5 26.5 L62 21.5 L55.5 26.5 L58 19 L51.5 14 L59.5 13.5 Z" 
+          fill="url(#fullGold)" stroke="#FEF08A" stroke-width="0.8" />
+  </g>
+
+  <!-- Typography: Arabic Primary + English Secondary (Vibrant, high contrast on light backgrounds) -->
+  <g transform="translate(148, 12)">
+    <!-- Arabic Main Title: أكاديمية إيليت -->
+    <text x="0" y="52" font-family="'Cairo', system-ui, -apple-system, sans-serif" font-weight="900" font-size="38" fill="#1E1B4B">
+      أكاديمية <tspan fill="url(#fullLogoViolet)">إيليت</tspan>
+    </text>
+
+    <!-- Badge Tag: English / Phonics Learning -->
+    <rect x="250" y="24" width="138" height="26" rx="8" fill="#F5F3FF" stroke="#DDD6FE" stroke-width="1" />
+    <text x="319" y="41" font-family="'Cairo', system-ui, -apple-system, sans-serif" font-weight="700" font-size="12" fill="#7C3AED" text-anchor="middle">
+      المنصة التعليمية الذكية 🎓
+    </text>
+
+    <!-- Subtitle: Teacher Branding -->
+    <text x="0" y="82" font-family="'Cairo', system-ui, -apple-system, sans-serif" font-weight="800" font-size="20" fill="#4338CA">
+      مستر أحمد عبد الرحمن
+    </text>
+
+    <!-- English Secondary Signature -->
+    <text x="0" y="104" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="13" letter-spacing="1.5" fill="#6B7280">
+      ELITE ACADEMY • PRIMARY ENGLISH EDUCATION
+    </text>
+
+    <!-- Quality Accreditation Stars -->
+    <g transform="translate(360, 93)">
+      <circle cx="0" cy="0" r="2.5" fill="#F59E0B" />
+      <circle cx="10" cy="0" r="2.5" fill="#F59E0B" />
+      <circle cx="20" cy="0" r="2.5" fill="#F59E0B" />
+      <circle cx="30" cy="0" r="2.5" fill="#F59E0B" />
+      <circle cx="40" cy="0" r="2.5" fill="#F59E0B" />
+    </g>
+  </g>
+</svg>

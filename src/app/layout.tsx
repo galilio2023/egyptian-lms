@@ -22,6 +22,15 @@ export const metadata: Metadata = {
   description: "المنصة الرائدة والممتعة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية (Grade 1 - Grade 6) تحت إشراف مستر أحمد عبد الرحمن. شرح كرتوني تفاعلي، مغامرات واختبارات بمكافآت، ومتابعة دورية لأولياء الأمور.",
   keywords: ["أكاديمية إيليت للأطفال", "مستر أحمد عبد الرحمن", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: [
+      { url: "/logo.png", sizes: "256x256" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

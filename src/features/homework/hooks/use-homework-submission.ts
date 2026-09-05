@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { compressImage } from "@/lib/utils/image-compression";
+import { compressImage, estimateDataUrlSizeKB } from "@/lib/utils/image-compression";
 import { apiPost } from "@/lib/api/api-client";
 import type { MockHomeworkAssignment, MockHomeworkSubmission } from "@/lib/db/mock-data";
 
@@ -21,6 +21,9 @@ export function useHomeworkSubmission({
 }: UseHomeworkSubmissionProps) {
   const [images, setImages] = useState<Array<{ pageNumber: number; imageUrl: string }>>(
     existingSubmission?.studentImages || []
+  );
+  const [audioVoiceNoteUrl, setAudioVoiceNoteUrl] = useState<string | null>(
+    existingSubmission?.audioVoiceNoteUrl || null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewAnnotatedModal, setViewAnnotatedModal] = useState(false);
@@ -53,7 +56,14 @@ export function useHomeworkSubmission({
         })),
       ]);
       toast.dismiss(toastId);
-      toast.success(`تم إرفاق ${compressedList.length} صفحة بنجاح ✓`);
+      const totalSizeKB = compressedList.reduce(
+        (sum, item) => sum + estimateDataUrlSizeKB(item.imageUrl),
+        0
+      );
+      const sizeLabel = totalSizeKB > 1024
+        ? `${(totalSizeKB / 1024).toFixed(1)} MB`
+        : `${totalSizeKB} KB`;
+      toast.success(`تم إرفاق ${compressedList.length} صفحة بنجاح ✓ (${sizeLabel} بعد الضغط)`);
     } catch {
       toast.dismiss(toastId);
       toast.error("تعذر قراءة أو ضغط ملفات الصور.");
@@ -66,8 +76,8 @@ export function useHomeworkSubmission({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (images.length === 0) {
-      toast.error("يرجى التقاط أو رفع صورة واحدة على الأقل لصفحات الكراسة.");
+    if (images.length === 0 && !audioVoiceNoteUrl) {
+      toast.error("يرجى التقاط أو رفع صورة واحدة على الأقل أو تسجيل ملاحظة صوتية.");
       return;
     }
 
@@ -78,6 +88,7 @@ export function useHomeworkSubmission({
         {
           assignmentId: assignment.id,
           studentImages: images,
+          audioVoiceNoteUrl: audioVoiceNoteUrl || undefined,
         },
         { showToast: false }
       );
@@ -87,14 +98,21 @@ export function useHomeworkSubmission({
         return;
       }
 
-      toast.success("🎉 أحسنت يا بطل! تم تسليم كراسة الواجب لمعلم المادة بنجاح.");
+      const hasAudio = Boolean(res.data?.submission?.audioVoiceNoteUrl || audioVoiceNoteUrl);
+      const hasImages = images.length > 0;
+      const successMsg = hasAudio && hasImages
+        ? "🎉 أحسنت يا بطل! تم تسليم كراسة الواجب والملاحظة الصوتية لمعلم المادة بنجاح."
+        : hasAudio
+        ? "🎉 أحسنت يا بطل! تم تسليم الملاحظة الصوتية لمعلم المادة بنجاح."
+        : "🎉 أحسنت يا بطل! تم تسليم صفحات كراسة الواجب لمعلم المادة بنجاح.";
+
+      toast.success(successMsg);
       if (onSubmitSuccess && res.data?.submission) {
         onSubmitSuccess(res.data.submission);
       }
       onClose();
     } catch {
-      toast.success("🎉 تم حفظ وتأكيد تسليم الواجب بنجاح!");
-      onClose();
+      toast.error("فشل الاتصال أثناء تسليم الواجب، يرجى إعادة المحاولة.");
     } finally {
       setIsSubmitting(false);
     }
@@ -102,6 +120,8 @@ export function useHomeworkSubmission({
 
   return {
     images,
+    audioVoiceNoteUrl,
+    setAudioVoiceNoteUrl,
     isSubmitting,
     viewAnnotatedModal,
     setViewAnnotatedModal,

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "@/lib/auth/auth-client";
 import { Sliders, ShieldAlert } from "lucide-react";
 import { 
   AdminShieldCrownSvg,
@@ -37,10 +38,20 @@ export const ADMIN_NAV_ITEMS: NavItemConfig[] = [
 
 export const AdminNavLinks: React.FC = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const isAssistant = userRole === "assistant";
+
+  const visibleNavItems = ADMIN_NAV_ITEMS.filter((item) => {
+    if (isAssistant && (item.href === "/admin/settings" || item.href === "/admin/security")) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <nav className="space-y-1.5">
-      {ADMIN_NAV_ITEMS.map((item) => {
+      {visibleNavItems.map((item) => {
         const ItemSvg = item.Svg;
         const isActive = pathname === item.href;
 
