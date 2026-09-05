@@ -182,7 +182,7 @@ export function VoiceNoteRecorder({
       </div>
 
       <p className="text-[11px] text-purple-700 font-medium leading-relaxed">
-        شجّع طفلك على قراءة جمل الدرس أو نطق الحروف بصوته ليستمع إليها مستر أحمد ويصحح النطق.
+        شجّع طفلك على قراءة جمل الدرس أو نطق الحروف بصوته ليستمع إليها المعلم ويصحح النطق.
       </p>
 
       {!audioUrl && !isRecording && (

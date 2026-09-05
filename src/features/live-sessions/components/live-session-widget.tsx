@@ -72,7 +72,7 @@ export function LiveSessionWidget({
     e.preventDefault();
     if (!questionText.trim()) return;
     setQuestionsSubmitted((prev) => [...prev, questionText.trim()]);
-    toast.success(`تم إرسال سؤالك لمستر أحمد ليجيب عنه في البث المباشر يا ${studentName}! 🌟`);
+    toast.success(`تم إرسال سؤالك للمحاضر ليجيب عنه في البث المباشر يا ${studentName}! 🌟`);
     setQuestionText("");
   };
 
@@ -224,7 +224,7 @@ export function LiveSessionWidget({
         <form onSubmit={handleSendQuestion} className="flex gap-2">
           <input
             type="text"
-            placeholder="اسأل مستر أحمد سؤالاً ليجيب عنه في البث..."
+            placeholder="اكتب سؤالك للمحاضر ليجيب عنه في البث..."
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             className="flex-1 px-4 py-2 rounded-xl bg-purple-950/60 border border-purple-700/60 text-xs text-white placeholder:text-purple-300/50 focus:outline-none focus:border-purple-400"
@@ -241,7 +241,7 @@ export function LiveSessionWidget({
         {questionsSubmitted.length > 0 && (
           <div className="mt-2 text-[11px] text-emerald-300 flex items-center gap-1 font-medium">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>تم إرسال {questionsSubmitted.length} أسئلة لمستر أحمد ✓</span>
+            <span>تم إرسال {questionsSubmitted.length} أسئلة للمحاضر ✓</span>
           </div>
         )}
       </div>

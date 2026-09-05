@@ -2,7 +2,11 @@ import React from "react";
 import Link from "next/link";
 import { PlayCircle, ChevronLeft } from "lucide-react";
 
-export const NextLessonBanner: React.FC = () => {
+interface NextLessonBannerProps {
+  instructorName?: string;
+}
+
+export const NextLessonBanner: React.FC<NextLessonBannerProps> = ({ instructorName = "المعلم المشرف" }) => {
   return (
     <div className="modern-card p-6 bg-white/95 backdrop-blur-md border-2 border-purple-100 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
       <div className="flex items-center gap-4">
@@ -16,7 +20,7 @@ export const NextLessonBanner: React.FC = () => {
           <h3 className="font-black text-base text-slate-900">
             الدرس 1 و 2: الحروف والنطق الصوتي (Phonics & Letters)
           </h3>
-          <p className="text-xs text-slate-500 font-medium">Unit 1: Hello & My Class • مستر أحمد عبد الرحمن</p>
+          <p className="text-xs text-slate-500 font-medium">Unit 1: Hello & My Class • {instructorName}</p>
         </div>
       </div>
 

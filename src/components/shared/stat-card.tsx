@@ -117,7 +117,10 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
 
-      <div className={`text-2xl sm:text-3xl font-black mt-2 tracking-tight ${styles.valueColor}`}>
+      <div
+        suppressHydrationWarning
+        className={`text-2xl sm:text-3xl font-black mt-2 tracking-tight ${styles.valueColor}`}
+      >
         {value}
       </div>
 

@@ -103,8 +103,8 @@ export default function StudentDashboardPage() {
     };
   }, []);
 
-  const studentName = session?.user?.name || "أحمد محمود الخولي";
-  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01012345678";
+  const studentName = session?.user?.name || "طالب بطل";
+  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
 
   const currentStudent: StudentDashboardProfile = {
     name: studentName,
@@ -155,7 +155,7 @@ export default function StudentDashboardPage() {
 
   const handleSendToMom = () => {
     const msg = encodeURIComponent(
-      `السلام عليكم يا ماما! ❤️\nأنا بطل أكاديمية إيليت: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nمستر أحمد بيشجعني وبيقولي شاطر جداً وبطل الأكاديمية! 🥳🎉`
+      `السلام عليكم يا ماما! ❤️\nأنا بطل أكاديمية إيليت: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nالمعلم المشرف بيشجعني وبيقولي شاطر جداً وبطل الأكاديمية! 🥳🎉`
     );
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };

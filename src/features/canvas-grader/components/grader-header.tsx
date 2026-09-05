@@ -10,6 +10,7 @@ interface GraderHeaderProps {
   score: number;
   feedbackNotes: string;
   isSaving: boolean;
+  teacherName?: string;
   onSave: () => void;
   onClose: () => void;
 }
@@ -19,15 +20,16 @@ export function GraderHeader({
   score,
   feedbackNotes,
   isSaving,
+  teacherName = "المعلم المشرف",
   onSave,
   onClose,
 }: GraderHeaderProps) {
   const whatsappMsg =
-    `🌟 *تقرير تصحيح كراسة الواجب - أكاديمية إيليت*\n` +
+    `🌟 *تقرير تصحيح كراسة الواجب*\n` +
     `👤 *اسم البطل:* ${submission.studentName}\n` +
     `📝 *الواجب:* ${submission.assignmentTitle}\n` +
     `🎯 *الدرجة:* ${score} من ${submission.maxScore}\n` +
-    `✍️ *ملاحظات مستر أحمد عبد الرحمن:* ${feedbackNotes}\n` +
+    `✍️ *ملاحظات ${teacherName}:* ${feedbackNotes}\n` +
     `يمكنكم الآن الدخول لحساب الطالب لرؤية كراسة الواجب مع علامات التصحيح بالقلم الأحمر 📜👏`;
   const whatsappUrl = getWhatsAppChatUrl(submission.parentPhone, whatsappMsg);
 

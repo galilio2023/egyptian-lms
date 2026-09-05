@@ -58,13 +58,21 @@ export default function HomePage() {
       <div className="fixed inset-0 bg-white/35 backdrop-blur-[0.5px] -z-10 pointer-events-none" />
 
       {/* Global Header */}
-      <Header />
+      <Header 
+        academyName={settings.academyNameArabic}
+        teacherName={settings.teacherNameEnglish}
+      />
 
       {/* Landing Feature Sections */}
-      <HeroSection />
+      <HeroSection teacherName={settings.teacherNameArabic} />
       <PreviewVideoSection settings={settings} />
       <SampleLecturesSection sampleLectures={settings.sampleLectures} />
-      <TeacherBioSection />
+      <TeacherBioSection
+        teacherNameArabic={settings.teacherNameArabic}
+        teacherTitle={settings.teacherTitle}
+        teacherBio={settings.teacherBio}
+        academyName={settings.academyNameArabic}
+      />
       <FeaturesGridSection />
       <HonorBoardSection />
       <AdventureQuizzesSection />
@@ -80,6 +88,8 @@ export default function HomePage() {
         <EgyptianCheckoutModal
           unit={selectedUnit}
           isOpen={!!selectedUnit}
+          vodafoneCashNumber={settings.vodafoneCashNumber}
+          instapayAddress={settings.instapayAddress}
           onClose={() => setSelectedUnit(null)}
           onSuccess={() => {
             alert("تم تسجيل طلب الاشتراك وتفعيله بنجاح!");
@@ -95,8 +105,13 @@ export default function HomePage() {
         inquiriesNumber={settings.inquiriesNumber}
         academyName={settings.academyNameArabic}
         teacherName={settings.teacherNameEnglish}
+        teacherNameArabic={settings.teacherNameArabic}
       />
-      <WhatsAppFloatingButton phoneNumber={settings.whatsappNumber} />
+      <WhatsAppFloatingButton 
+        phoneNumber={settings.whatsappNumber} 
+        teacherName={settings.teacherNameArabic}
+        academyName={settings.academyNameArabic}
+      />
     </div>
   );
 }

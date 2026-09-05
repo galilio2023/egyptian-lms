@@ -81,12 +81,12 @@ export const SecurityLogsTable: React.FC<SecurityLogsTableProps> = ({
       {logs.map((log) => (
         <tr key={log.id} className="hover:bg-purple-50/20 transition-colors">
           {/* Timestamp */}
-          <td className="p-3.5 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+          <td className="p-3.5 whitespace-nowrap text-slate-500 font-mono text-[11px]" suppressHydrationWarning>
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span>{new Date(log.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</span>
+              <span suppressHydrationWarning>{new Date(log.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</span>
             </div>
-            <span className="text-[10px] text-slate-400 block">{new Date(log.createdAt).toLocaleDateString("ar-EG")}</span>
+            <span className="text-[10px] text-slate-400 block" suppressHydrationWarning>{new Date(log.createdAt).toLocaleDateString("ar-EG")}</span>
           </td>
 
           {/* Event Type Badge */}

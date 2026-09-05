@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
     const effectiveImages = hasImages ? studentImages! : [];
 
     const userId = session.user.id;
-    const studentName = session.user.name || "طالب أكاديمية إيليت";
-    const studentPhone = ((session.user as Record<string, unknown>)?.phoneNumber as string) || "01012345678";
+    const studentName = session.user.name || "طالب المنصة";
+    const studentPhone = ((session.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
 
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignmentId);
     let submissionId = `sub-${Date.now()}`;
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       studentId: userId,
       studentName,
       studentPhone,
-      parentPhone: "01098765432",
+      parentPhone: "01000000000",
       gradeTitle: unitTitle,
       studentImages: effectiveImages,
       audioVoiceNoteUrl: audioVoiceNoteUrl || undefined,

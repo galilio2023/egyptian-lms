@@ -12,15 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 export function PwaInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(() => {
-    if (typeof window !== "undefined") {
-      return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        Boolean((window.navigator as unknown as { standalone?: boolean }).standalone)
-      );
-    }
-    return false;
-  });
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     // 1. Register Service Worker cleanly
@@ -33,9 +25,11 @@ export function PwaInstallBanner() {
 
     // 2. Check if already running in standalone mode (installed)
     if (typeof window !== "undefined") {
-      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || 
-                           Boolean((window.navigator as unknown as { standalone?: boolean }).standalone);
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        Boolean((window.navigator as unknown as { standalone?: boolean }).standalone);
       if (isStandalone) {
+        setIsInstalled(true);
         return;
       }
     }

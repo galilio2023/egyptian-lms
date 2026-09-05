@@ -29,7 +29,7 @@ export const AuthSideCard: React.FC<AuthSideCardProps> = ({ mode }) => {
             <span className="text-base font-black text-slate-900 block leading-tight">
               أكاديمية <span className="text-gradient-purple">إيليت</span>
             </span>
-            <span className="text-xs text-purple-700 font-bold">Mr. Ahmed Abdelrahman</span>
+            <span className="text-xs text-purple-700 font-bold">Elite Learning</span>
           </div>
         </Link>
 
@@ -40,7 +40,7 @@ export const AuthSideCard: React.FC<AuthSideCardProps> = ({ mode }) => {
           </span>
           <h2 className="text-2xl font-black text-slate-900 mt-2 leading-snug">
             {isRegister
-              ? "ابدأ رحلتك التعليمية مع مستر أحمد مجاناً 🚀"
+              ? "ابدأ رحلتك التعليمية الممتعة مجاناً 🚀"
               : "مرحباً بعودتك يا بطل اللغة الإنجليزية 👋"}
           </h2>
           <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1.5">

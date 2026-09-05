@@ -46,7 +46,7 @@ export const RegisterCard: React.FC = () => {
           إنشاء حساب <span className="text-gradient-purple">بطل جديد ✨</span>
         </h1>
         <p className="text-xs text-purple-700 font-bold">
-          خطوتان بسيطتان لبدء التعلم الممتع مع مستر أحمد عبد الرحمن
+          خطوتان بسيطتان لبدء رحلة التعلم الممتعة والتفوق الدراسي
         </p>
       </div>
 

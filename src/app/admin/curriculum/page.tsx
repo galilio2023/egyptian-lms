@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import type { MockUnit } from "@/lib/db/mock-data";
 import { CurriculumBookSvg } from "@/components/ui/illustrated-icons";
 import { AdminPageHeader } from "@/components/shared";
@@ -9,6 +9,7 @@ import { Button, ConfirmModal } from "@/components/ui";
 import {
   TusVideoUploaderModal,
   AddUnitModal,
+  MinistryIntakeModal,
   CurriculumUnitsGrid,
   GradeSelectorTabs,
   useCurriculumManagement,
@@ -25,6 +26,7 @@ export default function AdminCurriculumPage() {
   } = useCurriculumManagement();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showIntakeModal, setShowIntakeModal] = useState(false);
   const [deletingUnit, setDeletingUnit] = useState<MockUnit | null>(null);
   const [uploadTargetUnit, setUploadTargetUnit] = useState<MockUnit | null>(null);
 
@@ -45,16 +47,28 @@ export default function AdminCurriculumPage() {
             <span className="text-gradient-purple">(Curriculum Studio)</span>
           </>
         }
-        subtitle="إضافة وتعديل وحدات الكورس، رفع فيديوهات المحاضرات عبر Bunny Stream TUS، وإرفاق الملازم والواجبات."
+        subtitle="إضافة وتعديل وحدات الكورس، استيراد مناهج الوزارة الرسمية بـ PDF، ورفع فيديوهات المحاضرات عبر Bunny Stream TUS."
         actions={
-          <Button
-            variant="vibrant"
-            size="sm"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Plus className="w-4 h-4 me-1" />
-            <span>إضافة وحدة دراسية جديدة</span>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowIntakeModal(true)}
+              className="border-purple-300 text-purple-900 bg-purple-50/70 hover:bg-purple-100/80 shadow-xs"
+            >
+              <Sparkles className="w-4 h-4 me-1.5 text-amber-500" />
+              <span>استيراد منهج الوزارة (PDF + AI) ✨</span>
+            </Button>
+
+            <Button
+              variant="vibrant"
+              size="sm"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus className="w-4 h-4 me-1" />
+              <span>إضافة وحدة دراسية يدوية</span>
+            </Button>
+          </div>
         }
       />
 
@@ -86,6 +100,15 @@ export default function AdminCurriculumPage() {
         onSubmit={async (data) => {
           const success = await createUnit(data);
           if (success) setShowAddModal(false);
+        }}
+      />
+
+      {/* 6. Ministry Curriculum PDF Intake Modal */}
+      <MinistryIntakeModal
+        isOpen={showIntakeModal}
+        onClose={() => setShowIntakeModal(false)}
+        onSuccess={() => {
+          window.location.reload();
         }}
       />
 

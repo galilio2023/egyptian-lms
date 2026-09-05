@@ -196,7 +196,7 @@ export const INITIAL_UNITS: MockUnit[] = [
     gradeTitle: 'Grade 1',
     title: 'Unit 1: Hello & My Class',
     slug: 'grade-1-unit-1',
-    description: 'تعلم الحروف والأصوات الأساسية، وطريقة إلقاء التحية والمحادثات اليومية البسيطة مع مستر محمد.',
+    description: 'تعلم الحروف والأصوات الأساسية، وطريقة إلقاء التحية والمحادثات اليومية البسيطة بأسلوب تفاعلي ممتع.',
     priceEgp: 250,
     thumbnailUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=60',
     lessonsCount: 4,
@@ -1132,7 +1132,7 @@ export const INITIAL_LIVE_SESSIONS: MockLiveSession[] = [
     gradeId: 'g-1',
     gradeTitle: 'Grade 1 (الصف الأول الابتدائي)',
     gradeSlug: 'grade-1',
-    title: '🔴 بث المراجعة التفاعلية الشاملة للوحدة الأولى مع مستر أحمد',
+    title: '🔴 بث المراجعة التفاعلية الشاملة للوحدة الأولى',
     description: 'مراجعة نطق الصوتيات والأغاني التفاعلية، ومسابقة سريعة لأبطال الصف الأول الابتدائي وجوائز XP فورية.',
     scheduledAt: '2026-09-04T18:00:00.000Z',
     durationMinutes: 45,
@@ -1140,7 +1140,7 @@ export const INITIAL_LIVE_SESSIONS: MockLiveSession[] = [
     meetingUrl: 'https://zoom.us/j/99283748291?pwd=ELITE_GRADE1_ZOOM',
     meetingPassword: 'ELITE',
     isLiveNow: false,
-    instructorName: 'مستر أحمد عبد الرحمن',
+    instructorName: 'المعلم المشرف',
   },
   {
     id: 'live-02',
@@ -1155,7 +1155,7 @@ export const INITIAL_LIVE_SESSIONS: MockLiveSession[] = [
     meetingUrl: 'https://zoom.us/j/11827364520?pwd=ELITE_GRADE3_ZOOM',
     meetingPassword: 'ELITE',
     isLiveNow: false,
-    instructorName: 'مستر أحمد عبد الرحمن',
+    instructorName: 'المعلم المشرف',
   },
 ];
 
@@ -1165,9 +1165,13 @@ export interface MockPlatformSettings {
   academyNameEnglish: string;
   teacherNameArabic: string;
   teacherNameEnglish: string;
+  teacherTitle?: string;
+  teacherBio?: string;
   whatsappNumber: string;
   hotlineNumber: string;
   inquiriesNumber: string;
+  vodafoneCashNumber?: string;
+  instapayAddress?: string;
   heroVideoUrl: string;
   sampleLectures: Array<{
     id: string;
@@ -1185,11 +1189,15 @@ export const INITIAL_PLATFORM_SETTINGS: MockPlatformSettings = {
   id: 'default',
   academyNameArabic: 'أكاديمية إيليت',
   academyNameEnglish: 'Elite Academy',
-  teacherNameArabic: 'مستر أحمد عبد الرحمن',
-  teacherNameEnglish: 'Mr. Ahmed Abdelrahman',
-  whatsappNumber: '201020003000',
+  teacherNameArabic: 'المعلم المشرف',
+  teacherNameEnglish: 'Lead Instructor',
+  teacherTitle: 'المشرف الأكاديمي وكبير المعلمين',
+  teacherBio: 'نخبة من أفضل الكفاءات التعليمية المتخصصة في تدريس وتأسيس المناهج التعليمية بأحدث الأساليب التفاعلية والتقنيات الحديثة.',
+  whatsappNumber: '201000000000',
   hotlineNumber: '0225006000',
-  inquiriesNumber: '01120004000',
+  inquiriesNumber: '01100000000',
+  vodafoneCashNumber: '01000000000',
+  instapayAddress: 'academy@instapay',
   heroVideoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
   sampleLectures: [
     {

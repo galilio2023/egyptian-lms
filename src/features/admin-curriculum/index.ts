@@ -8,3 +8,5 @@ export { UploadProgressTracker } from "./components/upload-progress-tracker";
 export { ManualVideoIdForm } from "./components/manual-video-id-form";
 export { useCurriculumManagement } from "./hooks/use-curriculum-management";
 export { useTusVideoUpload } from "./hooks/use-tus-video-upload";
+export { MinistryIntakeModal } from "./components/ministry-intake-modal";
+export { ValidationAlert } from "./components/validation-alert";

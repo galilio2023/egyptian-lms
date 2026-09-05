@@ -14,6 +14,8 @@ export interface EgyptianCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  vodafoneCashNumber?: string;
+  instapayAddress?: string;
 }
 
 export function EgyptianCheckoutModal({
@@ -21,6 +23,8 @@ export function EgyptianCheckoutModal({
   isOpen,
   onClose,
   onSuccess,
+  vodafoneCashNumber,
+  instapayAddress,
 }: EgyptianCheckoutModalProps) {
   const [method, setMethod] = useState<PaymentMethodType>("voucher_card");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -62,6 +66,8 @@ export function EgyptianCheckoutModal({
             {method === "instapay_manual" && (
               <ManualTransferForm
                 unit={unit}
+                vodafoneCashNumber={vodafoneCashNumber}
+                instapayAddress={instapayAddress}
                 onSuccess={(msg) => handleSuccessfulPayment(msg, 2200)}
               />
             )}

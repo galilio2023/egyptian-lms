@@ -11,9 +11,16 @@ import type { MockUnit } from "@/lib/db/mock-data";
 interface ManualTransferFormProps {
   unit: MockUnit;
   onSuccess: (message: string) => void;
+  vodafoneCashNumber?: string;
+  instapayAddress?: string;
 }
 
-export function ManualTransferForm({ unit, onSuccess }: ManualTransferFormProps) {
+export function ManualTransferForm({
+  unit,
+  onSuccess,
+  vodafoneCashNumber = "01000000000",
+  instapayAddress = "academy@instapay",
+}: ManualTransferFormProps) {
   const [referenceNumber, setReferenceNumber] = useState("");
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptImageBase64, setReceiptImageBase64] = useState<string | null>(null);
@@ -97,10 +104,10 @@ export function ManualTransferForm({ unit, onSuccess }: ManualTransferFormProps)
           <span className="text-slate-600 font-medium">عنوان إنستاباي (InstaPay):</span>
           <button
             type="button"
-            onClick={() => copyToClipboard("elite.academy@instapay", "instapay")}
+            onClick={() => copyToClipboard(instapayAddress, "instapay")}
             className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-mono font-bold cursor-pointer"
           >
-            <span>elite.academy@instapay</span>
+            <span>{instapayAddress}</span>
             {copied === "instapay" ? (
               <Check className="w-3.5 h-3.5 text-emerald-600" />
             ) : (
@@ -112,10 +119,10 @@ export function ManualTransferForm({ unit, onSuccess }: ManualTransferFormProps)
           <span className="text-slate-600 font-medium">فودافون كاش والمحافظ:</span>
           <button
             type="button"
-            onClick={() => copyToClipboard("01020003000", "vodafone")}
+            onClick={() => copyToClipboard(vodafoneCashNumber, "vodafone")}
             className="text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-mono font-bold cursor-pointer"
           >
-            <bdi dir="ltr">01020003000</bdi>
+            <bdi dir="ltr">{vodafoneCashNumber}</bdi>
             {copied === "vodafone" ? (
               <Check className="w-3.5 h-3.5 text-emerald-600" />
             ) : (

@@ -19,9 +19,11 @@ export function useHlsStream(
   const hlsRef = useRef<Hls | null>(null);
   const [availableLevels, setAvailableLevels] = useState<Level[]>([]);
   const [currentLevel, setCurrentLevel] = useState<number>(-1);
-  const [isHlsSupported] = useState<boolean>(() => {
-    return typeof window !== "undefined" ? Hls.isSupported() : false;
-  });
+  const [isHlsSupported, setIsHlsSupported] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsHlsSupported(Hls.isSupported());
+  }, []);
 
   // تطبيق وضع جودة التشغيل على مستوى hls الحالي
   const applyQualityMode = useCallback(

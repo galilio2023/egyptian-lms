@@ -18,9 +18,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "أكاديمية إيليت التعليمية للأطفال — مستر أحمد عبد الرحمن | المنصة الذكية لتعليم وتأسيس اللغة الإنجليزية",
-  description: "المنصة الرائدة والممتعة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية (Grade 1 - Grade 6) تحت إشراف مستر أحمد عبد الرحمن. شرح كرتوني تفاعلي، مغامرات واختبارات بمكافآت، ومتابعة دورية لأولياء الأمور.",
-  keywords: ["أكاديمية إيليت للأطفال", "مستر أحمد عبد الرحمن", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
+  title: "أكاديمية إيليت التعليمية للأطفال | المنصة الذكية لتعليم وتأسيس اللغة الإنجليزية",
+  description: "المنصة الرائدة والممتعة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية (Grade 1 - Grade 6). شرح كرتوني تفاعلي، مغامرات واختبارات بمكافآت، ومتابعة دورية لأولياء الأمور.",
+  keywords: ["أكاديمية إيليت للأطفال", "المنصة التعليمية الذكية", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -44,8 +44,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="rtl" className={cairoFont.variable}>
-      <body className={`min-h-screen text-slate-900 antialiased ${cairoFont.className}`}>
+    <html lang="ar" dir="rtl" className={cairoFont.variable} suppressHydrationWarning>
+      <body
+        className={`min-h-screen text-slate-900 antialiased ${cairoFont.className}`}
+        suppressHydrationWarning
+      >
         {children}
         <Toaster richColors position="top-center" dir="rtl" />
       </body>

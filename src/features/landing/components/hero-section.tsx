@@ -18,7 +18,11 @@ import {
 } from "@/components/ui/illustrated-icons";
 import { MascotChampionCard } from "./mascot-champion-card";
 
-export const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  teacherName?: string;
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ teacherName }) => {
   return (
     <section className="relative pt-12 pb-24 overflow-hidden">
       {/* Playful Floating Kids Toys Decor */}
@@ -44,7 +48,7 @@ export const HeroSection: React.FC = () => {
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium">
-            رحلة تعلم شيقة للأبطال الصغار من الصف الأول إلى السادس الابتدائي تحت إشراف <strong className="text-purple-900 font-bold">مستر أحمد عبد الرحمن</strong>. صوتيات (Phonics)، اختبارات ذكية، ألعاب ومسابقات، وتقارير أسبوعية مباشرة لولي الأمر.
+            رحلة تعلم شيقة للأبطال الصغار من الصف الأول إلى السادس الابتدائي تحت إشراف <strong className="text-purple-900 font-bold">{teacherName || "نخبة من خبراء التأسيس الأكاديمي"}</strong>. صوتيات (Phonics)، اختبارات ذكية، ألعاب ومسابقات، وتقارير أسبوعية مباشرة لولي الأمر.
           </p>
 
           {/* Hero Mascot Champions Spotlight */}

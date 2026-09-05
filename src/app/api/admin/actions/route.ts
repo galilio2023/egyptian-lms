@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and, desc, count, sql } from "drizzle-orm";
 import { INITIAL_PLATFORM_SETTINGS, type MockPlatformSettings } from "@/lib/db/mock-data";
+import { invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
 import { getRecentSecurityLogs, logSecurityEvent, SecurityAuditRecord } from "@/lib/security/audit-logger";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
 
@@ -249,7 +250,7 @@ export async function GET(request: NextRequest) {
           meetingPassword: s.meetingPassword || "",
           isLiveNow: s.isLiveNow,
           recordingUrl: s.recordingUrl || undefined,
-          instructorName: "مستر أحمد عبد الرحمن",
+          instructorName: "المعلم المشرف",
         }));
       } catch (err) {
         console.warn("Live sessions fetch DB note:", err);
@@ -896,9 +897,13 @@ export async function POST(request: NextRequest) {
           academyNameEnglish?: string;
           teacherNameArabic?: string;
           teacherNameEnglish?: string;
+          teacherTitle?: string;
+          teacherBio?: string;
           whatsappNumber?: string;
           hotlineNumber?: string;
           inquiriesNumber?: string;
+          vodafoneCashNumber?: string;
+          instapayAddress?: string;
           heroVideoUrl?: string;
           sampleLectures?: schema.FreeSampleLecture[];
         };
@@ -921,17 +926,22 @@ export async function POST(request: NextRequest) {
           } else {
             await db.insert(schema.platformSettings).values({
               id: "default",
-              academyNameArabic: settingsPayload.academyNameArabic || "أكاديمية إيليت",
-              academyNameEnglish: settingsPayload.academyNameEnglish || "Elite Academy",
-              teacherNameArabic: settingsPayload.teacherNameArabic || "مستر أحمد عبد الرحمن",
-              teacherNameEnglish: settingsPayload.teacherNameEnglish || "Mr. Ahmed Abdelrahman",
-              whatsappNumber: settingsPayload.whatsappNumber || "201020003000",
-              hotlineNumber: settingsPayload.hotlineNumber || "0225006000",
-              inquiriesNumber: settingsPayload.inquiriesNumber || "01120004000",
-              heroVideoUrl: settingsPayload.heroVideoUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+              academyNameArabic: settingsPayload.academyNameArabic || INITIAL_PLATFORM_SETTINGS.academyNameArabic,
+              academyNameEnglish: settingsPayload.academyNameEnglish || INITIAL_PLATFORM_SETTINGS.academyNameEnglish,
+              teacherNameArabic: settingsPayload.teacherNameArabic || INITIAL_PLATFORM_SETTINGS.teacherNameArabic,
+              teacherNameEnglish: settingsPayload.teacherNameEnglish || INITIAL_PLATFORM_SETTINGS.teacherNameEnglish,
+              teacherTitle: settingsPayload.teacherTitle || INITIAL_PLATFORM_SETTINGS.teacherTitle,
+              teacherBio: settingsPayload.teacherBio || INITIAL_PLATFORM_SETTINGS.teacherBio,
+              whatsappNumber: settingsPayload.whatsappNumber || INITIAL_PLATFORM_SETTINGS.whatsappNumber,
+              hotlineNumber: settingsPayload.hotlineNumber || INITIAL_PLATFORM_SETTINGS.hotlineNumber,
+              inquiriesNumber: settingsPayload.inquiriesNumber || INITIAL_PLATFORM_SETTINGS.inquiriesNumber,
+              vodafoneCashNumber: settingsPayload.vodafoneCashNumber || INITIAL_PLATFORM_SETTINGS.vodafoneCashNumber,
+              instapayAddress: settingsPayload.instapayAddress || INITIAL_PLATFORM_SETTINGS.instapayAddress,
+              heroVideoUrl: settingsPayload.heroVideoUrl || INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
               sampleLectures: settingsPayload.sampleLectures || [],
             });
           }
+          invalidatePlatformSettingsCache();
         } catch (dbErr) {
           console.warn("Update platform settings note:", dbErr);
         }
