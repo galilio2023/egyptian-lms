@@ -4,11 +4,11 @@
   </a>
 </p>
 
-<h1 align="center">🌟 أكاديمية إيليت التعليمية — Elite Academy LMS</h1>
+<h1 align="center">🌟 نظام أكاديمية إيليت التعليمية — Elite Academy LMS</h1>
 
 <p align="center">
-  <strong>The Enterprise-Grade, Anti-Piracy EdTech Platform Engineered for the Egyptian Education Ecosystem.</strong><br/>
-  <em>Next.js 16.3 (Turbopack) • React 19 • Tailwind CSS v4 • Drizzle ORM • Better Auth • Bunny.net DRM • Paymob & InstaPay</em>
+  <strong>The Enterprise-Grade, Anti-Piracy & White-Label EdTech Platform Engineered for the Egyptian Education Ecosystem.</strong><br/>
+  <em>Next.js 16.3 (Turbopack) • React 19 • Tailwind CSS v4 • Drizzle ORM • Better Auth • Bunny.net DRM • MOETE AI Intake • Paymob & InstaPay</em>
 </p>
 
 <p align="center">
@@ -28,7 +28,8 @@
 | Property | Value |
 | :--- | :--- |
 | **Repository** | `galilio2023/egyptian-lms` |
-| **Primary Domain** | Primary English Education (Grade 1 – Grade 6) — Mr. Ahmed Abdelrahman |
+| **Primary Domain** | Primary English Education (Grade 1 – Grade 6) • Connect & Connect Plus Tracks |
+| **Architecture** | White-Label Ready • 100% Dynamic Academy Branding & Instructor Abstraction |
 | **Market Target** | Egyptian Education Ecosystem (Egyptian Telecoms, Local Wallets, InstaPay, WhatsApp) |
 | **Design Language** | Modern Arabic-First (RTL), High-Density Cairo Typography, Playful Gamified UI |
 | **Security Posture** | Zero-Trust Webhooks (HMAC-SHA512), Single-Device Binding, Canvas DRM Watermarking, Strict RBAC |
@@ -55,6 +56,7 @@ flowchart TB
         API["Next.js 16 App Router & Server Actions\n(Turbopack Engine)"]
         QUIZ["Interactive Anti-Cheat Quiz Engine\n(Tab-Blur Detection + Auto-Expiry)"]
         PEN["Canvas Pen Grader Studio\n(Multi-Page Canvas + Audio Notes)"]
+        AI["MOETE Curriculum AI Intake Engine\n(PDF Parser + Connect Presets)"]
         WA["Automated WhatsApp Gateway\n(HTTPS, Redacted Logs, 10s Timeout)"]
     end
 
@@ -73,6 +75,7 @@ flowchart TB
     S --> DRM --> CDN
     S --> QUIZ --> DB
     S --> PEN --> DB
+    T --> AI --> DB
     API --> PaymentTriad --> DB
     API --> WA --> P
     T --> PEN
@@ -83,12 +86,23 @@ flowchart TB
 
 ## 🌟 Core Pillars & Key Features
 
-### 1. 📱 Egyptian Mobile-First Authentication & Anti-Sharing
-* **Zero-Friction Phone Sign-in:** Eliminates email requirements for elementary students. Registration and login rely directly on 11-digit Egyptian mobile numbers (`010`, `011`, `012`, `015`).
-* **Hardware Single-Device Lock (فك حظر الجهاز):** Automatically binds a student’s account to their active device fingerprint. Simultaneous logins on another phone or computer are locked instantly until reset by the teacher/assistant from the backoffice.
-* **Parent-Student Mobile Association:** Captures the guardian’s WhatsApp phone number at registration to form an unbreakable automated parent-communication channel.
+### 1. 🎨 Dynamic White-Label & Teacher Abstraction Engine
+* **Zero Hardcoded Names:** The entire LMS is fully abstracted and white-label ready. All branding identity—including Academy Name (Arabic & English), Lead Teacher/Instructor Name, Title, Biography, and Hotline/WhatsApp contact lines—is managed dynamically via the Admin Dashboard (`/admin/settings`).
+* **Dynamic Payment Numbers:** Dedicated configuration for InstaPay addresses and Vodafone Cash / Mobile Wallet collection numbers.
+* **Curated Animated Preview Carousel:** Interactive in-page modal video player showcasing child-friendly, animated phonics and vocabulary lessons without external YouTube redirects.
 
-### 2. 🎥 Anti-Piracy Video Streaming & Dynamic Canvas Watermark
+### 2. 🤖 Egyptian Ministry Curriculum (MOETE) PDF Intake & AI Parser
+* **1-Click Textbook Intake (`/admin/curriculum`):** Allows teachers to upload official Egyptian Ministry of Education (MOETE) student books, teacher guides, or worksheets (PDFs).
+* **Dual-Mode AI Engine:** Integrates with Google Gemini / OpenAI for live extraction, and includes a comprehensive built-in knowledge base of **Connect** and **Connect Plus** standards (Grades 1 through 6).
+* **Automated Structure Generation:** Auto-extracts core vocabulary with Egyptian Arabic translations, phonics patterns, grammar rules, structured lessons, and gamified multiple-choice quizzes with explanations.
+* **Integrity & Quality Scoring:** Real-time validator inspects extracted units for pedagogical completeness, calculates an educational quality score (0–100), and validates questions before committing to the database.
+
+### 3. 📱 Egyptian Mobile-First Authentication & Anti-Sharing
+* **Zero-Friction Phone Sign-in:** Eliminates email requirements for elementary students. Registration and login rely directly on 11-digit Egyptian mobile numbers (`010`, `011`, `012`, `015`).
+* **Hardware Single-Device Lock (فك حظر الجهاز):** Automatically binds a student’s account to their active device fingerprint. Simultaneous logins on another phone or computer are locked instantly until reset by authorized staff.
+* **Parent-Student Mobile Association:** Captures the guardian’s WhatsApp phone number at registration to maintain an automated parent-communication loop.
+
+### 4. 🎥 Anti-Piracy Video Streaming & Dynamic Canvas Watermark
 * **Bunny.net / Cloudflare Stream HLS:** Adaptive bitrate streaming with automatic quality switching.
 * **Bouncing Dynamic DRM Watermark:** A dedicated `<canvas>` overlays every video player frame, continuously animating the student's registered name, Egyptian phone number, and IP timestamp across the viewport to deter screen recording and piracy.
 * **Egyptian Data-Saver Mode (باقة التوفير 📶):** One-click toggle that caps video quality to 360p/480p to conserve cellular data quotas for students on limited mobile bundles.
@@ -109,27 +123,17 @@ sequenceDiagram
     Note over Video,Canvas: If Screen Recording Attempted: Student Identifier Permanently Embedded
 ```
 
-### 3. 📝 Interactive Anti-Cheat Exam Engine
+### 5. 📝 Interactive Anti-Cheat Exam Engine
 * **Tab-Switch & Blur Sentry:** Monitors focus changes in real time. Switching away from the exam triggers strike warnings, with automatic forced submission upon 3 infractions.
-* **Elapsed-Time Draft Recovery:** Draft answers and remaining countdown seconds are stored locally with tamper-proof timestamps. If a student closes the tab or refreshes, the elapsed seconds are deducted, preventing indefinite timer pauses.
+* **Elapsed-Time Draft Recovery:** Draft answers and remaining countdown seconds are stored locally with tamper-proof timestamps. If a student closes the tab or refreshes, elapsed seconds are deducted, preventing indefinite timer pauses.
 * **Immediate Audio-Visual Celebration:** Features confetti animations, chime sound effects, XP/Streak rewards, and instant automated WhatsApp score dispatches to parents.
 
-### 4. ✍️ Canvas Pen Grader & Oral Phonics Voice Notes
+### 6. ✍️ Canvas Pen Grader & Oral Phonics Voice Notes
 * **Teacher Canvas Pen Grader (`/admin/homework`):** Enables teachers and assistants to grade uploaded student homework sheets directly on an interactive canvas using digital pen strokes, highlighter tools, and customizable stamps.
 * **Student Oral Phonics Recording:** Students can attach audio voice notes directly inside their homework submissions for oral reading and phonics assessment.
 * **1-Click Fast-Queue Presets:** Pre-configured grading templates allow assistants to evaluate hundreds of submissions per hour with automated encouragement phrases.
 
-```mermaid
-flowchart LR
-    A["👦 Student submits\nHomework + Voice Note"] --> B["📤 Safe Data URI / CDN\nSSRF Protected"]
-    B --> C["👨‍🏫 Teacher opens\nCanvas Pen Grader"]
-    C --> D["🎨 Annotates pages\nwith digital ink"]
-    C --> E["🎙️ Listens to\noral pronunciation"]
-    D & E --> F["⚡ 1-Click Fast Grade\n(XP + Score Awarded)"]
-    F --> G["📲 WhatsApp Report\ndispatched to Parent"]
-```
-
-### 5. 💳 The Egyptian Payment Triad
+### 7. 💳 The Egyptian Payment Triad
 * **Paymob Automated Webhook:** Instant fulfillment for Vodafone Cash, Orange Money, Etisalat Cash, WE Pay, and Meeza debit cards with strict HMAC-SHA512 cryptographic verification.
 * **InstaPay & Manual Wallet Queue:** Parents who transfer funds manually via InstaPay or telecom wallets upload a receipt screenshot. Assistants review the queue with zoom tools, 1-click approvals, and instant activation.
 * **Cryptographic Scratch Vouchers (كروت الشحن):** Center-based distribution using locally generated vector QR code scratch cards with cryptographic collision-resistant codes.
@@ -172,6 +176,7 @@ egyptian-lms/
 ├── Database Layer      -> Neon Serverless PostgreSQL + Drizzle ORM 0.45.2
 ├── Auth Engine         -> Better Auth 1.7.2 (Egyptian Phone + Single Device Plugin)
 ├── Media & DRM         -> Bunny.net Stream HLS + Dynamic Canvas Watermark
+├── AI Curriculum Engine-> Dual-Mode MOETE Parser (Gemini 1.5 / GPT-4o + Presets)
 ├── Payment Gateways    -> Paymob (Card & Wallets) + InstaPay + Local QR Vouchers
 ├── Notifications       -> Automated WhatsApp Bot (UltraMsg / WasAPI)
 ├── Testing & Quality   -> TypeScript 5.0 (Strict Mode) + ESLint 9 + Turbopack
@@ -187,15 +192,16 @@ src/
 │   ├── (public)/                      # Landing page, public previews
 │   ├── admin/                         # Teacher & Assistant CMS Backoffice
 │   │   ├── broadcasts/                # WhatsApp Parent Broadcast Hub
-│   │   ├── curriculum/                # Course & Bunny Video Manager
+│   │   ├── curriculum/                # Course, Bunny Video & AI PDF Intake
 │   │   ├── homework/                  # Canvas Pen Grader Studio
 │   │   ├── live-sessions/             # Zoom & Live Revision Manager
 │   │   ├── orders/                    # InstaPay Receipt Verification Queue
 │   │   ├── quizzes/                   # Question Bank & Exam Builder
 │   │   ├── security/                  # Real-Time Security Audit Logs
-│   │   └── settings/                  # Platform & Carousel Configuration
+│   │   └── settings/                  # White-Label Branding & Carousel Hub
 │   ├── api/                           # Secure Next.js API Route Handlers
 │   │   ├── admin/actions/             # RBAC Protected Admin Operations
+│   │   ├── admin/curriculum/intake/   # MOETE PDF Intake & Commit Handlers
 │   │   ├── homework/                  # Submit & Grade Handlers
 │   │   ├── live-sessions/             # Attendance & Join Gatekeeper
 │   │   ├── quiz/grade/                # Exam Correction & Scoring
@@ -212,13 +218,14 @@ src/
 │   ├── layout/                        # Header, Footer, Admin Sidebar
 │   └── ui/                            # Button, Badge, Modal, Illustrated Icons
 ├── features/                          # Domain-Driven Feature Modules
-│   ├── admin-curriculum/              # Tus uploaders, unit managers
+│   ├── admin-curriculum/              # Tus uploaders, unit managers, AI intake modal
 │   ├── canvas-grader/                 # Digital ink correction canvas
 │   ├── homework/                      # Voice note recorder & submission
 │   ├── live-sessions/                 # Attendance widgets & Zoom links
 │   ├── quiz-engine/                   # Anti-cheat timers & audio chime
 │   └── video-player/                  # DRM player & canvas watermark
 └── lib/                               # Infrastructure, Database & Security
+    ├── ai/                            # PDF Parser, MOETE Engine, Quality Validator
     ├── api/                           # Type-safe client fetchers
     ├── auth/                          # Better Auth server & client setup
     ├── db/                            # Drizzle Schema, Migrations & Mocks
@@ -268,6 +275,10 @@ PAYMOB_INTEGRATION_ID_WALLET="654321"
 BUNNY_STREAM_API_KEY="your_bunny_stream_api_key"
 BUNNY_STREAM_LIBRARY_ID="12345"
 
+# Optional AI Engines for PDF Curriculum Intake (Gemini / OpenAI)
+GEMINI_API_KEY="your_gemini_api_key"
+OPENAI_API_KEY="your_openai_api_key"
+
 # WhatsApp Notifications Gateway
 WHATSAPP_API_URL="https://api.wasapi.io/v1/messages"
 WHATSAPP_API_TOKEN="your_whatsapp_gateway_token"
@@ -294,10 +305,10 @@ Navigate to [http://localhost:3000](http://localhost:3000) to view the portal.
 
 For repository classification, discoverability, and SEO:
 
-`nextjs16` • `react19` • `lms` • `edtech` • `egypt` • `arabic` • `drizzle-orm` • `better-auth` • `paymob` • `instapay` • `anti-piracy` • `video-watermark` • `hls-streaming` • `canvas-grader` • `whatsapp-notifications` • `tailwind-v4` • `turbopack` • `security-hardened`
+`nextjs16` • `react19` • `lms` • `edtech` • `egypt` • `arabic` • `drizzle-orm` • `better-auth` • `paymob` • `instapay` • `anti-piracy` • `video-watermark` • `hls-streaming` • `canvas-grader` • `ai-curriculum` • `pdf-parser` • `whatsapp-notifications` • `tailwind-v4` • `turbopack` • `security-hardened` • `white-label`
 
 ---
 
 ## 📄 License & Attribution
 
-Distributed under the **MIT License**. Engineered with precision for **Elite Academy** under the educational supervision of **Mr. Ahmed Abdelrahman**.
+Distributed under the **MIT License**. Engineered with precision as a white-label, enterprise-ready LMS platform for educational academies and instructors across Egypt.
