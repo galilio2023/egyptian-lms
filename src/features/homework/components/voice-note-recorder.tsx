@@ -24,6 +24,19 @@ export function VoiceNoteRecorder({
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const recordingActiveRef = useRef(false);
+
+  const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    toast.success("تم تسجيل الملاحظة الصوتية بنجاح 🎤");
+  };
 
   useEffect(() => {
     return () => {
@@ -31,14 +44,17 @@ export function VoiceNoteRecorder({
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
       }
+      recordingActiveRef.current = false;
     };
   }, []);
 
   const startRecording = async () => {
-    if (disabled) return;
+    if (disabled || recordingActiveRef.current) return;
+    recordingActiveRef.current = true;
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast.error("متصفحك لا يدعم تسجيل الصوت المباشر.");
+        recordingActiveRef.current = false;
         return;
       }
 
@@ -54,7 +70,9 @@ export function VoiceNoteRecorder({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        recordingActiveRef.current = false;
+        const selectedMime = mediaRecorder.mimeType || "audio/webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type: selectedMime });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
@@ -69,29 +87,19 @@ export function VoiceNoteRecorder({
       setIsRecording(true);
       setRecordingSeconds(0);
 
+      const startTime = Date.now();
       timerRef.current = setInterval(() => {
-        setRecordingSeconds((prev) => {
-          if (prev >= 60) {
-            // Auto stop at 60 seconds
-            stopRecording();
-            return 60;
-          }
-          return prev + 1;
-        });
-      }, 1000);
+        const elapsed = Math.min(60, Math.floor((Date.now() - startTime) / 1000));
+        setRecordingSeconds(elapsed);
+        if (elapsed >= 60) {
+          stopRecording();
+        }
+      }, 500);
     } catch (err) {
+      recordingActiveRef.current = false;
       console.warn("Microphone access error:", err);
       toast.error("يرجى إعطاء الإذن لاستخدام الميكروفون لتسجيل قراءة الكلمات.");
     }
-  };
-
-  const stopRecording = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    toast.success("تم تسجيل الملاحظة الصوتية بنجاح 🎤");
   };
 
   const togglePlayback = () => {

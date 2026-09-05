@@ -22,17 +22,10 @@ function verifyPaymobHmac(
   providedHmac: string
 ): boolean {
   if (!PAYMOB_HMAC_SECRET) {
-    // If HMAC secret is not configured, skip verification in dev mode only
-    if (process.env.NODE_ENV === "production") {
-      console.error(
-        "⚠️ CRITICAL: PAYMOB_HMAC_SECRET is not configured in production. Webhook verification cannot proceed."
-      );
-      return false;
-    }
-    console.warn(
-      "⚠️ PAYMOB_HMAC_SECRET not set — skipping HMAC verification (dev mode only)."
+    console.error(
+      "⚠️ CRITICAL: PAYMOB_HMAC_SECRET is not configured. Webhook verification cannot proceed."
     );
-    return true;
+    return false;
   }
 
   if (!providedHmac) {
@@ -198,23 +191,47 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Locate target order
+    // SECURITY (CWE-347): Paymob HMAC signs obj.order.id (gatewayOrderId), NOT merchant_order_id.
+    // To prevent parameter tampering where merchant_order_id is modified to point to another order:
+    // 1) First lookup using HMAC-signed gatewayOrderId.
+    // 2) If looking up by merchantOrderId, ensure stored gatewayOrderId strictly matches signed gatewayOrderId.
     let targetOrder: typeof schema.order.$inferSelect | undefined;
-    if (merchantOrderId) {
-      const [found] = await db
-        .select()
-        .from(schema.order)
-        .where(eq(schema.order.id, merchantOrderId))
-        .limit(1);
-      targetOrder = found;
-    }
-
-    if (!targetOrder && gatewayOrderId) {
-      const [found] = await db
+    if (gatewayOrderId) {
+      const [foundByGatewayId] = await db
         .select()
         .from(schema.order)
         .where(eq(schema.order.gatewayOrderId, gatewayOrderId))
         .limit(1);
-      targetOrder = found;
+      targetOrder = foundByGatewayId;
+    }
+
+    if (!targetOrder && merchantOrderId) {
+      const [foundByMerchantId] = await db
+        .select()
+        .from(schema.order)
+        .where(eq(schema.order.id, merchantOrderId))
+        .limit(1);
+
+      if (foundByMerchantId) {
+        // Enforce that if order already has a gatewayOrderId recorded, it must match the signed gatewayOrderId
+        if (foundByMerchantId.gatewayOrderId && gatewayOrderId && foundByMerchantId.gatewayOrderId !== gatewayOrderId) {
+          logSecurityEvent({
+            eventType: "unauthorized_portal_access",
+            severity: "critical",
+            description: `🚨 Paymob webhook order mismatch: signed gatewayOrderId ${gatewayOrderId} does not match stored ${foundByMerchantId.gatewayOrderId} for order ${foundByMerchantId.id}`,
+            details: {
+              merchantOrderId,
+              gatewayOrderId,
+              storedGatewayOrderId: foundByMerchantId.gatewayOrderId,
+            },
+          });
+          return NextResponse.json(
+            { error: "Order gateway ID mismatch" },
+            { status: 403 }
+          );
+        }
+        targetOrder = foundByMerchantId;
+      }
     }
 
     if (!targetOrder) {

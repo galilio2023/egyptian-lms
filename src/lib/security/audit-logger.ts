@@ -12,6 +12,7 @@ export type AuditEventType =
   | "quiz_max_attempts_blocked"
   | "rate_limit_triggered"
   | "unauthorized_portal_access"
+  | "live_session_attended"
   | "user_banned";
 
 export type AuditSeverity = "low" | "medium" | "high" | "critical";

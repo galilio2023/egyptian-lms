@@ -9,7 +9,7 @@ export interface CanvasPenGraderProps {
     score: number;
     feedbackNotes: string;
     annotatedImages: Array<{ pageIndex: number; dataUrl: string }>;
-  }, andAdvanceNext?: boolean) => void;
+  }, andAdvanceNext?: boolean) => Promise<boolean>;
   hasNextSubmission?: boolean;
 }
 

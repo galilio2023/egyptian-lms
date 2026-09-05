@@ -60,7 +60,7 @@ export function CanvasPenGrader({
       }
 
       if (onSaveGrade) {
-        onSaveGrade(
+        const saved = await onSaveGrade(
           {
             submissionId: submission.id,
             score,
@@ -69,6 +69,11 @@ export function CanvasPenGrader({
           },
           advanceNext
         );
+
+        if (!saved) {
+          toast.error("فشل حفظ التصحيح ورصد الدرجة.");
+          return;
+        }
       }
 
       toast.success("✅ تم حفظ تصحيح كراسة الواجب ورصد الدرجة بنجاح!");

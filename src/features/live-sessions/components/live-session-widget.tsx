@@ -78,15 +78,46 @@ export function LiveSessionWidget({
 
   const isLive = session.isLiveNow || timeLeft.isPast;
 
-  const handleJoinMeeting = (e: React.MouseEvent) => {
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleJoinMeeting = async (e: React.MouseEvent) => {
     e.preventDefault();
-    fetch("/api/live-sessions/attend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: session.id }),
-    }).catch(() => {});
-    toast.success("تم تسجيل حضورك في الحصة بنجاح 🔴");
-    window.open(session.meetingUrl, "_blank", "noopener,noreferrer");
+    if (isJoining) return;
+    setIsJoining(true);
+
+    // Open placeholder tab synchronously to preserve user-gesture permissions
+    const newWindow = typeof window !== "undefined" ? window.open("", "_blank") : null;
+
+    try {
+      const response = await fetch("/api/live-sessions/attend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: session.id }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (newWindow) newWindow.close();
+        toast.error(data.error || "تعذر تسجيل الحضور والانضمام للبث.");
+        return;
+      }
+
+      toast.success(data.message || "تم تسجيل حضورك في الحصة بنجاح 🔴");
+      const targetUrl = data.meetingUrl || session.meetingUrl;
+
+      if (newWindow) {
+        newWindow.opener = null;
+        newWindow.location.href = targetUrl;
+      } else {
+        window.location.href = targetUrl;
+      }
+    } catch {
+      if (newWindow) newWindow.close();
+      toast.error("فشل الاتصال بخادم البث المباشر.");
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (

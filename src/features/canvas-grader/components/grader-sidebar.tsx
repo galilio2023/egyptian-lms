@@ -73,21 +73,21 @@ export function GraderSidebar({
               onClick={() => handleQuickGrade(submission.maxScore, "خط ممتاز ومنظم جداً يا بطل! أحسنت 🌟")}
               className="py-2 px-1 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-[10px] font-black border border-emerald-700/60 transition-all text-center cursor-pointer"
             >
-              10/10 مبدع 🌟
+              {submission.maxScore}/{submission.maxScore} مبدع 🌟
             </button>
             <button
               type="button"
               onClick={() => handleQuickGrade(Math.max(1, submission.maxScore - 1), "أحسنت مع التنبيه على المسافات بين الكلمات 👍")}
               className="py-2 px-1 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-[10px] font-black border border-indigo-700/60 transition-all text-center cursor-pointer"
             >
-              9/10 رائع 👏
+              {Math.max(1, submission.maxScore - 1)}/{submission.maxScore} رائع 👏
             </button>
             <button
               type="button"
               onClick={() => handleQuickGrade(Math.max(1, submission.maxScore - 3), "جيد جداً، نرجو التركيز على كتابة الحروف بين السطرين ✍️")}
               className="py-2 px-1 rounded-xl bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-[10px] font-black border border-amber-700/60 transition-all text-center cursor-pointer"
             >
-              7/10 جيد 💪
+              {Math.max(1, submission.maxScore - 3)}/{submission.maxScore} جيد 💪
             </button>
           </div>
         </div>

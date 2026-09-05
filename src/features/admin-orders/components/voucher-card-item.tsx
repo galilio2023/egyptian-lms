@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import QRCode from "qrcode";
 import { EliteLogoBadge } from "@/components/ui/illustrated-icons";
 import type { GeneratedVoucher } from "../types";
 
@@ -7,6 +8,30 @@ export interface VoucherCardItemProps {
 }
 
 export const VoucherCardItem: React.FC<VoucherCardItemProps> = ({ voucher }) => {
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    let isMounted = true;
+    QRCode.toDataURL(voucher.code, {
+      margin: 1,
+      width: 120,
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff",
+      },
+    })
+      .then((url) => {
+        if (isMounted) setQrDataUrl(url);
+      })
+      .catch((err) => {
+        console.warn("Failed to generate QR code locally:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [voucher.code]);
+
   return (
     <div className="border-2 border-purple-200 rounded-2xl p-4 bg-gradient-to-br from-white via-purple-50/20 to-pink-50/30 relative overflow-hidden text-right shadow-sm print:shadow-none print:border-slate-800 print:break-inside-avoid">
       {/* Card Top */}
@@ -38,15 +63,18 @@ export const VoucherCardItem: React.FC<VoucherCardItemProps> = ({ voucher }) => 
           </div>
         </div>
 
-        {/* QR Code for instant phone camera scanning */}
+        {/* QR Code generated locally without third-party network exposure (CWE-200 fix) */}
         <div className="flex flex-col items-center shrink-0 border border-purple-200 bg-white p-1 rounded-xl shadow-xs print:border-slate-800">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(voucher.code)}`}
-            alt="QR Code"
-            className="w-12 h-12 print:w-14 print:h-14 object-contain"
-            loading="lazy"
-          />
+          {qrDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={qrDataUrl}
+              alt="QR Code"
+              className="w-12 h-12 print:w-14 print:h-14 object-contain"
+            />
+          ) : (
+            <div className="w-12 h-12 print:w-14 print:h-14 bg-slate-100 rounded-lg animate-pulse" />
+          )}
           <span className="text-[7px] text-slate-500 font-bold mt-0.5">امسح للرمز 📷</span>
         </div>
       </div>

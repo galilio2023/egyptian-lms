@@ -18,53 +18,86 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session?.user?.id;
+    const userRole = session?.user?.role;
     const studentName = session?.user?.name || "طالب بأكاديمية إيليت";
     const studentPhone = (session?.user as Record<string, unknown> | undefined)?.phoneNumber as string | undefined;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "يجب تسجيل الدخول أولاً للوصول إلى حصة البث المباشر." },
+        { status: 401 }
+      );
+    }
 
     // Check if session exists in DB
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
     let meetingUrl = "https://zoom.us";
 
     if (isUUID) {
-      try {
-        const [liveRecord] = await db
-          .select()
-          .from(schema.liveSession)
-          .where(eq(schema.liveSession.id, sessionId))
+      const [liveRecord] = await db
+        .select()
+        .from(schema.liveSession)
+        .where(eq(schema.liveSession.id, sessionId))
+        .limit(1);
+
+      if (!liveRecord) {
+        return NextResponse.json(
+          { error: "لم يتم العثور على حصة البث المباشر المطلوبة." },
+          { status: 404 }
+        );
+      }
+
+      // Authorization check (CWE-862): Student must have active enrollment in a unit of this grade
+      if (userRole !== "admin" && userRole !== "teacher" && userRole !== "assistant") {
+        const [activeEnrollment] = await db
+          .select({ id: schema.enrollment.id })
+          .from(schema.enrollment)
+          .innerJoin(schema.courseUnit, eq(schema.enrollment.unitId, schema.courseUnit.id))
+          .where(
+            and(
+              eq(schema.enrollment.userId, userId),
+              eq(schema.courseUnit.gradeId, liveRecord.gradeId),
+              eq(schema.enrollment.isActive, true)
+            )
+          )
           .limit(1);
 
-        if (liveRecord) {
-          meetingUrl = liveRecord.meetingUrl;
+        if (!activeEnrollment) {
+          logSecurityEvent({
+            eventType: "unauthorized_portal_access",
+            severity: "medium",
+            userId,
+            studentPhone,
+            description: `محاولة غير مصرح بها لحضور حصة البث المباشر (${liveRecord.title}) دون اشتراك نشط بالصف.`,
+            details: { sessionId: liveRecord.id, gradeId: liveRecord.gradeId },
+          });
 
-          // Record attendance if user is logged in
-          if (userId) {
-            const [existing] = await db
-              .select()
-              .from(schema.liveSessionAttendance)
-              .where(
-                and(
-                  eq(schema.liveSessionAttendance.sessionId, liveRecord.id),
-                  eq(schema.liveSessionAttendance.userId, userId)
-                )
-              )
-              .limit(1);
-
-            if (!existing) {
-              await db.insert(schema.liveSessionAttendance).values({
-                sessionId: liveRecord.id,
-                userId,
-                joinedAt: new Date(),
-              });
-            }
-          }
+          return NextResponse.json(
+            { error: "عذراً، هذه الحصة مخصصة لطلاب الصف المشتركين فقط 🔒" },
+            { status: 403 }
+          );
         }
+      }
+
+      meetingUrl = liveRecord.meetingUrl;
+
+      // Atomic idempotent attendance registration against unique index (sessionId, userId)
+      try {
+        await db
+          .insert(schema.liveSessionAttendance)
+          .values({
+            sessionId: liveRecord.id,
+            userId,
+            joinedAt: new Date(),
+          })
+          .onConflictDoNothing();
       } catch (dbErr) {
         console.warn("Live session attendance DB note:", dbErr);
       }
     }
 
     logSecurityEvent({
-      eventType: "device_transferred",
+      eventType: "live_session_attended",
       severity: "low",
       userId,
       studentPhone,

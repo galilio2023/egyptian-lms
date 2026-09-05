@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       quizId, 
       answers, 
       studentName = session?.user?.name || "بطل أكاديمية إيليت",
-      parentPhone = "01098765432",
+      parentPhone,
       studentPhone = (session?.user as Record<string, unknown>)?.phoneNumber as string | undefined,
       timeSpentSeconds = 0
     } = body as {
@@ -235,65 +235,88 @@ export async function POST(request: NextRequest) {
       earnedXp = passed ? correctCount * 25 + 50 : correctCount * 10;
     }
 
-    // Database attempt persistence & XP update
-    try {
-      if (targetUserId) {
-        // 1. Log attempt if quizId is a valid Postgres UUID
-        if (isUUID) {
-          await db.insert(schema.quizAttempt).values({
-            quizId: quiz.id,
-            userId: targetUserId,
-            score: correctCount,
-            totalPossibleScore: totalQuestions,
-            passed,
-            timeSpentSeconds: timeSpentSeconds || 60,
-            userAnswers: answers,
-          });
-        }
+    // Database attempt persistence & XP update (P0: Persistence must succeed before dispatching notifications)
+    if (targetUserId) {
+      // 1. Log attempt if quizId is a valid Postgres UUID
+      if (isUUID) {
+        await db.insert(schema.quizAttempt).values({
+          quizId: quiz.id,
+          userId: targetUserId,
+          score: correctCount,
+          totalPossibleScore: totalQuestions,
+          passed,
+          timeSpentSeconds: timeSpentSeconds || 60,
+          userAnswers: answers,
+        });
+      }
 
-        // 2. Increment student profile XP only if earnedXp > 0 (prevents replay farming)
-        if (earnedXp > 0) {
-          const [profile] = await db
-            .select()
-            .from(schema.studentProfile)
-            .where(eq(schema.studentProfile.userId, targetUserId))
-            .limit(1);
+      // 2. Increment student profile XP only if earnedXp > 0 (prevents replay farming)
+      if (earnedXp > 0) {
+        const [profile] = await db
+          .select()
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, targetUserId))
+          .limit(1);
 
-          if (profile) {
-            await db
-              .update(schema.studentProfile)
-              .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-              .where(eq(schema.studentProfile.userId, targetUserId));
-          }
+        if (profile) {
+          await db
+            .update(schema.studentProfile)
+            .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
+            .where(eq(schema.studentProfile.userId, targetUserId));
         }
       }
-    } catch (dbErr) {
-      console.warn("Quiz attempt DB logging note:", dbErr);
     }
 
-    // Prepare WhatsApp Message for Parent
-    const cleanParentPhone = parentPhone.replace(/\D/g, "");
-    const rawTextMessage = 
-      `🌟 *تقرير مستوى الطالب - أكاديمية إيليت*\n` +
-      `👤 *اسم الطالب:* ${studentName}\n` +
-      `📝 *الاختبار:* ${quiz.title}\n` +
-      `🎯 *الدرجة:* ${correctCount} من ${totalQuestions} (%${percentage})\n` +
-      `📊 *الحالة:* ${passed ? "اجتاز الاختبار بنجاح وامتياز 🎉" : "يحتاج إلى مراجعة المحاضرة وإعادة المحاولة 💪"}\n` +
-      `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-      `👨‍🏫 *المشرف:* مستر أحمد عبد الرحمن`;
-    const whatsappMessage = encodeURIComponent(rawTextMessage);
+    // Retrieve verified guardian phone from student profile (CWE-200 / CWE-532 privacy protection)
+    let verifiedParentPhone: string | null = null;
+    if (targetUserId) {
+      try {
+        const [profile] = await db
+          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, targetUserId))
+          .limit(1);
 
-    // Automated server-side dispatch to parent
+        if (profile?.parentPhoneNumber) {
+          const digits = profile.parentPhoneNumber.replace(/\D/g, "");
+          if (digits.length === 10 || digits.length === 11) {
+            verifiedParentPhone = digits;
+          }
+        }
+      } catch (profileErr) {
+        console.warn("Could not query verified student profile:", profileErr);
+      }
+    }
+
+    // Automated server-side dispatch to parent only if verified number exists
     let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
-    if (cleanParentPhone) {
+    let parentNotification: { parentPhone: string; whatsappUrl: string; messageText: string } | null = null;
+
+    if (verifiedParentPhone) {
+      const rawTextMessage = 
+        `🌟 *تقرير مستوى الطالب - أكاديمية إيليت*\n` +
+        `👤 *اسم الطالب:* ${studentName}\n` +
+        `📝 *الاختبار:* ${quiz.title}\n` +
+        `🎯 *الدرجة:* ${correctCount} من ${totalQuestions} (%${percentage})\n` +
+        `📊 *الحالة:* ${passed ? "اجتاز الاختبار بنجاح وامتياز 🎉" : "يحتاج إلى مراجعة المحاضرة وإعادة المحاولة 💪"}\n` +
+        `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
+        `👨‍🏫 *المشرف:* مستر أحمد عبد الرحمن`;
+      const whatsappMessage = encodeURIComponent(rawTextMessage);
+
       try {
         whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
-          to: cleanParentPhone,
+          to: verifiedParentPhone,
           message: rawTextMessage,
         });
       } catch (err) {
         console.warn("Automated WhatsApp dispatch note:", err);
       }
+
+      parentNotification = {
+        parentPhone: verifiedParentPhone,
+        whatsappUrl: `https://wa.me/2${verifiedParentPhone}?text=${whatsappMessage}`,
+        messageText: rawTextMessage,
+      };
     }
 
     const remainingAttempts = Math.max(0, maxAttempts - (existingAttempts.length + 1));
@@ -310,11 +333,7 @@ export async function POST(request: NextRequest) {
       maxAttempts,
       results,
       whatsappAutoDelivery,
-      parentNotification: {
-        parentPhone: cleanParentPhone || parentPhone,
-        whatsappUrl: `https://wa.me/2${cleanParentPhone || parentPhone}?text=${whatsappMessage}`,
-        messageText: rawTextMessage,
-      },
+      parentNotification,
     });
   } catch (error: unknown) {
     console.error("Quiz grading error:", error);

@@ -39,7 +39,7 @@ export const ADMIN_NAV_ITEMS: NavItemConfig[] = [
 export const AdminNavLinks: React.FC = () => {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined;
+  const userRole = session?.user?.role;
   const isAssistant = userRole === "assistant";
 
   const visibleNavItems = ADMIN_NAV_ITEMS.filter((item) => {

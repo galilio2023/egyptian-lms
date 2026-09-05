@@ -120,7 +120,7 @@ export const lesson = pgTable('lesson', {
   isFreePreview: boolean('is_free_preview').default(false).notNull(),
   orderIndex: integer('order_index').default(0).notNull(),
   prerequisiteType: text('prerequisite_type').default('none').notNull(), // 'none' | 'previous_quiz_passed' | 'previous_homework_submitted'
-  prerequisiteLessonId: uuid('prerequisite_lesson_id'),
+  prerequisiteLessonId: uuid('prerequisite_lesson_id').references((): any => lesson.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('lesson_unit_id_idx').on(table.unitId),
@@ -401,6 +401,7 @@ export const liveSessionAttendance = pgTable('live_session_attendance', {
 }, (table) => [
   index('live_attendance_session_id_idx').on(table.sessionId),
   index('live_attendance_user_id_idx').on(table.userId),
+  uniqueIndex('live_attendance_session_user_idx').on(table.sessionId, table.userId),
 ]);
 
 export const homeworkAssignmentRelations = relations(homeworkAssignment, ({ one, many }) => ({
@@ -474,6 +475,7 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'quiz_max_attempts_blocked',
   'rate_limit_triggered',
   'unauthorized_portal_access',
+  'live_session_attended',
   'user_banned',
 ]);
 

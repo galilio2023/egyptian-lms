@@ -106,6 +106,7 @@ export default function AdminHomeworkPage() {
       {/* 4. Canvas Pen Grader Modal with Fast-Queue Mode */}
       {selectedSubmission && (
         <CanvasPenGrader
+          key={selectedSubmission.id}
           submission={selectedSubmission}
           isOpen={Boolean(selectedSubmission)}
           hasNextSubmission={
@@ -113,8 +114,12 @@ export default function AdminHomeworkPage() {
             filteredSubmissions.length - 1
           }
           onClose={() => setSelectedSubmission(null)}
-          onSaveGrade={async (data, andAdvanceNext) => {
-            await saveGrade(data);
+          onSaveGrade={async (data, andAdvanceNext): Promise<boolean> => {
+            const success = await saveGrade(data);
+            if (!success) {
+              return false;
+            }
+
             if (andAdvanceNext) {
               const curIdx = filteredSubmissions.findIndex((s) => s.id === selectedSubmission.id);
               // Find next pending or next item in queue
@@ -128,6 +133,7 @@ export default function AdminHomeworkPage() {
             } else {
               setSelectedSubmission(null);
             }
+            return true;
           }}
         />
       )}

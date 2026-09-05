@@ -37,6 +37,8 @@ export const TusVideoUploaderModal: React.FC<TusVideoUploaderModalProps> = ({
     setManualVideoId,
     selectedFile,
     setSelectedFile,
+    prerequisiteType,
+    setPrerequisiteType,
     uploadState,
     formatBytes,
     handleStartTusUpload,
@@ -95,6 +97,8 @@ export const TusVideoUploaderModal: React.FC<TusVideoUploaderModalProps> = ({
           onIsFreePreviewChange={setIsFreePreview}
           pdfAttachmentUrl={pdfAttachmentUrl}
           onPdfAttachmentUrlChange={setPdfAttachmentUrl}
+          prerequisiteType={prerequisiteType}
+          onPrerequisiteTypeChange={setPrerequisiteType}
           disabled={uploadState.isUploading}
         />
 

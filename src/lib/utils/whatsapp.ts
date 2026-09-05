@@ -28,6 +28,11 @@ export interface SendWhatsAppNotificationResult {
   error?: string;
 }
 
+function maskPhoneNumber(phone: string): string {
+  if (phone.length <= 6) return "***";
+  return `${phone.slice(0, 4)}****${phone.slice(-3)}`;
+}
+
 /**
  * Sends an automated server-side WhatsApp message to an Egyptian phone number.
  * Supports official WhatsApp Business Cloud API / Wasapi / UltraMsg / Custom Gateway.
@@ -38,11 +43,21 @@ export async function sendAutomatedWhatsAppNotification({
   message,
 }: SendWhatsAppNotificationOptions): Promise<SendWhatsAppNotificationResult> {
   const formattedPhone = formatEgyptianWhatsAppNumber(to);
+  const maskedPhone = maskPhoneNumber(formattedPhone);
   const apiKey = process.env.WHATSAPP_API_KEY;
   const apiUrl = process.env.WHATSAPP_API_URL;
   const instanceId = process.env.WHATSAPP_INSTANCE_ID;
 
   if (apiKey && apiUrl) {
+    // CWE-319: Enforce HTTPS transport encryption
+    if (!apiUrl.startsWith("https://")) {
+      console.error("WhatsApp Gateway URL rejected: Must use HTTPS transport");
+      return {
+        success: false,
+        error: "WHATSAPP_API_URL must use HTTPS protocol",
+      };
+    }
+
     try {
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -57,6 +72,8 @@ export async function sendAutomatedWhatsAppNotification({
           message: message,
           body: message,
         }),
+        signal: AbortSignal.timeout(10000),
+        redirect: "error",
       });
 
       if (response.ok) {
@@ -67,17 +84,26 @@ export async function sendAutomatedWhatsAppNotification({
           simulated: false,
         };
       } else {
-        const errorText = await response.text();
-        console.warn(`WhatsApp Gateway response error (${response.status}):`, errorText);
+        const errorText = await response.text().catch(() => "");
+        console.warn(`WhatsApp Gateway response error (${response.status}) for ${maskedPhone}`);
+        return {
+          success: false,
+          error: `WhatsApp gateway returned HTTP ${response.status}`,
+        };
       }
-    } catch (err) {
-      console.error("WhatsApp Gateway connection error:", err);
+    } catch (err: unknown) {
+      const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+      console.error(`WhatsApp Gateway request failed for ${maskedPhone}:`, isTimeout ? "Timeout" : "Connection failed");
+      return {
+        success: false,
+        error: isTimeout ? "WhatsApp gateway request timed out after 10s" : "WhatsApp gateway connection failed",
+      };
     }
   }
 
-  // Graceful simulation mode (production dev/staging without gateway or fallback)
-  console.log(`[WhatsApp Automated Notification] Sent to +${formattedPhone}:`, {
-    preview: message.slice(0, 100) + (message.length > 100 ? "..." : ""),
+  // Graceful simulation mode (only when gateway credentials are not configured)
+  // CWE-532: Log only delivery metadata with masked phone, omitting sensitive student academic message body
+  console.log(`[WhatsApp Automated Notification] Simulation dispatched to +${maskedPhone}`, {
     timestamp: new Date().toISOString(),
   });
 

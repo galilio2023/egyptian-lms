@@ -76,8 +76,8 @@ export function useHomeworkSubmission({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (images.length === 0) {
-      toast.error("يرجى التقاط أو رفع صورة واحدة على الأقل لصفحات الكراسة.");
+    if (images.length === 0 && !audioVoiceNoteUrl) {
+      toast.error("يرجى التقاط أو رفع صورة واحدة على الأقل أو تسجيل ملاحظة صوتية.");
       return;
     }
 
@@ -98,14 +98,21 @@ export function useHomeworkSubmission({
         return;
       }
 
-      toast.success("🎉 أحسنت يا بطل! تم تسليم كراسة الواجب والملاحظة الصوتية لمعلم المادة بنجاح.");
+      const hasAudio = Boolean(res.data?.submission?.audioVoiceNoteUrl || audioVoiceNoteUrl);
+      const hasImages = images.length > 0;
+      const successMsg = hasAudio && hasImages
+        ? "🎉 أحسنت يا بطل! تم تسليم كراسة الواجب والملاحظة الصوتية لمعلم المادة بنجاح."
+        : hasAudio
+        ? "🎉 أحسنت يا بطل! تم تسليم الملاحظة الصوتية لمعلم المادة بنجاح."
+        : "🎉 أحسنت يا بطل! تم تسليم صفحات كراسة الواجب لمعلم المادة بنجاح.";
+
+      toast.success(successMsg);
       if (onSubmitSuccess && res.data?.submission) {
         onSubmitSuccess(res.data.submission);
       }
       onClose();
     } catch {
-      toast.success("🎉 تم حفظ وتأكيد تسليم الواجب بنجاح!");
-      onClose();
+      toast.error("فشل الاتصال أثناء تسليم الواجب، يرجى إعادة المحاولة.");
     } finally {
       setIsSubmitting(false);
     }

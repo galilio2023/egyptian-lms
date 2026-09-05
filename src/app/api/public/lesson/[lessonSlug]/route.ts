@@ -118,6 +118,9 @@ export async function GET(
                   isPrerequisiteBlocked = true;
                   prerequisiteMessage = "يجب اجتياز كويز المحاضرة السابقة أولاً بنجاح لفتح هذا الدرس 🔒";
                 }
+              } else {
+                isPrerequisiteBlocked = true;
+                prerequisiteMessage = "يجب اجتياز كويز المحاضرة السابقة أولاً 🔒";
               }
             } else if (dbLesson.prerequisiteType === 'previous_homework_submitted') {
               const [prereqHw] = await db
@@ -142,11 +145,16 @@ export async function GET(
                   isPrerequisiteBlocked = true;
                   prerequisiteMessage = "يجب تسليم واجب المحاضرة السابقة لمعلم المادة أولاً لفتح هذا الدرس 🔒";
                 }
+              } else {
+                isPrerequisiteBlocked = true;
+                prerequisiteMessage = "يجب تسليم واجب المحاضرة السابقة أولاً 🔒";
               }
             }
           }
         } catch (prereqErr) {
           console.warn("Prerequisite check note:", prereqErr);
+          isPrerequisiteBlocked = true;
+          prerequisiteMessage = "تعذر التحقق من شروط فتح الدرس، يرجى إعادة المحاولة 🔒";
         }
       }
 

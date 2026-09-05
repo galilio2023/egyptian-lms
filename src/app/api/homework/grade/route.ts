@@ -40,64 +40,85 @@ export async function POST(request: NextRequest) {
     const safeScore = Math.max(0, Math.min(10, Math.round(score)));
     const earnedXp = safeScore >= 8 ? 30 : 15;
 
+    let targetUserId: string | null = null;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(submissionId);
     if (isUUID) {
-      try {
-        const [updatedSub] = await db.update(schema.homeworkSubmission)
-          .set({
-            score: safeScore,
-            feedbackNotes: feedbackNotes?.trim() || null,
-            annotatedImages,
-            status: "graded",
-            gradedAt: new Date(),
-            gradedByUserId: session.user.id,
-          })
-          .where(eq(schema.homeworkSubmission.id, submissionId))
-          .returning({ userId: schema.homeworkSubmission.userId });
+      // 1. Persistence must succeed before any notification dispatch
+      const [updatedSub] = await db.update(schema.homeworkSubmission)
+        .set({
+          score: safeScore,
+          feedbackNotes: feedbackNotes?.trim() || null,
+          annotatedImages,
+          status: "graded",
+          gradedAt: new Date(),
+          gradedByUserId: session.user.id,
+        })
+        .where(eq(schema.homeworkSubmission.id, submissionId))
+        .returning({ userId: schema.homeworkSubmission.userId });
 
-        // Persist XP to student profile
-        if (updatedSub?.userId) {
-          const [profile] = await db
-            .select()
-            .from(schema.studentProfile)
-            .where(eq(schema.studentProfile.userId, updatedSub.userId))
-            .limit(1);
+      if (updatedSub?.userId) {
+        targetUserId = updatedSub.userId;
+        const [profile] = await db
+          .select()
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, updatedSub.userId))
+          .limit(1);
 
-          if (profile) {
-            await db
-              .update(schema.studentProfile)
-              .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-              .where(eq(schema.studentProfile.userId, updatedSub.userId));
-          }
+        if (profile) {
+          await db
+            .update(schema.studentProfile)
+            .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
+            .where(eq(schema.studentProfile.userId, updatedSub.userId));
         }
-      } catch (dbErr) {
-        console.warn("DB homework grade update note:", dbErr);
       }
     }
 
-    // Generate WhatsApp Notification Message
-    const cleanPhone = (parentPhone || "01098765432").replace(/\D/g, "");
-    const rawTextMessage = 
-      `🌟 *تقرير تصحيح كراسة الواجب - أكاديمية إيليت*\n` +
-      `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
-      `📝 *الواجب:* ${assignmentTitle || "كراسة التدريبات"}\n` +
-      `🎯 *الدرجة المستحقة:* ${score} من 10\n` +
-      `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-      `✍️ *ملاحظات مستر أحمد:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
-      `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;
-    const msg = encodeURIComponent(rawTextMessage);
+    // 2. Fetch verified guardian phone from database record (CWE-200 / CWE-532 privacy protection)
+    let verifiedParentPhone: string | null = null;
+    if (targetUserId) {
+      try {
+        const [profile] = await db
+          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, targetUserId))
+          .limit(1);
 
-    // Automated server-side dispatch to parent
+        if (profile?.parentPhoneNumber) {
+          const digits = profile.parentPhoneNumber.replace(/\D/g, "");
+          if (digits.length === 10 || digits.length === 11) {
+            verifiedParentPhone = digits;
+          }
+        }
+      } catch (profileErr) {
+        console.warn("Could not query verified student profile:", profileErr);
+      }
+    }
+
+    // 3. Automated server-side dispatch to parent only if verified number exists
     let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
-    if (cleanPhone) {
+    let whatsappUrl: string | null = null;
+
+    if (verifiedParentPhone) {
+      const rawTextMessage = 
+        `🌟 *تقرير تصحيح كراسة الواجب - أكاديمية إيليت*\n` +
+        `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
+        `📝 *الواجب:* ${assignmentTitle || "كراسة التدريبات"}\n` +
+        `🎯 *الدرجة المستحقة:* ${safeScore} من 10\n` +
+        `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
+        `✍️ *ملاحظات مستر أحمد:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
+        `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;
+      const msg = encodeURIComponent(rawTextMessage);
+
       try {
         whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
-          to: cleanPhone,
+          to: verifiedParentPhone,
           message: rawTextMessage,
         });
       } catch (err) {
         console.warn("Automated WhatsApp homework dispatch note:", err);
       }
+
+      whatsappUrl = `https://wa.me/2${verifiedParentPhone}?text=${msg}`;
     }
 
     return NextResponse.json({
@@ -105,7 +126,7 @@ export async function POST(request: NextRequest) {
       message: "تم حفظ درجات وتصحيح الواجب بنجاح وإرسال التنبيه.",
       earnedXp,
       whatsappAutoDelivery,
-      whatsappUrl: `https://wa.me/2${cleanPhone}?text=${msg}`,
+      whatsappUrl,
     });
   } catch (err) {
     console.error("Homework grade error:", err);

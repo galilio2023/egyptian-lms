@@ -7,7 +7,8 @@ import {
   Ban, 
   Smartphone, 
   Ticket, 
-  Lock 
+  Lock,
+  Radio
 } from "lucide-react";
 import { DataTableCard } from "@/components/shared";
 import { Badge, Button } from "@/components/ui";
@@ -56,6 +57,8 @@ function getEventTypeBadge(evt: AuditEventType | string) {
       return <Badge variant="slate"><Ticket className="w-3 h-3 me-1" /> كود شحن غير صحيح</Badge>;
     case "voucher_redeem_success":
       return <Badge variant="emerald"><Ticket className="w-3 h-3 me-1" /> كود شحن ناجح</Badge>;
+    case "live_session_attended":
+      return <Badge variant="purple"><Radio className="w-3 h-3 me-1" /> حضور بث مباشر</Badge>;
     case "user_banned":
       return <Badge variant="rose"><Ban className="w-3 h-3 me-1" /> حساب محظور</Badge>;
     default:

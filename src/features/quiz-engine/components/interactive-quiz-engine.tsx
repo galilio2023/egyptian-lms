@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import { useSession } from "@/lib/auth/auth-client";
 import { useQuizAudio } from "../hooks/use-quiz-audio";
 import { useAntiCheat } from "../hooks/use-anti-cheat";
 import { QuizActiveHeader } from "./quiz-active-header";
@@ -30,10 +31,13 @@ export function InteractiveQuizEngine({
 
   const { isSpeaking, playChimeSound, speakEnglishText } = useQuizAudio();
 
-  const draftStorageKey = `elite_quiz_draft_${quiz.id}_${studentPhone || "guest"}`;
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const draftStorageKey = userId ? `elite_quiz_draft_${quiz.id}_${userId}` : null;
 
-  // Restore draft answers and time on mount if internet dropped or page refreshed
+  // Restore draft answers and time on mount only for authenticated users
   useEffect(() => {
+    if (!draftStorageKey) return;
     try {
       const saved = localStorage.getItem(draftStorageKey);
       if (saved) {
@@ -59,8 +63,8 @@ export function InteractiveQuizEngine({
 
   useEffect(() => {
     selectedAnswersRef.current = selectedAnswers;
-    // Auto-save draft on every answer change
-    if (!isSubmitted && Object.keys(selectedAnswers).length > 0) {
+    // Auto-save draft on every answer change only if authenticated
+    if (draftStorageKey && !isSubmitted && Object.keys(selectedAnswers).length > 0) {
       try {
         localStorage.setItem(
           draftStorageKey,
@@ -107,9 +111,11 @@ export function InteractiveQuizEngine({
         if (data && typeof data.score === "number") {
           setGradeResult(data);
           setIsSubmitted(true);
-          try {
-            localStorage.removeItem(draftStorageKey);
-          } catch {}
+          if (draftStorageKey) {
+            try {
+              localStorage.removeItem(draftStorageKey);
+            } catch {}
+          }
 
           if (data.passed) {
             playChimeSound("complete");
@@ -175,9 +181,11 @@ export function InteractiveQuizEngine({
   };
 
   const handleRetake = () => {
-    try {
-      localStorage.removeItem(draftStorageKey);
-    } catch {}
+    if (draftStorageKey) {
+      try {
+        localStorage.removeItem(draftStorageKey);
+      } catch {}
+    }
     setIsSubmitted(false);
     setGradeResult(null);
     setSelectedAnswers({});

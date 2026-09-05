@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "all";
 
-    // RBAC: Assistants cannot view financial overview KPIs or platform settings
+    // RBAC: Assistants cannot view financial overview KPIs, platform settings, security logs, or aggregate all data
     const isAssistant = userRole === "assistant";
-    const ASSISTANT_RESTRICTED_TYPES = ["settings"];
+    const ASSISTANT_RESTRICTED_TYPES = ["settings", "security_logs", "all"];
     if (isAssistant && ASSISTANT_RESTRICTED_TYPES.includes(type)) {
       return NextResponse.json(
-        { error: "عذراً، لا يمكن لحساب المساعد الوصول إلى هذا القسم." },
+        { error: "عذراً، لا يمكن لحساب المساعد الوصول إلى هذا القسم أو طلب البيانات المجمعة." },
         { status: 403 }
       );
     }
@@ -269,6 +269,7 @@ export async function GET(request: NextRequest) {
             studentPhone: schema.user.phoneNumber,
             parentPhone: schema.studentProfile.parentPhoneNumber,
             studentImages: schema.homeworkSubmission.studentImages,
+            audioVoiceNoteUrl: schema.homeworkSubmission.audioVoiceNoteUrl,
             annotatedImages: schema.homeworkSubmission.annotatedImages,
             status: schema.homeworkSubmission.status,
             score: schema.homeworkSubmission.score,
@@ -291,6 +292,7 @@ export async function GET(request: NextRequest) {
           parentPhone: s.parentPhone || "010xxxxxxxx",
           gradeTitle: "Grade 1",
           studentImages: s.studentImages as Array<{ pageNumber: number; imageUrl: string }>,
+          audioVoiceNoteUrl: s.audioVoiceNoteUrl || null,
           annotatedImages: (s.annotatedImages as Array<{ pageIndex: number; dataUrl: string }>) || undefined,
           status: s.status,
           score: s.score ?? undefined,
@@ -412,6 +414,12 @@ export async function POST(request: NextRequest) {
     // RBAC: Assistants are restricted from destructive / financial actions
     // ──────────────────────────────────────────────────────────
     const ADMIN_TEACHER_ONLY_ACTIONS = [
+      "approve_order",
+      "reject_order",
+      "reset_device",
+      "toggle_ban",
+      "ban_student",
+      "unban_student",
       "delete_unit",
       "create_unit",
       "delete_lesson",
@@ -421,8 +429,6 @@ export async function POST(request: NextRequest) {
       "save_vouchers",
       "delete_live_session",
       "send_broadcast",
-      "ban_student",
-      "unban_student",
     ];
 
     if (userRole === "assistant" && ADMIN_TEACHER_ONLY_ACTIONS.includes(action)) {
@@ -659,6 +665,20 @@ export async function POST(request: NextRequest) {
           prerequisiteLessonId?: string;
         };
 
+        // Compute unit-specific next orderIndex
+        let nextOrderIndex = 1;
+        try {
+          const [maxOrder] = await db
+            .select({ maxOrder: sql<number>`COALESCE(MAX(${schema.lesson.orderIndex}), 0)` })
+            .from(schema.lesson)
+            .where(eq(schema.lesson.unitId, unitId));
+          if (maxOrder && typeof maxOrder.maxOrder === "number") {
+            nextOrderIndex = Number(maxOrder.maxOrder) + 1;
+          }
+        } catch (orderErr) {
+          console.warn("Calculating next lesson orderIndex error:", orderErr);
+        }
+
         const lessonSlug = `lesson-${Date.now()}`;
         const [inserted] = await db.insert(schema.lesson).values({
           unitId,
@@ -671,7 +691,7 @@ export async function POST(request: NextRequest) {
           isFreePreview: Boolean(isFreePreview),
           prerequisiteType: prerequisiteType || "none",
           prerequisiteLessonId: prerequisiteLessonId || null,
-          orderIndex: 1,
+          orderIndex: nextOrderIndex,
         }).returning();
 
         return NextResponse.json({

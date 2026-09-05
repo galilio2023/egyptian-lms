@@ -64,7 +64,14 @@ export function ProtectedVideoPlayer({
     return "auto";
   });
 
+  // HLS stream management
+  const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, { qualityMode });
+
   const toggleDataSaver = () => {
+    if (!isHlsSupported) {
+      toast.info("التحكم بجودة البث غير مدعوم على المشغل الأصلي لهذا الجهاز/المتصفح.");
+      return;
+    }
     const nextMode = qualityMode === "low" ? "auto" : "low";
     setQualityMode(nextMode);
     if (typeof window !== "undefined") {
@@ -78,9 +85,6 @@ export function ProtectedVideoPlayer({
       toast.info("تم العودة إلى الجودة التلقائية ⚡");
     }
   };
-
-  // HLS stream management
-  const { hlsRef } = useHlsStream(videoRef, src, { qualityMode });
 
   // Watermark canvas
   const { updateCanvasSize } = useWatermarkCanvas({
@@ -210,6 +214,10 @@ export function ProtectedVideoPlayer({
   };
 
   const toggleQuality = () => {
+    if (qualityMode === "low") {
+      toast.info("وضع توفير باقة النت مفعّل حالياً. قم بإلغاء توفير الباقة أولاً للتبديل اليدوي بين الجودات.");
+      return;
+    }
     if (!hlsRef.current) {
       setQuality((q) => (q === "Auto" ? "1080p" : "Auto"));
       return;
