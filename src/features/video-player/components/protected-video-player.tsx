@@ -59,7 +59,11 @@ export function ProtectedVideoPlayer({
 
   const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("elite_data_saver") === "true" ? "low" : "auto";
+      try {
+        return localStorage.getItem("elite_data_saver") === "true" ? "low" : "auto";
+      } catch {
+        return "auto";
+      }
     }
     return "auto";
   });
@@ -67,15 +71,30 @@ export function ProtectedVideoPlayer({
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, { qualityMode });
 
+  // Reset quality mode to auto if native HLS is used (Issue #19)
+  useEffect(() => {
+    if (!isHlsSupported && qualityMode === "low") {
+      setQualityMode("auto");
+    }
+  }, [isHlsSupported, qualityMode]);
+
   const toggleDataSaver = () => {
     if (!isHlsSupported) {
       toast.info("التحكم بجودة البث غير مدعوم على المشغل الأصلي لهذا الجهاز/المتصفح.");
+      setQualityMode("auto");
+      try {
+        localStorage.removeItem("elite_data_saver");
+      } catch {}
       return;
     }
     const nextMode = qualityMode === "low" ? "auto" : "low";
     setQualityMode(nextMode);
     if (typeof window !== "undefined") {
-      localStorage.setItem("elite_data_saver", nextMode === "low" ? "true" : "false");
+      try {
+        localStorage.setItem("elite_data_saver", nextMode === "low" ? "true" : "false");
+      } catch {
+        // ignore storage write errors (Issue #18)
+      }
     }
     if (nextMode === "low") {
       toast.success("تم تفعيل وضع توفير باقة النت 📶", {
@@ -336,7 +355,7 @@ export function ProtectedVideoPlayer({
         duration={duration}
         playbackSpeed={playbackSpeed}
         quality={quality}
-        isDataSaver={qualityMode === "low"}
+        isDataSaver={isHlsSupported && qualityMode === "low"}
         onTogglePlay={togglePlay}
         onToggleMute={() => {
           if (videoRef.current) {
@@ -348,7 +367,7 @@ export function ProtectedVideoPlayer({
         onSkipTime={skipTime}
         onCycleSpeed={cycleSpeed}
         onToggleQuality={toggleQuality}
-        onToggleDataSaver={toggleDataSaver}
+        onToggleDataSaver={isHlsSupported ? toggleDataSaver : undefined}
         onToggleFullScreen={toggleFullScreen}
       />
     </div>

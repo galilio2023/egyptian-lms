@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex, AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -120,7 +120,7 @@ export const lesson = pgTable('lesson', {
   isFreePreview: boolean('is_free_preview').default(false).notNull(),
   orderIndex: integer('order_index').default(0).notNull(),
   prerequisiteType: text('prerequisite_type').default('none').notNull(), // 'none' | 'previous_quiz_passed' | 'previous_homework_submitted'
-  prerequisiteLessonId: uuid('prerequisite_lesson_id').references((): any => lesson.id, { onDelete: 'set null' }),
+  prerequisiteLessonId: uuid('prerequisite_lesson_id').references((): AnyPgColumn => lesson.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('lesson_unit_id_idx').on(table.unitId),

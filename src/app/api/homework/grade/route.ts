@@ -42,34 +42,46 @@ export async function POST(request: NextRequest) {
 
     let targetUserId: string | null = null;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(submissionId);
-    if (isUUID) {
-      // 1. Persistence must succeed before any notification dispatch
-      const [updatedSub] = await db.update(schema.homeworkSubmission)
-        .set({
-          score: safeScore,
-          feedbackNotes: feedbackNotes?.trim() || null,
-          annotatedImages,
-          status: "graded",
-          gradedAt: new Date(),
-          gradedByUserId: session.user.id,
-        })
-        .where(eq(schema.homeworkSubmission.id, submissionId))
-        .returning({ userId: schema.homeworkSubmission.userId });
+    if (!isUUID) {
+      return NextResponse.json(
+        { error: "معرف تسليم الواجب غير صالح." },
+        { status: 400 }
+      );
+    }
 
-      if (updatedSub?.userId) {
-        targetUserId = updatedSub.userId;
-        const [profile] = await db
-          .select()
-          .from(schema.studentProfile)
-          .where(eq(schema.studentProfile.userId, updatedSub.userId))
-          .limit(1);
+    // 1. Persistence must succeed before any notification dispatch
+    const [updatedSub] = await db.update(schema.homeworkSubmission)
+      .set({
+        score: safeScore,
+        feedbackNotes: feedbackNotes?.trim() || null,
+        annotatedImages,
+        status: "graded",
+        gradedAt: new Date(),
+        gradedByUserId: session.user.id,
+      })
+      .where(eq(schema.homeworkSubmission.id, submissionId))
+      .returning({ userId: schema.homeworkSubmission.userId });
 
-        if (profile) {
-          await db
-            .update(schema.studentProfile)
-            .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-            .where(eq(schema.studentProfile.userId, updatedSub.userId));
-        }
+    if (!updatedSub) {
+      return NextResponse.json(
+        { error: "لم يتم العثور على تسليم الواجب المطلوب في قاعدة البيانات." },
+        { status: 404 }
+      );
+    }
+
+    if (updatedSub.userId) {
+      targetUserId = updatedSub.userId;
+      const [profile] = await db
+        .select()
+        .from(schema.studentProfile)
+        .where(eq(schema.studentProfile.userId, updatedSub.userId))
+        .limit(1);
+
+      if (profile) {
+        await db
+          .update(schema.studentProfile)
+          .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
+          .where(eq(schema.studentProfile.userId, updatedSub.userId));
       }
     }
 

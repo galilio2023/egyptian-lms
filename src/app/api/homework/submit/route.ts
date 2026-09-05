@@ -7,6 +7,30 @@ import { eq, and, or, isNull, gt } from "drizzle-orm";
 import { INITIAL_HOMEWORK_ASSIGNMENTS, MockHomeworkSubmission } from "@/lib/db/mock-data";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 
+function isValidAudioVoiceNote(url: unknown): url is string {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  // Safe base64 audio data URI (max 15MB)
+  if (/^data:audio\/(webm|mp4|ogg|wav|mpeg|aac|x-m4a);base64,[A-Za-z0-9+/=\s]+$/i.test(trimmed)) {
+    return trimmed.length <= 15 * 1024 * 1024;
+  }
+  // Safe relative storage path or trusted CDN domains (CWE-918 SSRF protection)
+  try {
+    if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/audio/")) return true;
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:") return false;
+    const trustedHostnames = [
+      "storage.bunnycdn.com",
+      "b-cdn.net",
+      "s3.amazonaws.com",
+      "r2.cloudflarestorage.com",
+    ];
+    return trustedHostnames.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const reqHeaders = await headers();
@@ -37,8 +61,15 @@ export async function POST(request: NextRequest) {
       audioVoiceNoteUrl?: string;
     };
 
+    if (audioVoiceNoteUrl && !isValidAudioVoiceNote(audioVoiceNoteUrl)) {
+      return NextResponse.json(
+        { error: "صيغة التسجيل الصوتي غير صالحة أو واردة من مصدر غير موثوق به." },
+        { status: 400 }
+      );
+    }
+
     const hasImages = Array.isArray(studentImages) && studentImages.length > 0;
-    const hasAudio = Boolean(audioVoiceNoteUrl && typeof audioVoiceNoteUrl === "string");
+    const hasAudio = Boolean(audioVoiceNoteUrl && isValidAudioVoiceNote(audioVoiceNoteUrl));
 
     if (!assignmentId || (!hasImages && !hasAudio)) {
       return NextResponse.json(

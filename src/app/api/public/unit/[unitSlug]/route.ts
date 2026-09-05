@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, or, and, isNull, gt } from "drizzle-orm";
+import { eq, or, and, isNull, gt, inArray } from "drizzle-orm";
 import { INITIAL_UNITS, INITIAL_LESSONS, INITIAL_QUIZ } from "@/lib/db/mock-data";
 
 export async function GET(
@@ -68,6 +68,33 @@ export async function GET(
         .where(eq(schema.lesson.unitId, dbUnit.id))
         .orderBy(schema.lesson.orderIndex);
 
+      // Fetch which lessons actually have quizzes or homework assignments
+      const unitLessonIds = dbLessons.map((l) => l.id);
+      const lessonsWithQuiz = new Set<string>();
+      const lessonsWithHw = new Set<string>();
+
+      if (unitLessonIds.length > 0) {
+        try {
+          const existingQuizzes = await db
+            .select({ lessonId: schema.quiz.lessonId })
+            .from(schema.quiz)
+            .where(inArray(schema.quiz.lessonId, unitLessonIds));
+          existingQuizzes.forEach((q) => {
+            if (q.lessonId) lessonsWithQuiz.add(q.lessonId);
+          });
+
+          const existingHw = await db
+            .select({ lessonId: schema.homeworkAssignment.lessonId })
+            .from(schema.homeworkAssignment)
+            .where(inArray(schema.homeworkAssignment.lessonId, unitLessonIds));
+          existingHw.forEach((h) => {
+            if (h.lessonId) lessonsWithHw.add(h.lessonId);
+          });
+        } catch (err) {
+          console.warn("Error fetching existing lesson quizzes/hw:", err);
+        }
+      }
+
       // Fetch passed quizzes and submitted homework for current user in this unit
       const userPassedQuizLessonIds = new Set<string>();
       const userSubmittedHwLessonIds = new Set<string>();
@@ -111,10 +138,19 @@ export async function GET(
         if (isEnrolled && !l.isFreePreview && l.prerequisiteType && l.prerequisiteType !== "none") {
           const targetLessonId = l.prerequisiteLessonId || (idx > 0 ? dbLessons[idx - 1].id : null);
           if (targetLessonId) {
-            if (l.prerequisiteType === "previous_quiz_passed" && !userPassedQuizLessonIds.has(targetLessonId)) {
+            // Block only when the required artifact exists and is incomplete
+            if (
+              l.prerequisiteType === "previous_quiz_passed" &&
+              lessonsWithQuiz.has(targetLessonId) &&
+              !userPassedQuizLessonIds.has(targetLessonId)
+            ) {
               isPrerequisiteBlocked = true;
               prerequisiteMessage = "يجب اجتياز كويز المحاضرة السابقة أولاً 🔒";
-            } else if (l.prerequisiteType === "previous_homework_submitted" && !userSubmittedHwLessonIds.has(targetLessonId)) {
+            } else if (
+              l.prerequisiteType === "previous_homework_submitted" &&
+              lessonsWithHw.has(targetLessonId) &&
+              !userSubmittedHwLessonIds.has(targetLessonId)
+            ) {
               isPrerequisiteBlocked = true;
               prerequisiteMessage = "يجب تسليم واجب المحاضرة السابقة أولاً 🔒";
             }

@@ -20,6 +20,8 @@ export function VoiceNoteRecorder({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const isMountedRef = useRef(true);
+  const pendingStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -34,15 +36,26 @@ export function VoiceNoteRecorder({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
-    setIsRecording(false);
-    toast.success("تم تسجيل الملاحظة الصوتية بنجاح 🎤");
+    if (isMountedRef.current) {
+      setIsRecording(false);
+      toast.success("تم تسجيل الملاحظة الصوتية بنجاح 🎤");
+    }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      isMountedRef.current = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
+      }
+      if (pendingStreamRef.current) {
+        pendingStreamRef.current.getTracks().forEach((track) => track.stop());
+        pendingStreamRef.current = null;
       }
       recordingActiveRef.current = false;
     };
@@ -59,6 +72,16 @@ export function VoiceNoteRecorder({
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      pendingStreamRef.current = stream;
+
+      // Unmounted during getUserMedia async resolution
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        pendingStreamRef.current = null;
+        recordingActiveRef.current = false;
+        return;
+      }
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -71,16 +94,22 @@ export function VoiceNoteRecorder({
 
       mediaRecorder.onstop = () => {
         recordingActiveRef.current = false;
+        // Stop all audio tracks to release microphone
+        if (pendingStreamRef.current) {
+          pendingStreamRef.current.getTracks().forEach((track) => track.stop());
+          pendingStreamRef.current = null;
+        }
+        if (!isMountedRef.current) return;
+
         const selectedMime = mediaRecorder.mimeType || "audio/webm";
         const audioBlob = new Blob(audioChunksRef.current, { type: selectedMime });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
+          if (!isMountedRef.current) return;
           const base64Audio = reader.result as string;
           onAudioChange(base64Audio);
         };
-        // Stop all audio tracks to release microphone
-        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start(200);
@@ -89,6 +118,7 @@ export function VoiceNoteRecorder({
 
       const startTime = Date.now();
       timerRef.current = setInterval(() => {
+        if (!isMountedRef.current) return;
         const elapsed = Math.min(60, Math.floor((Date.now() - startTime) / 1000));
         setRecordingSeconds(elapsed);
         if (elapsed >= 60) {

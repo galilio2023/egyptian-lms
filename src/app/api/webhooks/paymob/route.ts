@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET || "";
 
@@ -139,21 +140,28 @@ export async function POST(request: NextRequest) {
       providedHmac
     );
 
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
     if (!isHmacValid) {
-      logSecurityEvent({
-        eventType: "rate_limit_triggered",
-        severity: "critical",
-        description: `🚨 Paymob webhook HMAC verification FAILED — potential spoofing attack. Transaction ID: ${obj.id}`,
-        ipAddress:
-          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-          request.headers.get("x-real-ip") ||
-          "unknown",
-        details: {
-          transactionId: String(obj.id),
-          providedHmac: providedHmac ? `${providedHmac.slice(0, 12)}...` : "(empty)",
-          orderId: obj.order?.merchant_order_id,
-        },
-      });
+      // CWE-400 DoS Protection: Rate limit failed HMAC audit inserts to prevent DB capacity exhaustion
+      const hmacRateKey = `paymob-invalid-hmac:${clientIp}`;
+      const rateCheck = checkRateLimit(hmacRateKey, "paymobInvalidHmac");
+      if (rateCheck.success) {
+        logSecurityEvent({
+          eventType: "rate_limit_triggered",
+          severity: "critical",
+          description: `🚨 Paymob webhook HMAC verification FAILED — potential spoofing attack. Transaction ID: ${obj.id}`,
+          ipAddress: clientIp,
+          details: {
+            transactionId: String(obj.id),
+            providedHmac: providedHmac ? `${providedHmac.slice(0, 12)}...` : "(empty)",
+            orderId: obj.order?.merchant_order_id,
+          },
+        });
+      }
 
       return NextResponse.json(
         { error: "HMAC signature verification failed. Request rejected." },
@@ -194,7 +202,7 @@ export async function POST(request: NextRequest) {
     // SECURITY (CWE-347): Paymob HMAC signs obj.order.id (gatewayOrderId), NOT merchant_order_id.
     // To prevent parameter tampering where merchant_order_id is modified to point to another order:
     // 1) First lookup using HMAC-signed gatewayOrderId.
-    // 2) If looking up by merchantOrderId, ensure stored gatewayOrderId strictly matches signed gatewayOrderId.
+    // 2) If looking up by merchantOrderId, require signed gatewayOrderId to be present and strictly match stored gatewayOrderId.
     let targetOrder: typeof schema.order.$inferSelect | undefined;
     if (gatewayOrderId) {
       const [foundByGatewayId] = await db
@@ -206,6 +214,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!targetOrder && merchantOrderId) {
+      if (!gatewayOrderId) {
+        console.warn("Paymob webhook: reject merchant_order_id fallback without signed gatewayOrderId");
+        return NextResponse.json(
+          { error: "Missing signed gatewayOrderId for merchant order fallback" },
+          { status: 403 }
+        );
+      }
+
       const [foundByMerchantId] = await db
         .select()
         .from(schema.order)
@@ -214,7 +230,7 @@ export async function POST(request: NextRequest) {
 
       if (foundByMerchantId) {
         // Enforce that if order already has a gatewayOrderId recorded, it must match the signed gatewayOrderId
-        if (foundByMerchantId.gatewayOrderId && gatewayOrderId && foundByMerchantId.gatewayOrderId !== gatewayOrderId) {
+        if (foundByMerchantId.gatewayOrderId && foundByMerchantId.gatewayOrderId !== gatewayOrderId) {
           logSecurityEvent({
             eventType: "unauthorized_portal_access",
             severity: "critical",

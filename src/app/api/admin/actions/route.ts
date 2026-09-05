@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // RBAC: Assistants cannot view financial overview KPIs, platform settings, security logs, or aggregate all data
     const isAssistant = userRole === "assistant";
-    const ASSISTANT_RESTRICTED_TYPES = ["settings", "security_logs", "all"];
+    const ASSISTANT_RESTRICTED_TYPES = ["settings", "security_logs", "all", "overview"];
     if (isAssistant && ASSISTANT_RESTRICTED_TYPES.includes(type)) {
       return NextResponse.json(
         { error: "عذراً، لا يمكن لحساب المساعد الوصول إلى هذا القسم أو طلب البيانات المجمعة." },
@@ -665,34 +665,38 @@ export async function POST(request: NextRequest) {
           prerequisiteLessonId?: string;
         };
 
-        // Compute unit-specific next orderIndex
-        let nextOrderIndex = 1;
-        try {
-          const [maxOrder] = await db
+        const lessonSlug = `lesson-${Date.now()}`;
+        const inserted = await db.transaction(async (tx) => {
+          // Row-level lock on the parent unit to serialize concurrent lesson allocations for the same unit
+          try {
+            await tx.execute(sql`SELECT id FROM ${schema.courseUnit} WHERE id = ${unitId} FOR UPDATE`);
+          } catch {
+            // Ignore if unit row locking not supported
+          }
+
+          const [maxOrder] = await tx
             .select({ maxOrder: sql<number>`COALESCE(MAX(${schema.lesson.orderIndex}), 0)` })
             .from(schema.lesson)
             .where(eq(schema.lesson.unitId, unitId));
-          if (maxOrder && typeof maxOrder.maxOrder === "number") {
-            nextOrderIndex = Number(maxOrder.maxOrder) + 1;
-          }
-        } catch (orderErr) {
-          console.warn("Calculating next lesson orderIndex error:", orderErr);
-        }
 
-        const lessonSlug = `lesson-${Date.now()}`;
-        const [inserted] = await db.insert(schema.lesson).values({
-          unitId,
-          title: title.trim(),
-          slug: lessonSlug,
-          videoProvider: "bunny",
-          videoId: videoId.trim(),
-          videoDurationSeconds: videoDurationSeconds || 1200,
-          pdfAttachmentUrl: pdfAttachmentUrl || null,
-          isFreePreview: Boolean(isFreePreview),
-          prerequisiteType: prerequisiteType || "none",
-          prerequisiteLessonId: prerequisiteLessonId || null,
-          orderIndex: nextOrderIndex,
-        }).returning();
+          const nextOrderIndex = Number(maxOrder?.maxOrder || 0) + 1;
+
+          const [newLesson] = await tx.insert(schema.lesson).values({
+            unitId,
+            title: title.trim(),
+            slug: lessonSlug,
+            videoProvider: "bunny",
+            videoId: videoId.trim(),
+            videoDurationSeconds: videoDurationSeconds || 1200,
+            pdfAttachmentUrl: pdfAttachmentUrl || null,
+            isFreePreview: Boolean(isFreePreview),
+            prerequisiteType: prerequisiteType || "none",
+            prerequisiteLessonId: prerequisiteLessonId || null,
+            orderIndex: nextOrderIndex,
+          }).returning();
+
+          return newLesson;
+        });
 
         return NextResponse.json({
           success: true,

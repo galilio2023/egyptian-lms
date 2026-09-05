@@ -22,6 +22,21 @@ const PRESET_FEEDBACK_PHRASES = [
   "بطل الأكاديمية الأول! استمر في التألق 🔥",
 ];
 
+function isSafeAudioUrl(url: string): boolean {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (/^data:audio\/(webm|mp4|ogg|wav|mpeg|aac|x-m4a);base64,/i.test(trimmed)) return true;
+  try {
+    if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/audio/")) return true;
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:") return false;
+    const trustedHosts = ["storage.bunnycdn.com", "b-cdn.net", "s3.amazonaws.com", "r2.cloudflarestorage.com"];
+    return trustedHosts.some((h) => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
 export function GraderSidebar({
   submission,
   score,
@@ -39,11 +54,13 @@ export function GraderSidebar({
     onChangeNotes(notes);
   };
 
+  const hasSafeAudio = Boolean(submission.audioVoiceNoteUrl && isSafeAudioUrl(submission.audioVoiceNoteUrl));
+
   return (
     <div className="lg:col-span-4 xl:col-span-3 p-5 bg-slate-850 flex flex-col justify-between space-y-6 overflow-y-auto">
       <div className="space-y-5">
         {/* Oral Voice Note Player (if student submitted speaking phonics) */}
-        {submission.audioVoiceNoteUrl && (
+        {hasSafeAudio && (
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border-2 border-purple-500/40 text-xs space-y-2">
             <div className="flex items-center justify-between text-purple-300 font-black">
               <span className="flex items-center gap-1.5">

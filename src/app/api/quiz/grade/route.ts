@@ -74,19 +74,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let targetUserId = session?.user?.id;
-    if (!targetUserId && studentPhone) {
-      try {
-        const [userRecord] = await db
-          .select({ id: schema.user.id })
-          .from(schema.user)
-          .where(eq(schema.user.phoneNumber, studentPhone))
-          .limit(1);
-        if (userRecord) targetUserId = userRecord.id;
-      } catch {
-        // Fallback
-      }
-    }
+    // Require session ownership for targetUserId (IDOR CWE-639 protection)
+    const targetUserId = session?.user?.id || null;
 
     // Attempt to load questions from database if UUID format
     let quiz = INITIAL_QUIZ;
@@ -338,7 +327,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("Quiz grading error:", error);
     return NextResponse.json(
-      { error: "حدث خطأ في تصحيح الاختبار", details: (error as Error)?.message },
+      { error: "حدث خطأ في تصحيح الاختبار" },
       { status: 500 }
     );
   }
