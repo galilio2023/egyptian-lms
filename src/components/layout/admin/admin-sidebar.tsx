@@ -46,7 +46,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           href="/"
           className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-bold transition-colors border border-purple-200"
         >
-          <span>عرض موقع الأكاديمية</span>
+          <span>عرض المنصة التعليمية</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
 

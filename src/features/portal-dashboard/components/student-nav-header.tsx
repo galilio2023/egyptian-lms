@@ -36,10 +36,6 @@ export const StudentNavHeader: React.FC<StudentNavHeaderProps> = ({
               <span>💎</span>
               <span>{student.xpPoints} XP</span>
             </div>
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-900 text-xs font-black shadow-xs">
-              <span>🔥</span>
-              <span>{student.streakDays} أيام</span>
-            </div>
           </div>
 
           <div className="flex items-center gap-2.5 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 px-3 py-1 rounded-full shadow-sm">
