@@ -30,8 +30,6 @@ export function validateEgyptianPhone(phone: string): string | null {
     normalized = '0' + cleaned.slice(5);
   } else if (cleaned.startsWith('0020') && cleaned.length === 14) {
     normalized = '0' + cleaned.slice(4);
-  } else if (cleaned.startsWith('002') && cleaned.length === 14) {
-    normalized = '0' + cleaned.slice(4);
   } else if (cleaned.startsWith('200') && cleaned.length === 13) {
     normalized = '0' + cleaned.slice(3);
   } else if (cleaned.startsWith('20') && cleaned.length === 12) {

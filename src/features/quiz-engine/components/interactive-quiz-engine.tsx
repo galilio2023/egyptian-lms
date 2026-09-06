@@ -117,13 +117,14 @@ export function InteractiveQuizEngine({
           const savedTimeLeft = typeof parsed.timeLeft === "number" ? parsed.timeLeft : quiz.timeLimitMinutes * 60;
           const remainingTime = Math.max(0, savedTimeLeft - elapsedSeconds);
 
+          let submitTimer: ReturnType<typeof setTimeout> | undefined;
           const timer = setTimeout(() => {
             setSelectedAnswers(parsed.answers);
             setTimeLeft(remainingTime);
 
             if (remainingTime <= 0) {
               toast.warning("انتهى وقت الاختبار أثناء إغلاق الصفحة! جاري تسليم إجاباتك المحفوظة ⏳");
-              setTimeout(() => {
+              submitTimer = setTimeout(() => {
                 handleSubmitQuiz(parsed.answers);
               }, 300);
             } else {
@@ -131,7 +132,10 @@ export function InteractiveQuizEngine({
             }
           }, 0);
 
-          return () => clearTimeout(timer);
+          return () => {
+            clearTimeout(timer);
+            if (submitTimer !== undefined) clearTimeout(submitTimer);
+          };
         }
       }
     } catch {

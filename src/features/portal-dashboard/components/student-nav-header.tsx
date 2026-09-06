@@ -54,7 +54,7 @@ export const StudentNavHeader: React.FC<StudentNavHeaderProps> = ({
             </div>
           </div>
           <button
-            onClick={() => signOut({ fetchOptions: { onSuccess: () => { router.push("/"); router.refresh(); } } })}
+            onClick={() => signOut({ fetchOptions: { onSuccess: () => { router.push("/"); } } })}
             className="flex items-center justify-center p-2 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors bg-white border border-rose-100 shadow-sm"
             title="تسجيل الخروج"
           >
