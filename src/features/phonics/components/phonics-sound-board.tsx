@@ -14,6 +14,32 @@ interface PhonicsItem {
   category: "vowels" | "digraphs" | "alphabet";
 }
 
+type PracticeResult =
+  | { status: "scored"; score: number; transcript: string }
+  | { status: "unavailable" };
+
+interface SpeechRecognitionResultLike {
+  length: number;
+  [index: number]: { transcript: string };
+}
+
+interface SpeechRecognitionEventLike {
+  results: { [index: number]: SpeechRecognitionResultLike };
+}
+
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
 const PHONICS_DATA: PhonicsItem[] = [
   { id: "a", sound: "A", label: "أَ (Short A)", exampleWord: "Apple", translation: "تفاحة", emoji: "🍎", category: "vowels" },
   { id: "b", sound: "B", label: "بـ", exampleWord: "Ball", translation: "كرة", emoji: "⚽", category: "alphabet" },
@@ -35,7 +61,7 @@ export function PhonicsSoundBoard() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [practiceItemId, setPracticeItemId] = useState<string | null>(null);
-  const [practiceResult, setPracticeResult] = useState<{score: number; transcript: string} | null>(null);
+  const [practiceResult, setPracticeResult] = useState<PracticeResult | null>(null);
 
   const speakText = useCallback((word: string, soundId: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -66,7 +92,7 @@ export function PhonicsSoundBoard() {
 
   const startPractice = useCallback((item: PhonicsItem) => {
     if (typeof window === "undefined" || !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      setPracticeResult({ score: 0, transcript: "" });
+      setPracticeResult({ status: "unavailable" });
       return;
     }
     
@@ -74,14 +100,24 @@ export function PhonicsSoundBoard() {
     setPracticeResult(null);
     setIsListening(true);
     
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as typeof window & {
+      SpeechRecognition?: SpeechRecognitionConstructor;
+      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setPracticeItemId(null);
+      setIsListening(false);
+      setPracticeResult({ status: "unavailable" });
+      return;
+    }
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.maxAlternatives = 3;
     
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event) => {
       const results = event.results[0];
       let bestMatch = 0;
       const expectedWord = item.exampleWord.toLowerCase();
@@ -98,7 +134,7 @@ export function PhonicsSoundBoard() {
       }
       
       const transcript = results[0].transcript;
-      setPracticeResult({ score: bestMatch, transcript });
+      setPracticeResult({ status: "scored", score: bestMatch, transcript });
       setIsListening(false);
       setPracticeItemId(null);
     };
@@ -179,10 +215,9 @@ export function PhonicsSoundBoard() {
         {filteredItems.map((item) => {
           const isCurrent = playingId === item.id;
           return (
-            <button
+            <div
               key={item.id}
-              onClick={() => speakText(`${item.sound}... ${item.exampleWord}`, item.id)}
-              className={`p-3.5 rounded-2xl border-2 transition-all duration-300 text-right flex flex-col justify-between gap-3 relative overflow-hidden group hover:scale-[1.03] hover:-translate-y-1 cursor-pointer ${
+              className={`rounded-2xl border-2 transition-all duration-300 text-right relative overflow-hidden group hover:scale-[1.03] hover:-translate-y-1 ${
                 isCurrent
                   ? "border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg shadow-amber-500/20 scale-[1.03]"
                   : "border-purple-100 bg-white hover:border-purple-300 hover:bg-purple-50/50 shadow-sm"
@@ -196,69 +231,83 @@ export function PhonicsSoundBoard() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-2xl">{item.emoji}</span>
-                <div className="text-left">
-                  <span className="text-xl font-black text-purple-900 block leading-none">{item.sound}</span>
-                  <span className="text-[10px] text-slate-500 font-bold block mt-1">{item.label}</span>
+              <button
+                type="button"
+                onClick={() => speakText(`${item.sound}... ${item.exampleWord}`, item.id)}
+                className="w-full p-3.5 pe-14 text-right flex flex-col justify-between gap-3 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-purple-600"
+                aria-label={`استمع إلى نطق ${item.exampleWord}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl">{item.emoji}</span>
+                  <div className="text-left">
+                    <span className="text-xl font-black text-purple-900 block leading-none">{item.sound}</span>
+                    <span className="text-[10px] text-slate-500 font-bold block mt-1">{item.label}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="pt-2 border-t border-purple-50 flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-black text-slate-900 block group-hover:text-purple-700 transition-colors">
-                    {item.exampleWord}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-semibold block">{item.translation}</span>
-                </div>
-                <div className="flex items-center gap-2">
+                <div className="pt-2 border-t border-purple-50 flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-black text-slate-900 block group-hover:text-purple-700 transition-colors">
+                      {item.exampleWord}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-semibold block">{item.translation}</span>
+                  </div>
                   <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
                     isCurrent ? "bg-amber-500 text-white" : "bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white"
                   }`}>
                     <Volume2 className="w-3.5 h-3.5" />
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startPractice(item);
-                    }}
-                    disabled={isListening}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                      practiceItemId === item.id && isListening
-                        ? "bg-rose-500 text-white animate-pulse shadow-md"
-                        : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                    }`}
-                    title="دورك! انطق الكلمة"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
-            </button>
+              </button>
+              <button
+                type="button"
+                onClick={() => startPractice(item)}
+                disabled={isListening}
+                className={`absolute bottom-3.5 end-3.5 w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
+                  practiceItemId === item.id && isListening
+                    ? "bg-rose-500 text-white animate-pulse shadow-md"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                }`}
+                title="دورك! انطق الكلمة"
+                aria-label={`تدرب على نطق ${item.exampleWord}`}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            </div>
           );
         })}
       </div>
 
       {practiceResult && (
         <div className={`p-4 rounded-2xl border-2 text-center space-y-2 transition-all ${
-          practiceResult.score >= 3
+          practiceResult.status === "unavailable"
+            ? "bg-slate-50 border-slate-300 text-slate-900"
+            : practiceResult.score >= 3
             ? "bg-emerald-50 border-emerald-300 text-emerald-900"
             : practiceResult.score >= 2
             ? "bg-amber-50 border-amber-300 text-amber-900"
             : "bg-rose-50 border-rose-300 text-rose-900"
-        }`}>
-          <div className="text-2xl">
-            {practiceResult.score >= 3 ? "⭐⭐⭐" : practiceResult.score >= 2 ? "⭐⭐" : "⭐"}
-          </div>
-          <p className="text-sm font-black">
-            {practiceResult.score >= 3
-              ? "نطق أسطوري يا بطل! ممتاز جداً! 🎉"
-              : practiceResult.score >= 2
-              ? "جيد جداً! حاول مرة أخرى للحصول على 3 نجوم ✨"
-              : "حاول مرة أخرى يا بطل! استمع أولاً ثم انطق الكلمة 🗣️"}
-          </p>
-          {practiceResult.transcript && (
-            <p className="text-xs text-slate-500 font-mono">سمعنا: "{practiceResult.transcript}"</p>
+          }`}>
+          {practiceResult.status === "unavailable" ? (
+            <p className="text-sm font-black">
+              التدريب بالمايكروفون غير مدعوم في هذا المتصفح. جرّب متصفحاً يدعم التعرف على الكلام 🎤
+            </p>
+          ) : (
+            <>
+              <div className="text-2xl">
+                {practiceResult.score >= 3 ? "⭐⭐⭐" : practiceResult.score >= 2 ? "⭐⭐" : "⭐"}
+              </div>
+              <p className="text-sm font-black">
+                {practiceResult.score >= 3
+                  ? "نطق أسطوري يا بطل! ممتاز جداً! 🎉"
+                  : practiceResult.score >= 2
+                    ? "جيد جداً! حاول مرة أخرى للحصول على 3 نجوم ✨"
+                    : "حاول مرة أخرى يا بطل! استمع أولاً ثم انطق الكلمة 🗣️"}
+              </p>
+              {practiceResult.transcript && (
+                <p className="text-xs text-slate-500 font-mono">سمعنا: “{practiceResult.transcript}”</p>
+              )}
+            </>
           )}
           <button
             onClick={() => setPracticeResult(null)}

@@ -7,6 +7,7 @@ import { Volume2 } from "lucide-react";
 import { useSession } from "@/lib/auth/auth-client";
 import { 
   INITIAL_UNITS, 
+  INITIAL_LESSONS,
   INITIAL_HOMEWORK_ASSIGNMENTS, 
   INITIAL_HOMEWORK_SUBMISSIONS, 
   INITIAL_LIVE_SESSIONS, 
@@ -63,18 +64,27 @@ export default function StudentDashboardPage() {
   const [units, setUnits] = useState<MockUnit[]>(INITIAL_UNITS);
   const [checkoutUnit, setCheckoutUnit] = useState<MockUnit | null>(null);
   const [viewAllGrades, setViewAllGrades] = useState(false);
+  const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false);
+  const [nextLesson, setNextLesson] = useState<{
+    title: string;
+    unitTitle: string;
+    durationMinutes: number;
+    slug: string;
+  } | null>(null);
 
   const [studentProfile, setStudentProfile] = useState<{
     gradeLevel: number;
     gradeTitle: string;
     gradeSlug: string;
     xpPoints: number;
+    completedLessons: number;
     parentPhoneNumber?: string;
   }>({
     gradeLevel: 1,
     gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
     gradeSlug: "grade-1",
     xpPoints: 450,
+    completedLessons: 0,
   });
 
   useEffect(() => {
@@ -85,9 +95,13 @@ export default function StudentDashboardPage() {
         if (active) {
           if (data?.profile) setStudentProfile(data.profile);
           if (data?.enrolledUnitIds) setEnrolledUnitIds(data.enrolledUnitIds);
+          if (data && "nextLesson" in data) setNextLesson(data.nextLesson);
+          setEnrollmentsLoaded(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setEnrollmentsLoaded(true);
+      });
 
     fetch("/api/public/landing-data")
       .then((res) => (res.ok ? res.json() : null))
@@ -116,7 +130,7 @@ export default function StudentDashboardPage() {
     nextLevelXp: Math.max(600, Math.ceil(((studentProfile.xpPoints || 450) + 150) / 200) * 200),
     levelNumber: Math.max(1, Math.floor((studentProfile.xpPoints || 450) / 150) + 1),
     streakDays: 4,
-    completedLessons: 6,
+    completedLessons: studentProfile.completedLessons,
     activeQuizzes: 2,
   };
 
@@ -181,7 +195,13 @@ export default function StudentDashboardPage() {
           <div className="flex-1 h-px bg-purple-200" />
         </div>
         <section className="border-2 border-purple-400 animate-pulse shadow-lg shadow-purple-500/20 rounded-3xl">
-          <NextLessonBanner />
+          <NextLessonBanner
+            lessonTitle={nextLesson?.title ?? INITIAL_LESSONS[0].title}
+            unitTitle={nextLesson?.unitTitle ?? INITIAL_UNITS[0].title}
+            durationMinutes={nextLesson?.durationMinutes ?? Number.parseInt(INITIAL_LESSONS[0].videoDuration, 10)}
+            lessonSlug={nextLesson?.slug ?? INITIAL_LESSONS[0].slug}
+            isCompleted={enrollmentsLoaded && !nextLesson}
+          />
         </section>
 
         {/* Welcome Hero */}
@@ -202,7 +222,7 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* Courses Grid */}
-        <div className="flex items-center gap-2 pt-4">
+        <div id="courses" className="flex items-center gap-2 pt-4">
           <span className="text-sm font-black text-slate-900">📚 وحداتك الدراسية</span>
           <div className="flex-1 h-px bg-purple-200" />
         </div>

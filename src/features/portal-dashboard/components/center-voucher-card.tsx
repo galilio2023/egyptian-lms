@@ -42,7 +42,7 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
 
       <form onSubmit={onSubmit} className="flex flex-col gap-2">
         <div className="flex flex-col sm:flex-row items-stretch gap-3">
-          <div className="flex w-full sm:flex-1 gap-2">
+          <div className="flex w-full sm:flex-1">
             <input
               type="text"
               inputMode="text"
@@ -54,19 +54,6 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
               className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-hidden text-base font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30"
               disabled={isRedeeming}
             />
-            <label className="flex items-center justify-center w-14 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 cursor-pointer shrink-0 transition-colors" title="مسح كارت الشحن بالكاميرا">
-              <input 
-                type="file" 
-                accept="image/*" 
-                capture="environment" 
-                className="hidden" 
-                onChange={(e) => { 
-                  if(e.target.files?.length) alert("ميزة قراءة الكود بالكاميرا ستتوفر قريباً! برجاء كتابة الكود يدوياً مؤقتاً."); 
-                  e.target.value = '';
-                }} 
-              />
-              <span className="text-2xl">📷</span>
-            </label>
           </div>
           <button
             type="submit"

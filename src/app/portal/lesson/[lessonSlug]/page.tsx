@@ -31,6 +31,8 @@ export default function LessonPlayerPage({
     return Boolean(lesson.isFreePreview);
   });
   const [quizId, setQuizId] = useState(INITIAL_QUIZ.id);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -42,6 +44,7 @@ export default function LessonPlayerPage({
           if (data.unit) setUnit(data.unit);
           if (data.quizId) setQuizId(data.quizId);
           setIsEnrolled(Boolean(data.isEnrolled || data.lesson.isFreePreview));
+          setIsCompleted(Boolean(data.isCompleted));
         }
       })
       .catch(() => {});
@@ -91,7 +94,38 @@ export default function LessonPlayerPage({
   const currentIndex = unitLessons.findIndex((l) => l.slug === lessonSlug || l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? unitLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex >= 0 && currentIndex < unitLessons.length - 1 ? unitLessons[currentIndex + 1] : null;
-  const [isCompleted, setIsCompleted] = useState(false);
+
+  const handleCompleteLesson = async () => {
+    if (isCompleted || isCompleting) return;
+
+    setIsCompleting(true);
+    try {
+      const response = await fetch("/api/student/lesson-progress", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId: lesson.id }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.completed) {
+        toast.error(result.error || "تعذر حفظ إتمام الدرس. حاول مرة أخرى.");
+        return;
+      }
+
+      setIsCompleted(true);
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      toast.success(
+        result.xpAwarded > 0
+          ? `أحسنت يا بطل! تم تسجيل إتمام المحاضرة وحصلت على +${result.xpAwarded} XP 🌟`
+          : "تم تأكيد إتمام هذا الدرس مسبقاً ✓"
+      );
+    } catch {
+      toast.error("حدث خطأ في الاتصال بالخادم. لم يتم تسجيل إتمام الدرس.");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen text-slate-900 pb-16">
@@ -147,11 +181,8 @@ export default function LessonPlayerPage({
 
               <button
                 type="button"
-                onClick={() => {
-                  setIsCompleted(true);
-                  confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
-                  toast.success("أحسنت يا بطل! تم تسجيل إتمام المحاضرة وحصلت على +15 XP 🌟");
-                }}
+                onClick={handleCompleteLesson}
+                disabled={isCompleted || isCompleting}
                 className={`w-full sm:w-auto px-5 py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   isCompleted
                     ? "bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm"
@@ -159,7 +190,13 @@ export default function LessonPlayerPage({
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{isCompleted ? "تم إنهاء الدرس بنجاح ✓" : "تحديد الدرس كمكتمل (+15 XP)"}</span>
+                <span>
+                  {isCompleted
+                    ? "تم إنهاء الدرس بنجاح ✓"
+                    : isCompleting
+                      ? "جاري حفظ التقدم..."
+                      : "تحديد الدرس كمكتمل (+15 XP)"}
+                </span>
               </button>
 
               {nextLesson ? (

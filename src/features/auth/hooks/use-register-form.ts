@@ -90,7 +90,7 @@ export function useRegisterForm() {
 
       const result = await signUp.email({
         name: fullname.trim(),
-        email: `${cleanStd}@lms-platform.edu.eg`,
+        email: `${cleanStd}@elite-academy.edu.eg`,
         password,
         phoneNumber: cleanStd as string,
       });

@@ -53,12 +53,14 @@ export function CanvasPenGrader({
     try {
       const annotatedImages: Array<{ pageIndex: number; dataUrl: string }> = [];
       
-      Object.entries(savedAnnotations).forEach(([indexStr, dataUrl]) => {
-        const idx = parseInt(indexStr, 10);
-        if (idx !== currentPageIndex) {
-          annotatedImages.push({ pageIndex: idx, dataUrl });
-        }
-      });
+      Object.entries(savedAnnotations)
+        .sort(([leftIndex], [rightIndex]) => Number(leftIndex) - Number(rightIndex))
+        .forEach(([indexStr, dataUrl]) => {
+          const idx = parseInt(indexStr, 10);
+          if (idx !== currentPageIndex) {
+            annotatedImages.push({ pageIndex: idx, dataUrl });
+          }
+        });
 
       const canvas = canvasRef.current;
       if (canvas) {
@@ -67,6 +69,8 @@ export function CanvasPenGrader({
           dataUrl: canvas.toDataURL("image/jpeg", 0.85),
         });
       }
+
+      annotatedImages.sort((left, right) => left.pageIndex - right.pageIndex);
 
       if (onSaveGrade) {
         const saved = await onSaveGrade(

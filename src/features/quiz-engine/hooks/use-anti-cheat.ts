@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface UseAntiCheatOptions {
@@ -15,6 +15,35 @@ export function useAntiCheat({
   onWarningSound,
 }: UseAntiCheatOptions) {
   const [tabSwitchWarnings, setTabSwitchWarnings] = useState(0);
+  const handledWarningCountRef = useRef(0);
+  const autoSubmitStartedRef = useRef(false);
+  const onAutoSubmitRef = useRef(onAutoSubmit);
+  const onWarningSoundRef = useRef(onWarningSound);
+
+  useEffect(() => {
+    onAutoSubmitRef.current = onAutoSubmit;
+    onWarningSoundRef.current = onWarningSound;
+  }, [onAutoSubmit, onWarningSound]);
+
+  const autoSubmitOnce = useCallback((message: string) => {
+    if (autoSubmitStartedRef.current) return;
+    autoSubmitStartedRef.current = true;
+    toast.error(message);
+    onAutoSubmitRef.current();
+  }, []);
+
+  useEffect(() => {
+    if (isSubmitted || tabSwitchWarnings <= handledWarningCountRef.current) return;
+
+    handledWarningCountRef.current = tabSwitchWarnings;
+    onWarningSoundRef.current();
+
+    if (tabSwitchWarnings >= 5) {
+      autoSubmitOnce("عفواً يا بطل! غادرت شاشة الاختبار 5 مرات. تم تسليم إجاباتك تلقائياً.");
+    } else {
+      toast.warning(`انتبه يا بطل 🌟 يرجى البقاء في شاشة الاختبار للتركيز (${tabSwitchWarnings}/5).`);
+    }
+  }, [autoSubmitOnce, isSubmitted, tabSwitchWarnings]);
 
   useEffect(() => {
     if (isSubmitted) return;
@@ -25,22 +54,11 @@ export function useAntiCheat({
       if (blurTimeout || graceTimeout) return;
       
       blurTimeout = setTimeout(() => {
-        setTabSwitchWarnings((prev) => {
-          const updated = prev + 1;
-          onWarningSound();
-          if (updated >= 5) {
-            toast.error("عفواً يا بطل! غادرت شاشة الاختبار 5 مرات. تم تسليم إجاباتك تلقائياً.");
-            onAutoSubmit();
-          } else {
-            toast.warning(`انتبه يا بطل 🌟 يرجى البقاء في شاشة الاختبار للتركيز (${updated}/5).`);
-          }
-          return updated;
-        });
+        setTabSwitchWarnings((previousCount) => previousCount + 1);
       }, 3000);
 
       graceTimeout = setTimeout(() => {
-        toast.error("عفواً يا بطل! غبت عن شاشة الاختبار لفترة طويلة. تم تسليم إجاباتك تلقائياً.");
-        onAutoSubmit();
+        autoSubmitOnce("عفواً يا بطل! غبت عن شاشة الاختبار لفترة طويلة. تم تسليم إجاباتك تلقائياً.");
       }, 8000);
     };
 
@@ -81,9 +99,13 @@ export function useAntiCheat({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [isSubmitted, onAutoSubmit, onWarningSound]);
+  }, [autoSubmitOnce, isSubmitted]);
 
-  const resetWarnings = () => setTabSwitchWarnings(0);
+  const resetWarnings = () => {
+    handledWarningCountRef.current = 0;
+    autoSubmitStartedRef.current = false;
+    setTabSwitchWarnings(0);
+  };
 
   return {
     tabSwitchWarnings,
