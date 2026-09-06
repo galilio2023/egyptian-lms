@@ -126,6 +126,18 @@ export const lesson = pgTable('lesson', {
   index('lesson_unit_id_idx').on(table.unitId),
 ]);
 
+export const lessonProgress = pgTable('lesson_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }).notNull(),
+  lessonId: uuid('lesson_id').references(() => lesson.id, { onDelete: 'cascade' }).notNull(),
+  xpAwarded: integer('xp_awarded').default(15).notNull(),
+  completedAt: timestamp('completed_at').defaultNow().notNull(),
+}, (table) => [
+  index('lesson_progress_user_id_idx').on(table.userId),
+  index('lesson_progress_lesson_id_idx').on(table.lessonId),
+  uniqueIndex('lesson_progress_user_lesson_unique_idx').on(table.userId, table.lessonId),
+]);
+
 // Interactive Quizzes & Exams
 export const quiz = pgTable('quiz', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -240,6 +252,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
   enrollments: many(enrollment),
   orders: many(order),
   quizAttempts: many(quizAttempt),
+  lessonProgress: many(lessonProgress),
   redeemedVouchers: many(voucherCode),
 }));
 
@@ -283,6 +296,18 @@ export const lessonRelations = relations(lesson, ({ one, many }) => ({
     references: [courseUnit.id],
   }),
   quizzes: many(quiz),
+  progress: many(lessonProgress),
+}));
+
+export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
+  user: one(user, {
+    fields: [lessonProgress.userId],
+    references: [user.id],
+  }),
+  lesson: one(lesson, {
+    fields: [lessonProgress.lessonId],
+    references: [lesson.id],
+  }),
 }));
 
 export const quizRelations = relations(quiz, ({ one, many }) => ({
@@ -506,6 +531,5 @@ export const securityAuditLogRelations = relations(securityAuditLog, ({ one }) =
     references: [user.id],
   }),
 }));
-
 
 

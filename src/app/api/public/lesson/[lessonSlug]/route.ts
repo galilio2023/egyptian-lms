@@ -154,6 +154,18 @@ export async function GET(
 
       const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || undefined;
       const canAccessVideo = isEnrolled && !isPrerequisiteBlocked;
+      const [completedProgress] = currentUserId
+        ? await db
+            .select({ id: schema.lessonProgress.id })
+            .from(schema.lessonProgress)
+            .where(
+              and(
+                eq(schema.lessonProgress.userId, currentUserId),
+                eq(schema.lessonProgress.lessonId, dbLesson.id)
+              )
+            )
+            .limit(1)
+        : [];
       const secureVideoUrl = generateBunnyPlaybackUrl({
         provider: dbLesson.videoProvider,
         videoId: dbLesson.videoId,
@@ -167,6 +179,7 @@ export async function GET(
         isLocked: !canAccessVideo,
         isPrerequisiteBlocked,
         prerequisiteMessage,
+        isCompleted: Boolean(completedProgress),
         lesson: {
           id: dbLesson.id,
           unitId: dbLesson.unitId,

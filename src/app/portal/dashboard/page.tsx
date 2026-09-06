@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import { Volume2 } from "lucide-react";
 import { useSession } from "@/lib/auth/auth-client";
 import { 
   INITIAL_UNITS, 
+  INITIAL_LESSONS,
   INITIAL_HOMEWORK_ASSIGNMENTS, 
   INITIAL_HOMEWORK_SUBMISSIONS, 
   INITIAL_LIVE_SESSIONS, 
@@ -19,7 +21,6 @@ import { PwaInstallBanner } from "@/components/ui/pwa-install-banner";
 import { LiveSessionWidget } from "@/features/live-sessions";
 import { HomeworkSubmissionModal } from "@/features/homework";
 import { EgyptianCheckoutModal } from "@/features/checkout";
-import { KidsToysMiniStrip } from "@/components/ui/floating-kids-toys";
 import { Modal } from "@/components/ui/modal";
 import { 
   MascotLionSvg,
@@ -63,18 +64,27 @@ export default function StudentDashboardPage() {
   const [units, setUnits] = useState<MockUnit[]>(INITIAL_UNITS);
   const [checkoutUnit, setCheckoutUnit] = useState<MockUnit | null>(null);
   const [viewAllGrades, setViewAllGrades] = useState(false);
+  const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false);
+  const [nextLesson, setNextLesson] = useState<{
+    title: string;
+    unitTitle: string;
+    durationMinutes: number;
+    slug: string;
+  } | null>(null);
 
   const [studentProfile, setStudentProfile] = useState<{
     gradeLevel: number;
     gradeTitle: string;
     gradeSlug: string;
     xpPoints: number;
+    completedLessons: number;
     parentPhoneNumber?: string;
   }>({
     gradeLevel: 1,
     gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
     gradeSlug: "grade-1",
     xpPoints: 450,
+    completedLessons: 0,
   });
 
   useEffect(() => {
@@ -85,9 +95,13 @@ export default function StudentDashboardPage() {
         if (active) {
           if (data?.profile) setStudentProfile(data.profile);
           if (data?.enrolledUnitIds) setEnrolledUnitIds(data.enrolledUnitIds);
+          if (data && "nextLesson" in data) setNextLesson(data.nextLesson);
+          setEnrollmentsLoaded(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setEnrollmentsLoaded(true);
+      });
 
     fetch("/api/public/landing-data")
       .then((res) => (res.ok ? res.json() : null))
@@ -116,7 +130,7 @@ export default function StudentDashboardPage() {
     nextLevelXp: Math.max(600, Math.ceil(((studentProfile.xpPoints || 450) + 150) / 200) * 200),
     levelNumber: Math.max(1, Math.floor((studentProfile.xpPoints || 450) / 150) + 1),
     streakDays: 4,
-    completedLessons: 6,
+    completedLessons: studentProfile.completedLessons,
     activeQuizzes: 2,
   };
 
@@ -139,6 +153,11 @@ export default function StudentDashboardPage() {
         return;
       }
       setRedeemedUnitTitle(data.unitTitle || "الوحدة الدراسية الجديدة");
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+      });
       toast.success("مبروك يا بطل! تم شحن الكارت وتفعيل الوحدة بنجاح في حسابك 🎉");
       setVoucherCodeInput("");
       fetch("/api/student/enrollments")
@@ -155,7 +174,7 @@ export default function StudentDashboardPage() {
 
   const handleSendToMom = () => {
     const msg = encodeURIComponent(
-      `السلام عليكم يا ماما! ❤️\nأنا بطل أكاديمية إيليت: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nالمعلم المشرف بيشجعني وبيقولي شاطر جداً وبطل الأكاديمية! 🥳🎉`
+      `السلام عليكم يا ماما! ❤️\nأنا بطل المنصة التعليمية: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nالمعلم المشرف بيشجعني وبيقولي شاطر جداً وبطل المنصة! 🥳🎉`
     );
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
@@ -170,16 +189,23 @@ export default function StudentDashboardPage() {
 
       {/* 3. Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
+        {/* Next Lesson Banner - Moved up as top priority */}
+        <div className="flex items-center gap-2 pt-4">
+          <span className="text-sm font-black text-slate-900">🎯 محطتك التالية يا بطل</span>
+          <div className="flex-1 h-px bg-purple-200" />
+        </div>
+        <section className="border-2 border-purple-400 animate-pulse shadow-lg shadow-purple-500/20 rounded-3xl">
+          <NextLessonBanner
+            lessonTitle={nextLesson?.title ?? INITIAL_LESSONS[0].title}
+            unitTitle={nextLesson?.unitTitle ?? INITIAL_UNITS[0].title}
+            durationMinutes={nextLesson?.durationMinutes ?? Number.parseInt(INITIAL_LESSONS[0].videoDuration, 10)}
+            lessonSlug={nextLesson?.slug ?? INITIAL_LESSONS[0].slug}
+            isCompleted={enrollmentsLoaded && !nextLesson}
+          />
+        </section>
+
         {/* Welcome Hero */}
         <StudentHeroCard student={currentStudent} activeMascot={selectedMascot} />
-
-        {/* Kids Toys Ribbon */}
-        <div className="modern-card p-4 bg-white/90 backdrop-blur-md border-2 border-purple-100 shadow-sm text-center">
-          <span className="text-xs font-black text-purple-900 block mb-1">
-            🌟 شخصيات وألعاب الأكاديمية المرحة للأبطال الصغار
-          </span>
-          <KidsToysMiniStrip />
-        </div>
 
         {/* Live Session & Homework Interactive Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -195,22 +221,30 @@ export default function StudentDashboardPage() {
           </div>
         </div>
 
-        {/* Mascot / Avatar Selector */}
-        <MascotSelectorBar
-          mascots={MASCOTS}
-          selectedMascot={selectedMascot}
-          onSelectMascot={setSelectedMascot}
+        {/* Courses Grid */}
+        <div id="courses" className="flex items-center gap-2 pt-4">
+          <span className="text-sm font-black text-slate-900">📚 وحداتك الدراسية</span>
+          <div className="flex-1 h-px bg-purple-200" />
+        </div>
+        <CoursesGridSection
+          units={units}
+          enrolledUnitIds={enrolledUnitIds}
+          student={currentStudent}
+          viewAllGrades={viewAllGrades}
+          onToggleViewAllGrades={() => setViewAllGrades(!viewAllGrades)}
+          onSelectLockedUnit={setCheckoutUnit}
         />
 
         {/* Quick Action Super-Pills */}
+        <div className="flex items-center gap-2 pt-4">
+          <span className="text-sm font-black text-slate-900">⚡ أدوات البطل السريعة</span>
+          <div className="flex-1 h-px bg-purple-200" />
+        </div>
         <QuickActionPills
           onOpenSoundboard={() => setShowSoundboardModal(true)}
           onOpenCertificate={() => setShowCertificateModal(true)}
           onSendToMom={handleSendToMom}
         />
-
-        {/* Weekly Checklist */}
-        <WeeklyMissionsCard studentName={currentStudent.name} />
 
         {/* Center Voucher Scratch Card Redemption */}
         <CenterVoucherCard
@@ -221,17 +255,14 @@ export default function StudentDashboardPage() {
           redeemedUnitTitle={redeemedUnitTitle}
         />
 
-        {/* Next Lesson Banner */}
-        <NextLessonBanner />
+        {/* Weekly Checklist */}
+        <WeeklyMissionsCard studentName={currentStudent.name} />
 
-        {/* Courses Grid */}
-        <CoursesGridSection
-          units={units}
-          enrolledUnitIds={enrolledUnitIds}
-          student={currentStudent}
-          viewAllGrades={viewAllGrades}
-          onToggleViewAllGrades={() => setViewAllGrades(!viewAllGrades)}
-          onSelectLockedUnit={setCheckoutUnit}
+        {/* Mascot / Avatar Selector */}
+        <MascotSelectorBar
+          mascots={MASCOTS}
+          selectedMascot={selectedMascot}
+          onSelectMascot={setSelectedMascot}
         />
       </main>
 

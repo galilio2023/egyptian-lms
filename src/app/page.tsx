@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFloatingButton } from "@/components/layout/whatsapp-floating-btn";
@@ -92,7 +93,7 @@ export default function HomePage() {
           instapayAddress={settings.instapayAddress}
           onClose={() => setSelectedUnit(null)}
           onSuccess={() => {
-            alert("تم تسجيل طلب الاشتراك وتفعيله بنجاح!");
+            toast.success("تم تسجيل طلب الاشتراك وتفعيله بنجاح! 🎉");
             setSelectedUnit(null);
           }}
         />

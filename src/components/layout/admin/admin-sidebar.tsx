@@ -26,9 +26,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <EliteLogoBadge className="w-10 h-10" />
             <div>
               <span className="font-black text-sm text-slate-900 block">
-                لوحة تحكم <span className="text-gradient-purple">إيليت</span>
+                لوحة تحكم <span className="text-gradient-purple">المنصة</span>
               </span>
-              <span className="text-[10px] text-purple-700 font-bold">Elite CMS Studio</span>
+              <span className="text-[10px] text-purple-700 font-bold">Admin CMS Studio</span>
             </div>
           </Link>
         </div>
@@ -46,7 +46,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           href="/"
           className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-bold transition-colors border border-purple-200"
         >
-          <span>عرض موقع الأكاديمية</span>
+          <span>عرض المنصة التعليمية</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
 
