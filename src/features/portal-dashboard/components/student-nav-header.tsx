@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/lib/auth/auth-client";
 import { EliteLogoBadge } from "@/components/ui/illustrated-icons";
@@ -14,6 +17,7 @@ export const StudentNavHeader: React.FC<StudentNavHeaderProps> = ({
   student,
   activeMascot,
 }) => {
+  const router = useRouter();
   const ActiveMascotSvg = activeMascot.SvgComponent;
 
   return (
@@ -50,7 +54,7 @@ export const StudentNavHeader: React.FC<StudentNavHeaderProps> = ({
             </div>
           </div>
           <button
-            onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/"; } } })}
+            onClick={() => signOut({ fetchOptions: { onSuccess: () => { router.push("/"); router.refresh(); } } })}
             className="flex items-center justify-center p-2 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors bg-white border border-rose-100 shadow-sm"
             title="تسجيل الخروج"
           >

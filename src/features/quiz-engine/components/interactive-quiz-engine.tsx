@@ -109,7 +109,6 @@ export function InteractiveQuizEngine({
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.answers && Object.keys(parsed.answers).length > 0) {
-          setSelectedAnswers(parsed.answers);
           selectedAnswersRef.current = parsed.answers;
 
           const elapsedSeconds = Math.floor(
@@ -117,16 +116,22 @@ export function InteractiveQuizEngine({
           );
           const savedTimeLeft = typeof parsed.timeLeft === "number" ? parsed.timeLeft : quiz.timeLimitMinutes * 60;
           const remainingTime = Math.max(0, savedTimeLeft - elapsedSeconds);
-          setTimeLeft(remainingTime);
 
-          if (remainingTime <= 0) {
-            toast.warning("انتهى وقت الاختبار أثناء إغلاق الصفحة! جاري تسليم إجاباتك المحفوظة ⏳");
-            setTimeout(() => {
-              handleSubmitQuiz(parsed.answers);
-            }, 300);
-          } else {
-            toast.info("تم استرجاع إجاباتك السابقة والوقت المتبقي تلقائياً 🛡️");
-          }
+          const timer = setTimeout(() => {
+            setSelectedAnswers(parsed.answers);
+            setTimeLeft(remainingTime);
+
+            if (remainingTime <= 0) {
+              toast.warning("انتهى وقت الاختبار أثناء إغلاق الصفحة! جاري تسليم إجاباتك المحفوظة ⏳");
+              setTimeout(() => {
+                handleSubmitQuiz(parsed.answers);
+              }, 300);
+            } else {
+              toast.info("تم استرجاع إجاباتك السابقة والوقت المتبقي تلقائياً 🛡️");
+            }
+          }, 0);
+
+          return () => clearTimeout(timer);
         }
       }
     } catch {

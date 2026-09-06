@@ -42,34 +42,28 @@ export function ProtectedVideoPlayer({
 
   const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
 
-  const [savedTime, setSavedTime] = useState<number | null>(null);
-  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">("auto");
-
-  useEffect(() => {
+  const [savedTime, setSavedTime] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const time = parseFloat(stored);
-        if (time > 5) setSavedTime(time);
+        if (time > 5) return time;
       }
+    } catch {}
+    return null;
+  });
+  const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">(() => {
+    if (typeof window === "undefined") return "auto";
+    try {
       const dataSaver = localStorage.getItem("elite_data_saver");
-      if (dataSaver === "true") {
-        setQualityMode("low");
-      }
-    } catch {
-      // Ignore storage read error
-    }
-  }, [storageKey]);
+      if (dataSaver === "true") return "low";
+    } catch {}
+    return "auto";
+  });
 
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, { qualityMode });
-
-  // Reset quality mode to auto if native HLS is used (Issue #19)
-  useEffect(() => {
-    if (!isHlsSupported && qualityMode === "low") {
-      setQualityMode("auto");
-    }
-  }, [isHlsSupported, qualityMode]);
 
   const toggleDataSaver = () => {
     if (!isHlsSupported) {

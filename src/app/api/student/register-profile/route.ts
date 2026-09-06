@@ -36,35 +36,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if authenticated session exists
+    // Enforce authenticated session (CWE-284 / CWE-639 IDOR protection)
     const session = await auth.api.getSession({ headers: await headers() });
-    let targetUserId = session?.user?.id;
-
-    // If no session is active yet (e.g. called immediately during registration sequence), lookup user by phone
-    if (!targetUserId) {
-      const [existingUser] = await db
-        .select()
-        .from(schema.user)
-        .where(eq(schema.user.phoneNumber, cleanStdPhone))
-        .limit(1);
-
-      if (existingUser) {
-        targetUserId = existingUser.id;
-      }
-    }
+    const targetUserId = session?.user?.id;
 
     if (!targetUserId) {
-      return NextResponse.json({
-        success: true,
-        message: "تم حفظ الملف الشخصي بنجاح (وضع المعاينة).",
-        profile: {
-          phoneNumber: cleanStdPhone,
-          parentPhoneNumber: cleanParentPhone,
-          governorate: governorate || "cairo",
-          gradeLevel: parseInt(gradeLevel || "1", 10),
-          deviceId: deviceId || "device-default",
-        }
-      });
+      return NextResponse.json(
+        { error: "غير مصرح. يجب تسجيل الدخول لإنشاء أو تحديث الملف الشخصي للطالب." },
+        { status: 401 }
+      );
     }
 
     // Insert or update student profile in database

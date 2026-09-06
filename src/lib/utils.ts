@@ -25,9 +25,15 @@ export function validateEgyptianPhone(phone: string): string | null {
   const cleaned = phone.replace(/\D/g, '');
   let normalized = cleaned;
 
-  // Strip country code variants: 002010..., 2010...
-  if (cleaned.startsWith('002') && cleaned.length === 14) {
+  // Strip country code variants: 0020..., 200..., 20..., 0...
+  if (cleaned.startsWith('00200') && cleaned.length === 15) {
+    normalized = '0' + cleaned.slice(5);
+  } else if (cleaned.startsWith('0020') && cleaned.length === 14) {
     normalized = '0' + cleaned.slice(4);
+  } else if (cleaned.startsWith('002') && cleaned.length === 14) {
+    normalized = '0' + cleaned.slice(4);
+  } else if (cleaned.startsWith('200') && cleaned.length === 13) {
+    normalized = '0' + cleaned.slice(3);
   } else if (cleaned.startsWith('20') && cleaned.length === 12) {
     normalized = '0' + cleaned.slice(2);
   } else if (cleaned.startsWith('0') && cleaned.length === 11) {

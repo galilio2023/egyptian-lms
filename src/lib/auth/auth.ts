@@ -5,7 +5,7 @@ import { db } from "../db";
 import * as schema from "../db/schema";
 
 if (!process.env.BETTER_AUTH_SECRET && process.env.NODE_ENV === "production") {
-  console.warn("⚠️ BETTER_AUTH_SECRET is not configured. Please set BETTER_AUTH_SECRET in your production environment variables.");
+  throw new Error("FATAL: BETTER_AUTH_SECRET is not configured in production environment variables.");
 }
 
 export const auth = betterAuth({
