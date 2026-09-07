@@ -1486,6 +1486,15 @@ export interface MockPlatformSettings {
     badgeText: string;
     orderIndex: number;
   }>;
+  enableHeroToys: boolean;
+  enableHeroPhonicsStrip: boolean;
+  enableMascotCards: boolean;
+  themeVibe: 'playful_kids' | 'academic_elite' | 'modern_vibrant' | 'science_stem' | 'cyber_gamer' | 'thanawya_prep' | 'midnight_luxury' | 'minimal_clean';
+  toySquad: 'dino_safari' | 'space_galaxy' | 'magic_unicorns' | 'magma_heroes' | 'all_toys';
+  accentColorPalette: 'purple' | 'blue' | 'emerald' | 'amber' | 'rose';
+  backgroundStyle: 'default_gradient' | 'warm_playful' | 'academic_blue' | 'cosmic_purple' | 'emerald_oasis' | 'doodle_pattern' | 'sunset_rose' | 'custom_image';
+  customBackgroundUrl?: string;
+  cardVibeStyle: 'cartoon_playful' | 'glass_glow' | 'modern_flat' | 'sharp_luxury' | 'soft_neumorphic';
   updatedAt?: Date;
 }
 
@@ -1503,6 +1512,15 @@ export const INITIAL_PLATFORM_SETTINGS: MockPlatformSettings = {
   vodafoneCashNumber: '01000000000',
   instapayAddress: 'academy@instapay',
   heroVideoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+  enableHeroToys: true,
+  enableHeroPhonicsStrip: true,
+  enableMascotCards: true,
+  themeVibe: 'playful_kids',
+  toySquad: 'all_toys',
+  accentColorPalette: 'purple',
+  backgroundStyle: 'default_gradient',
+  customBackgroundUrl: '',
+  cardVibeStyle: 'cartoon_playful',
   sampleLectures: [
     {
       id: 'samp-1',

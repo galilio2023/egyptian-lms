@@ -49,12 +49,51 @@ export default function HomePage() {
     };
   }, []);
 
+  // Dynamic Background resolution based on admin vibe settings
+  const getBackgroundStyle = () => {
+    if (settings.backgroundStyle === "custom_image" && settings.customBackgroundUrl) {
+      return { backgroundImage: `url('${settings.customBackgroundUrl}')` };
+    }
+    if (settings.backgroundStyle === "warm_playful") {
+      return {
+        background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 40%, #ffedd5 100%)",
+      };
+    }
+    if (settings.backgroundStyle === "academic_blue") {
+      return {
+        background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ede9fe 100%)",
+      };
+    }
+    if (settings.backgroundStyle === "cosmic_purple") {
+      return {
+        background: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 40%, #fae8ff 100%)",
+      };
+    }
+    if (settings.backgroundStyle === "emerald_oasis") {
+      return {
+        background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #f0fdf4 100%)",
+      };
+    }
+    if (settings.backgroundStyle === "doodle_pattern") {
+      return {
+        background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e0e7ff 100%)",
+      };
+    }
+    if (settings.backgroundStyle === "sunset_rose") {
+      return {
+        background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fdf2f8 100%)",
+      };
+    }
+    // Default fallback to hero artwork
+    return { backgroundImage: "url('/images/hero-bg.jpg')" };
+  };
+
   return (
     <div className="min-h-screen flex flex-col text-slate-900 overflow-x-hidden relative">
       {/* Background artwork & frosted overlay */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20 scale-105 pointer-events-none"
-        style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-20 scale-105 pointer-events-none transition-all duration-700"
+        style={getBackgroundStyle()}
       />
       <div className="fixed inset-0 bg-white/35 backdrop-blur-[0.5px] -z-10 pointer-events-none" />
 
@@ -65,7 +104,10 @@ export default function HomePage() {
       />
 
       {/* Landing Feature Sections */}
-      <HeroSection teacherName={settings.teacherNameArabic} />
+      <HeroSection 
+        teacherName={settings.teacherNameArabic} 
+        settings={settings}
+      />
       <PreviewVideoSection settings={settings} />
       <SampleLecturesSection sampleLectures={settings.sampleLectures} />
       <TeacherBioSection

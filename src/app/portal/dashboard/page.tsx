@@ -11,9 +11,11 @@ import {
   INITIAL_HOMEWORK_ASSIGNMENTS, 
   INITIAL_HOMEWORK_SUBMISSIONS, 
   INITIAL_LIVE_SESSIONS, 
+  INITIAL_PLATFORM_SETTINGS,
   MockHomeworkAssignment, 
   MockHomeworkSubmission,
-  MockUnit
+  MockUnit,
+  MockPlatformSettings
 } from "@/lib/db/mock-data";
 import { PhonicsSoundBoard } from "@/features/phonics";
 import { PrintableCertificate } from "@/features/certificates";
@@ -65,6 +67,7 @@ export default function StudentDashboardPage() {
   const [checkoutUnit, setCheckoutUnit] = useState<MockUnit | null>(null);
   const [viewAllGrades, setViewAllGrades] = useState(false);
   const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false);
+  const [settings, setSettings] = useState<MockPlatformSettings>(INITIAL_PLATFORM_SETTINGS);
   const [nextLesson, setNextLesson] = useState<{
     title: string;
     unitTitle: string;
@@ -116,8 +119,13 @@ export default function StudentDashboardPage() {
     fetch("/api/public/landing-data")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (active && data?.units && data.units.length > 0) {
-          setUnits(data.units);
+        if (active) {
+          if (data?.units && data.units.length > 0) {
+            setUnits(data.units);
+          }
+          if (data?.settings) {
+            setSettings(data.settings);
+          }
         }
       })
       .catch(() => {});
@@ -224,7 +232,11 @@ export default function StudentDashboardPage() {
         </section>
 
         {/* Welcome Hero */}
-        <StudentHeroCard student={currentStudent} activeMascot={selectedMascot} />
+        <StudentHeroCard 
+          student={currentStudent} 
+          activeMascot={selectedMascot} 
+          showToys={settings.enableHeroToys !== false}
+        />
 
         {/* Live Session & Homework Interactive Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">

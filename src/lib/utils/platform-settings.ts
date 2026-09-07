@@ -43,6 +43,15 @@ export async function getPlatformSettings(): Promise<MockPlatformSettings> {
         instapayAddress: dbSettings.instapayAddress || INITIAL_PLATFORM_SETTINGS.instapayAddress,
         heroVideoUrl: dbSettings.heroVideoUrl || INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
         sampleLectures: dbSettings.sampleLectures || INITIAL_PLATFORM_SETTINGS.sampleLectures,
+        enableHeroToys: dbSettings.enableHeroToys !== undefined && dbSettings.enableHeroToys !== null ? dbSettings.enableHeroToys : INITIAL_PLATFORM_SETTINGS.enableHeroToys,
+        enableHeroPhonicsStrip: dbSettings.enableHeroPhonicsStrip !== undefined && dbSettings.enableHeroPhonicsStrip !== null ? dbSettings.enableHeroPhonicsStrip : INITIAL_PLATFORM_SETTINGS.enableHeroPhonicsStrip,
+        enableMascotCards: dbSettings.enableMascotCards !== undefined && dbSettings.enableMascotCards !== null ? dbSettings.enableMascotCards : INITIAL_PLATFORM_SETTINGS.enableMascotCards,
+        themeVibe: (dbSettings.themeVibe as MockPlatformSettings['themeVibe']) || INITIAL_PLATFORM_SETTINGS.themeVibe,
+        toySquad: (dbSettings.toySquad as MockPlatformSettings['toySquad']) || INITIAL_PLATFORM_SETTINGS.toySquad,
+        accentColorPalette: (dbSettings.accentColorPalette as MockPlatformSettings['accentColorPalette']) || INITIAL_PLATFORM_SETTINGS.accentColorPalette,
+        backgroundStyle: (dbSettings.backgroundStyle as MockPlatformSettings['backgroundStyle']) || INITIAL_PLATFORM_SETTINGS.backgroundStyle,
+        customBackgroundUrl: dbSettings.customBackgroundUrl ?? INITIAL_PLATFORM_SETTINGS.customBackgroundUrl,
+        cardVibeStyle: (dbSettings.cardVibeStyle as MockPlatformSettings['cardVibeStyle']) || INITIAL_PLATFORM_SETTINGS.cardVibeStyle,
       };
       cacheTimestamp = now;
       return cachedSettings;

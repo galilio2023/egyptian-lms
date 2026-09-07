@@ -10,6 +10,7 @@ import {
   AcademyBrandingSection,
   HeroVideoSection,
   CarouselLecturesSection,
+  VibeThemeSection,
   AddSampleLectureModal,
   useAdminSettings,
 } from "@/features/admin-settings";
@@ -21,6 +22,7 @@ export default function AdminSettingsPage() {
     isSaving,
     handleFieldChange,
     saveSettings,
+    resetSettings,
     addSampleLecture,
     removeSampleLecture,
   } = useAdminSettings();
@@ -73,13 +75,21 @@ export default function AdminSettingsPage() {
           onChange={handleFieldChange}
         />
 
-        {/* 3. Hero Video */}
+        {/* 3. Visual Vibe, Hero Toys & Standard Reset */}
+        <VibeThemeSection
+          settings={settings}
+          onChange={handleFieldChange}
+          onResetToStandard={resetSettings}
+          isSaving={isSaving}
+        />
+
+        {/* 4. Hero Video */}
         <HeroVideoSection
           heroVideoUrl={settings.heroVideoUrl}
           onChange={(val) => handleFieldChange("heroVideoUrl", val)}
         />
 
-        {/* 4. Carousel Sample Lectures */}
+        {/* 5. Carousel Sample Lectures */}
         <CarouselLecturesSection
           lectures={settings.sampleLectures || []}
           onDeleteLecture={removeSampleLecture}

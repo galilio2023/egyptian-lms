@@ -11,11 +11,13 @@ import { StudentDashboardProfile, MascotItem } from "../types";
 export interface StudentHeroCardProps {
   student: StudentDashboardProfile;
   activeMascot: MascotItem;
+  showToys?: boolean;
 }
 
 export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
   student,
   activeMascot,
+  showToys = true,
 }) => {
   const ActiveMascotSvg = activeMascot.SvgComponent;
   const xpPercentage = Math.min(100, Math.round((student.xpPoints / student.nextLevelXp) * 100));
@@ -27,12 +29,16 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
       <div className="absolute top-0 start-1/3 w-64 h-64 bg-pink-400/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Cheerful Decorative Toys positioned safely in open center space */}
-      <div className="absolute -top-2 end-1/3 w-20 h-20 sm:w-28 sm:h-28 pointer-events-none opacity-15 sm:opacity-25 animate-float-slow">
-        <ToyDinoDinoSvg className="w-full h-full drop-shadow-md" />
-      </div>
-      <div className="absolute -bottom-3 start-1/2 -translate-x-1/2 w-16 h-16 sm:w-24 sm:h-24 pointer-events-none opacity-15 sm:opacity-20 animate-float-reverse">
-        <ToyPrincessUnicornSvg className="w-full h-full drop-shadow-md" />
-      </div>
+      {showToys && (
+        <>
+          <div className="absolute -top-2 end-1/3 w-20 h-20 sm:w-28 sm:h-28 pointer-events-none opacity-15 sm:opacity-25 animate-float-slow">
+            <ToyDinoDinoSvg className="w-full h-full drop-shadow-md" />
+          </div>
+          <div className="absolute -bottom-3 start-1/2 -translate-x-1/2 w-16 h-16 sm:w-24 sm:h-24 pointer-events-none opacity-15 sm:opacity-20 animate-float-reverse">
+            <ToyPrincessUnicornSvg className="w-full h-full drop-shadow-md" />
+          </div>
+        </>
+      )}
 
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-3.5 w-full md:w-auto">

@@ -49,6 +49,26 @@ export function useAdminSettings() {
     }));
   };
 
+  const resetSettings = async () => {
+    setIsSaving(true);
+    try {
+      const result = await executeAdminAction(
+        "reset_settings",
+        {},
+        {
+          successMessage: "✨ تمت استعادة كافة الإعدادات القياسية الافتراضية بنجاح!",
+          errorMessage: "حدث خطأ أثناء استعادة الإعدادات الافتراضية.",
+        }
+      );
+      if (result.success) {
+        setSettings(INITIAL_PLATFORM_SETTINGS);
+      }
+      return result.success;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return {
     settings,
     isLoading,
@@ -56,6 +76,7 @@ export function useAdminSettings() {
     refetch,
     handleFieldChange,
     saveSettings,
+    resetSettings,
     addSampleLecture,
     removeSampleLecture,
   };
