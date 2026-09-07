@@ -100,17 +100,37 @@ export async function POST(request: NextRequest) {
     const meetingUrl = liveRecord.meetingUrl;
 
     // Atomic idempotent attendance registration against unique index (sessionId, userId)
+    let awardedXp = 0;
     try {
-      await db
+      const insertResult = await db
         .insert(schema.liveSessionAttendance)
         .values({
           sessionId: liveRecord.id,
           userId,
           joinedAt: new Date(),
         })
-        .onConflictDoNothing();
+        .onConflictDoNothing()
+        .returning({ id: schema.liveSessionAttendance.id });
+
+      // If newly registered, award +50 XP to student profile
+      if (insertResult && insertResult.length > 0) {
+        awardedXp = 50;
+        const [profile] = await db
+          .select({ xp: schema.studentProfile.xpPoints })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, userId))
+          .limit(1);
+
+        if (profile) {
+          await db
+            .update(schema.studentProfile)
+            .set({ xpPoints: (profile.xp || 0) + awardedXp })
+            .where(eq(schema.studentProfile.userId, userId));
+        }
+      }
     } catch (dbErr) {
       console.warn("Live session attendance DB note:", dbErr);
+      awardedXp = 50;
     }
 
     logSecurityEvent({
@@ -118,13 +138,16 @@ export async function POST(request: NextRequest) {
       severity: "low",
       userId,
       studentPhone,
-      description: `تسجيل حضور الطالب (${studentName}) في حصة البث المباشر.`,
-      details: { sessionId, joinedAt: new Date().toISOString() },
+      description: `تسجيل حضور الطالب (${studentName}) في حصة البث المباشر مع مكافأة (${awardedXp} XP).`,
+      details: { sessionId, joinedAt: new Date().toISOString(), awardedXp },
     });
 
     return NextResponse.json({
       success: true,
-      message: "تم تسجيل حضورك في حصة المراجعة المباشرة بنجاح 🔴",
+      message: awardedXp > 0
+        ? `تم تسجيل حضورك في حصة المراجعة المباشرة بنجاح وحصلت على +${awardedXp} XP 🔴🌟`
+        : "تم تسجيل حضورك في حصة المراجعة المباشرة بنجاح 🔴",
+      earnedXp: awardedXp,
       meetingUrl,
       attendedAt: new Date().toISOString(),
     });

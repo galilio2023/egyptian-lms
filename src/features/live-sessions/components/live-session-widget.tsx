@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import { 
   Video, 
   Clock, 
@@ -103,7 +104,12 @@ export function LiveSessionWidget({
         return;
       }
 
-      toast.success(data.message || "تم تسجيل حضورك في الحصة بنجاح 🔴");
+      if (data.earnedXp && data.earnedXp > 0) {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+        toast.success(`أحسنت يا بطل! تم تسجيل حضورك في البث المباشر وحصلت على +${data.earnedXp} XP 🔴🌟`);
+      } else {
+        toast.success(data.message || "تم تسجيل حضورك في الحصة بنجاح 🔴");
+      }
       const targetUrl = data.meetingUrl || session.meetingUrl;
 
       if (newWindow) {

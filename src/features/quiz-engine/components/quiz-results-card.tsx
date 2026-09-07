@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { 
   XCircle, 
   Sparkles, 
   ExternalLink, 
   RefreshCw, 
-  Volume2 
+  Volume2,
+  PlayCircle 
 } from "lucide-react";
 import { 
   ChampionCupSvg, 
@@ -178,6 +180,17 @@ export function QuizResultsCard({
                   <p className="text-[11px] text-slate-500 pt-1">
                     💡 التوضيح: {res.explanation}
                   </p>
+                )}
+                {!isCorrect && q.remedialLessonSlug && (
+                  <div className="pt-2 flex justify-end">
+                    <Link
+                      href={`/portal/lesson/${q.remedialLessonSlug}?t=${q.remedialTimestampSeconds || 0}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-extrabold text-[11px] border border-purple-200 transition-all hover:scale-[1.02] shadow-2xs"
+                    >
+                      <PlayCircle className="w-3.5 h-3.5 text-purple-600" />
+                      <span>🎬 راجع فقرة الشرح في المحاضرة ({Math.floor((q.remedialTimestampSeconds || 0) / 60)}:{(q.remedialTimestampSeconds || 0) % 60 < 10 ? '0' : ''}{(q.remedialTimestampSeconds || 0) % 60})</span>
+                    </Link>
+                  </div>
                 )}
               </div>
             );

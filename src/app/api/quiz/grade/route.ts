@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { INITIAL_QUIZ } from "@/lib/db/mock-data";
+import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and, or, isNull, gt } from "drizzle-orm";
@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     // Require session ownership for targetUserId (IDOR CWE-639 protection)
     const targetUserId = session?.user?.id || null;
 
-    // Attempt to load questions from database if UUID format
-    let quiz = INITIAL_QUIZ;
-    let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = INITIAL_QUIZ.questions;
+    // Attempt to load questions from database if UUID format, or fallback to adventure quiz map / initial quiz
+    let quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
+    let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = quiz.questions;
     let maxAttempts = 3;
     let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
 

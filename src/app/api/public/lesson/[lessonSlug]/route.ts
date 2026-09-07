@@ -103,7 +103,7 @@ export async function GET(
       ]);
 
       // Verify entitlement
-      let isEnrolled = Boolean(dbLesson.isFreePreview || (activeEnrollmentList && activeEnrollmentList.length > 0));
+      const isEnrolled = Boolean(dbLesson.isFreePreview || (activeEnrollmentList && activeEnrollmentList.length > 0));
 
       // Check prerequisite gating
       let isPrerequisiteBlocked = false;
