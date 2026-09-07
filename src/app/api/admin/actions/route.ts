@@ -420,7 +420,6 @@ export async function POST(request: NextRequest) {
     const ADMIN_TEACHER_ONLY_ACTIONS = [
       "approve_order",
       "reject_order",
-      "reset_device",
       "toggle_ban",
       "ban_student",
       "unban_student",
@@ -578,6 +577,23 @@ export async function POST(request: NextRequest) {
         } catch (err) {
           console.warn("DB session reset note:", err);
         }
+
+        logSecurityEvent({
+          eventType: "device_transferred",
+          severity: userRole === "assistant" ? "medium" : "low",
+          userId: session.user.id,
+          studentPhone,
+          description: userRole === "assistant"
+            ? `قام المساعد (${session.user.name || "المساعد"}) بفك ربط جهاز الطالب (${studentPhone || studentId}) بناءً على تفويض ولي الأمر.`
+            : `قام المعلم المشرف (${session.user.name}) بفك ربط جهاز الطالب (${studentPhone || studentId}).`,
+          details: {
+            performedByUserId: session.user.id,
+            performedByRole: userRole,
+            performedByName: session.user.name,
+            targetStudentId: studentId,
+            targetStudentPhone: studentPhone,
+          },
+        });
 
         return NextResponse.json({
           success: true,

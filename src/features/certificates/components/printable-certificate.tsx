@@ -19,6 +19,7 @@ export interface PrintableCertificateProps {
   instructorName?: string;
   instructorTitle?: string;
   academyName?: string;
+  certificateHash?: string;
   onClose?: () => void;
 }
 
@@ -32,9 +33,11 @@ export function PrintableCertificate({
   instructorName = "المعلم المشرف",
   instructorTitle = "المشرف الأكاديمي وكبير المعلمين",
   academyName = "أكاديمية إيليت",
+  certificateHash,
   onClose,
 }: PrintableCertificateProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
+  const certId = certificateHash || `CERT-${Math.abs(studentName.split("").reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)).toString(16).toUpperCase()}-2026`;
 
   const handlePrint = () => {
     window.print();
@@ -157,11 +160,16 @@ export function PrintableCertificate({
                   <span className="text-xs font-black text-slate-800">{issuedDate}</span>
                 </div>
 
-                {/* Golden Official Stamp */}
-                <div className="w-20 h-20 rounded-full border-4 border-double border-amber-500 bg-amber-50 flex flex-col items-center justify-center text-center p-1 shadow-md rotate-[-6deg]">
-                  <AdminShieldCrownSvg className="w-6 h-6 text-amber-600" />
-                  <span className="text-[8px] font-black text-amber-900 leading-tight">معتمد رسمياً</span>
-                  <span className="text-[7px] text-amber-700 font-bold">ELITE VERIFIED</span>
+                {/* Golden Official Stamp & Verification Hash */}
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full border-4 border-double border-amber-500 bg-amber-50 flex flex-col items-center justify-center text-center p-1 shadow-md rotate-[-6deg]">
+                    <AdminShieldCrownSvg className="w-6 h-6 text-amber-600" />
+                    <span className="text-[8px] font-black text-amber-900 leading-tight">معتمد رسمياً</span>
+                    <span className="text-[7px] text-amber-700 font-bold">ELITE VERIFIED</span>
+                  </div>
+                  <span className="mt-1 text-[8px] font-mono text-slate-400 font-semibold uppercase tracking-wider" dir="ltr">
+                    ID: {certId}
+                  </span>
                 </div>
 
                 {/* Lecturer Signature */}
