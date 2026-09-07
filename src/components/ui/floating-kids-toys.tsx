@@ -41,11 +41,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 1. Top-Right: Smiling Emerald Dino (Responsive: w-16 on mobile, w-28 on tablet, w-40 on desktop) */}
       <div 
         onClick={() => playToySound("Dinosaur", "D says duh, duh, Dinosaur!")}
-        className="absolute top-2 end-2 sm:top-6 sm:end-8 lg:end-14 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-2 end-2 sm:top-6 sm:end-6 lg:end-8 xl:end-12 2xl:end-16 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي لداينو 🦕"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-40 lg:h-40 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 drop-shadow-2xl">
             <ToyDinoDinoSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-emerald-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-emerald-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -57,11 +57,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 2. Mid-Right: Friendly Alligator with Glasses (Visible on ALL devices) */}
       <div 
         onClick={() => playToySound("Alligator", "A says ah, ah, Alligator!")}
-        className="absolute top-[38%] -translate-y-1/2 end-1.5 sm:end-8 lg:end-14 animate-toy-wiggle transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-[38%] -translate-y-1/2 end-1.5 sm:end-6 lg:end-8 xl:end-10 2xl:end-14 animate-toy-wiggle transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي للتمساح 🐊"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-28 sm:h-28 lg:w-38 lg:h-38 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyAlligatorGatorSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-green-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-green-600/30 border border-white group-hover:scale-105 transition-transform">
@@ -73,11 +73,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 3. Bottom-Right: Dreamy Princess Unicorn (Visible on ALL devices) */}
       <div 
         onClick={() => playToySound("Magic Unicorn", "U says yoo, Unicorn!")}
-        className="absolute top-[72%] -translate-y-1/2 end-1.5 sm:bottom-6 sm:top-auto sm:end-8 lg:end-16 animate-float-reverse transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-[72%] -translate-y-1/2 end-1.5 sm:bottom-6 sm:top-auto sm:end-6 lg:end-8 xl:end-12 2xl:end-16 animate-float-reverse transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي لليونيكورن 🦄"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-28 sm:h-28 lg:w-36 lg:h-36 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyPrincessUnicornSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-pink-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-pink-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -91,11 +91,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 4. Top-Left: Joyful Happy Pear (Responsive: w-16 on mobile, w-28 on tablet, w-40 on desktop) */}
       <div 
         onClick={() => playToySound("Pear", "P says puh, puh, Pear!")}
-        className="absolute top-2 start-1.5 sm:top-6 sm:start-8 lg:start-14 animate-float-reverse transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-2 start-1.5 sm:top-6 sm:start-6 lg:start-8 xl:start-12 2xl:start-16 animate-float-reverse transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي للكمثرى 🍐"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-40 lg:h-40 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 drop-shadow-2xl">
             <ToyHappyPearSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-lime-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-lime-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -107,11 +107,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 5. Mid-Left: Fiery Magma Apple */}
       <div 
         onClick={() => playToySound("Magma Apple", "A says ah, ah, Apple!")}
-        className="absolute top-[38%] -translate-y-1/2 start-1.5 sm:start-8 lg:start-14 animate-pulse-soft transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-[38%] -translate-y-1/2 start-1.5 sm:start-6 lg:start-8 xl:start-10 2xl:start-14 animate-pulse-soft transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي لتفاحة ماجما 🍎"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-38 lg:h-38 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyMagmaAppleSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-gradient-to-r from-red-600 to-amber-500 text-white text-[10px] sm:text-xs font-black px-3 py-0.5 rounded-full shadow-lg shadow-red-600/30 border border-amber-200 group-hover:scale-105 transition-transform">
@@ -123,11 +123,11 @@ export function FloatingKidsToysHeroDecor() {
       {/* 6. Lower-Left: Fluffy Honey Teddy Bear (Visible on ALL devices) */}
       <div 
         onClick={() => playToySound("Teddy Bear", "B says buh, buh, Bear!")}
-        className="absolute top-[72%] -translate-y-1/2 start-1.5 sm:start-8 lg:start-14 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="absolute top-[72%] -translate-y-1/2 start-1.5 sm:start-6 lg:start-8 xl:start-12 2xl:start-16 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي لدبدوب تيدي 🧸"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-28 sm:h-28 lg:w-36 lg:h-36 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyTeddyBearSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-amber-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-amber-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -139,7 +139,7 @@ export function FloatingKidsToysHeroDecor() {
       {/* 7. Bottom-Left: Cheerful Adventure Rocket (Desktop Only) */}
       <div 
         onClick={() => playToySound("Rocket", "R says rrr, Rocket blast off!")}
-        className="hidden lg:block absolute bottom-6 start-8 lg:start-16 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-10 cursor-pointer"
+        className="hidden xl:block absolute bottom-6 start-8 xl:start-14 2xl:start-20 animate-float-slow transition-transform hover:scale-110 active:scale-90 active:rotate-3 pointer-events-auto z-0 cursor-pointer"
         title="انقر للاستماع للنطق الصوتي للصاروخ 🚀"
       >
         <div className="relative group text-center">

@@ -228,7 +228,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ teacherName, settings 
       {showToys && <FloatingKidsToysHeroDecor />}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center max-w-3xl mx-auto space-y-6">
+        <div className="text-center max-w-3xl lg:max-w-5xl mx-auto space-y-6">
           
           {/* Top Pill Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-purple-200 text-xs font-bold text-purple-900 shadow-md shadow-purple-500/10">
@@ -265,7 +265,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ teacherName, settings 
 
           {/* Hero Mascot Champions Spotlight (Conditionally Rendered by Squad) */}
           {showMascotCards && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 py-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3.5 sm:gap-4 lg:gap-5 py-2 max-w-5xl mx-auto">
               {activeMascotSquad.map((champion, idx) => (
                 <MascotChampionCard
                   key={idx}
