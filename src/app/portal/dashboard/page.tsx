@@ -90,12 +90,22 @@ export default function StudentDashboardPage() {
   useEffect(() => {
     let active = true;
     fetch("/api/student/enrollments")
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (res.status === 403) {
+          const errData = await res.json().catch(() => ({}));
+          if (errData.isDeviceLocked || errData.isBanned) {
+            toast.error(errData.error || "تم قفل الجلسة على هذا الجهاز.");
+            window.location.href = "/student-login?reason=device_locked";
+            return null;
+          }
+        }
+        return res.ok ? res.json() : null;
+      })
       .then((data) => {
-        if (active) {
-          if (data?.profile) setStudentProfile(data.profile);
-          if (data?.enrolledUnitIds) setEnrolledUnitIds(data.enrolledUnitIds);
-          if (data && "nextLesson" in data) setNextLesson(data.nextLesson);
+        if (active && data) {
+          if (data.profile) setStudentProfile(data.profile);
+          if (data.enrolledUnitIds) setEnrolledUnitIds(data.enrolledUnitIds);
+          if ("nextLesson" in data) setNextLesson(data.nextLesson);
           setEnrollmentsLoaded(true);
         }
       })
@@ -173,10 +183,19 @@ export default function StudentDashboardPage() {
   };
 
   const handleSendToMom = () => {
+    const rawParentPhone = studentProfile.parentPhoneNumber?.trim();
+    const formattedParentPhone = rawParentPhone
+      ? rawParentPhone.startsWith("2")
+        ? rawParentPhone
+        : `20${rawParentPhone.replace(/^0+/, "")}`
+      : "";
     const msg = encodeURIComponent(
       `السلام عليكم يا ماما! ❤️\nأنا بطل المنصة التعليمية: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nالمعلم المشرف بيشجعني وبيقولي شاطر جداً وبطل المنصة! 🥳🎉`
     );
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
+    const targetUrl = formattedParentPhone
+      ? `https://wa.me/${formattedParentPhone}?text=${msg}`
+      : `https://wa.me/?text=${msg}`;
+    window.open(targetUrl, "_blank");
   };
 
   return (
@@ -188,13 +207,13 @@ export default function StudentDashboardPage() {
       <PwaInstallBanner />
 
       {/* 3. Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-5 sm:space-y-8">
         {/* Next Lesson Banner - Moved up as top priority */}
-        <div className="flex items-center gap-2 pt-4">
+        <div className="flex items-center gap-2 pt-1 sm:pt-4">
           <span className="text-sm font-black text-slate-900">🎯 محطتك التالية يا بطل</span>
           <div className="flex-1 h-px bg-purple-200" />
         </div>
-        <section className="border-2 border-purple-400 animate-pulse shadow-lg shadow-purple-500/20 rounded-3xl">
+        <section>
           <NextLessonBanner
             lessonTitle={nextLesson?.title ?? INITIAL_LESSONS[0].title}
             unitTitle={nextLesson?.unitTitle ?? INITIAL_UNITS[0].title}
@@ -208,7 +227,7 @@ export default function StudentDashboardPage() {
         <StudentHeroCard student={currentStudent} activeMascot={selectedMascot} />
 
         {/* Live Session & Homework Interactive Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <div className="lg:col-span-7">
             <LiveSessionWidget session={INITIAL_LIVE_SESSIONS[0]} studentName={currentStudent.name} />
           </div>
@@ -222,7 +241,7 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* Courses Grid */}
-        <div id="courses" className="flex items-center gap-2 pt-4">
+        <div id="courses" className="flex items-center gap-2 pt-1 sm:pt-4">
           <span className="text-sm font-black text-slate-900">📚 وحداتك الدراسية</span>
           <div className="flex-1 h-px bg-purple-200" />
         </div>
@@ -236,7 +255,7 @@ export default function StudentDashboardPage() {
         />
 
         {/* Quick Action Super-Pills */}
-        <div className="flex items-center gap-2 pt-4">
+        <div className="flex items-center gap-2 pt-1 sm:pt-4">
           <span className="text-sm font-black text-slate-900">⚡ أدوات البطل السريعة</span>
           <div className="flex-1 h-px bg-purple-200" />
         </div>

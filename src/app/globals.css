@@ -35,15 +35,31 @@
   --font-sans: 'Plus Jakarta Sans', 'Cairo', sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: linear-gradient(135deg, #fdf4ff 0%, #f5f3ff 40%, #f0fdf4 100%);
   color: #0f172a;
   font-family: 'Cairo', sans-serif;
   direction: rtl;
   text-align: right;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Vibrant Colorful Card Components */

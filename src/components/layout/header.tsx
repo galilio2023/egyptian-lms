@@ -136,7 +136,7 @@ export function Header({
 
       {/* Mobile Menu Dropdown with Playful Custom SVGs */}
       {mobileMenuOpen && (
-        <div className="lg:hidden max-w-6xl mx-auto mt-2 rounded-3xl bg-white/95 backdrop-blur-xl border-2 border-purple-200 p-5 space-y-3 shadow-2xl animate-in fade-in-50">
+        <div className="lg:hidden max-w-6xl mx-3 sm:mx-6 lg:mx-auto mt-2 rounded-3xl bg-white/95 backdrop-blur-xl border-2 border-purple-200 p-4 sm:p-5 space-y-3 shadow-2xl animate-in fade-in-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-contain">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}

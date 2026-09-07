@@ -14,6 +14,7 @@ interface GraderSidebarProps {
   onChangeNotes: (notes: string) => void;
   onSave: () => void;
   onSaveNext?: () => void;
+  className?: string;
 }
 
 const PRESET_FEEDBACK_PHRASES = [
@@ -48,6 +49,7 @@ export function GraderSidebar({
   onChangeNotes,
   onSave,
   onSaveNext,
+  className = "",
 }: GraderSidebarProps) {
   const handleQuickGrade = (points: number, notes: string) => {
     onChangeScore(points);
@@ -57,7 +59,7 @@ export function GraderSidebar({
   const hasSafeAudio = Boolean(submission.audioVoiceNoteUrl && isSafeAudioUrl(submission.audioVoiceNoteUrl));
 
   return (
-    <div className="lg:col-span-4 xl:col-span-3 p-5 bg-slate-850 flex flex-col justify-between space-y-6 overflow-y-auto">
+    <div className={`lg:col-span-4 xl:col-span-3 p-4 sm:p-5 bg-slate-850 flex flex-col justify-between space-y-6 overflow-y-auto ${className}`}>
       <div className="space-y-5">
         {/* Oral Voice Note Player (if student submitted speaking phonics) */}
         {hasSafeAudio && (

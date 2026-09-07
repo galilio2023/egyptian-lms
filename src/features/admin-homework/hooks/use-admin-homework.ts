@@ -1,8 +1,9 @@
 "use client";
 
-import { useAdminQuery, executeAdminAction } from "@/lib/api/admin-client";
+import { useAdminQuery } from "@/lib/api/admin-client";
 import { useTableFilter } from "@/lib/hooks/use-table-filter";
 import { INITIAL_HOMEWORK_SUBMISSIONS, type MockHomeworkSubmission } from "@/lib/db/mock-data";
+import { toast } from "sonner";
 
 export function useAdminHomework() {
   const { data: submissions, setData: setSubmissions, isLoading, refetch } = useAdminQuery<MockHomeworkSubmission[]>(
@@ -33,24 +34,30 @@ export function useAdminHomework() {
   }) => {
     const sub = submissions.find((s) => s.id === data.submissionId);
 
-    const result = await executeAdminAction(
-      "grade_homework",
-      {
-        submissionId: data.submissionId,
-        score: data.score,
-        feedbackNotes: data.feedbackNotes,
-        annotatedImages: data.annotatedImages,
-        studentName: sub?.studentName,
-        parentPhone: sub?.parentPhone,
-        assignmentTitle: sub?.assignmentTitle,
-      },
-      {
-        successMessage: "✅ تم حفظ تصحيح كراسة الواجب ورصد الدرجة بنجاح!",
-        errorMessage: "حدث خطأ أثناء حفظ التصحيح.",
-      }
-    );
+    try {
+      const response = await fetch("/api/homework/grade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId: data.submissionId,
+          score: data.score,
+          feedbackNotes: data.feedbackNotes,
+          annotatedImages: data.annotatedImages,
+          studentName: sub?.studentName,
+          parentPhone: sub?.parentPhone,
+          assignmentTitle: sub?.assignmentTitle,
+        }),
+      });
 
-    if (result.success) {
+      const resData = await response.json().catch(() => ({}));
+
+      if (!response.ok || resData.error) {
+        toast.error(resData.error || "حدث خطأ أثناء حفظ التصحيح.");
+        return false;
+      }
+
+      toast.success(resData.message || "✅ تم حفظ تصحيح كراسة الواجب ورصد الدرجة بنجاح!");
+
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === data.submissionId
@@ -65,8 +72,10 @@ export function useAdminHomework() {
         )
       );
       return true;
+    } catch {
+      toast.error("حدث خطأ في الاتصال بالخادم أثناء حفظ درجات الواجب.");
+      return false;
     }
-    return false;
   };
 
   return {

@@ -16,6 +16,8 @@ interface FooterProps {
   academyName?: string;
   teacherName?: string;
   teacherNameArabic?: string;
+  youtubeUrl?: string;
+  facebookUrl?: string;
 }
 
 export function Footer({
@@ -25,8 +27,12 @@ export function Footer({
   academyName = "أكاديمية إيليت",
   teacherName = "Lead Instructor",
   teacherNameArabic,
+  youtubeUrl: customYoutube,
+  facebookUrl: customFacebook,
 }: FooterProps = {}) {
   const whatsappNumber = customWhatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201000000000";
+  const youtubeUrl = customYoutube || process.env.NEXT_PUBLIC_YOUTUBE_URL || "https://www.youtube.com/@EliteAcademyEgypt";
+  const facebookUrl = customFacebook || process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://www.facebook.com/EliteAcademyEgypt";
     
   return (
     <footer className="w-full bg-white/80 backdrop-blur-md border-t-2 border-purple-200/80 pt-16 pb-12 text-slate-600 relative overflow-hidden">
@@ -62,19 +68,19 @@ export function Footer({
             <h4 className="text-slate-900 font-black text-base">المراحل الدراسية</h4>
             <ul className="space-y-2.5 text-xs font-bold">
               <li>
-                <Link href="/portal/dashboard" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الأول الابتدائي (Grade 1)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/portal/dashboard" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الثاني الابتدائي (Grade 2)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/portal/dashboard" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الثالث الابتدائي (Grade 3)</span>
                 </Link>
@@ -128,7 +134,7 @@ export function Footer({
             <p className="text-xs text-slate-500 font-medium">شاهد الشروحات التأسيسية والمسابقات الأسبوعية:</p>
             <div className="flex items-center gap-3 pt-1">
               <a
-                href="https://www.youtube.com"
+                href={youtubeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:scale-110 transition-transform drop-shadow-sm"
@@ -138,7 +144,7 @@ export function Footer({
                 <YouTubePlaySvg className="w-9 h-9" />
               </a>
               <a
-                href="https://www.facebook.com"
+                href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:scale-110 transition-transform drop-shadow-sm"

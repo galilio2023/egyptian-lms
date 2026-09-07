@@ -33,6 +33,9 @@ export default function LessonPlayerPage({
   const [quizId, setQuizId] = useState(INITIAL_QUIZ.id);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [playlist, setPlaylist] = useState<MockLesson[]>(() =>
+    INITIAL_LESSONS.filter((l) => l.unitId === unit.id).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+  );
 
   useEffect(() => {
     let active = true;
@@ -43,6 +46,9 @@ export default function LessonPlayerPage({
           setLesson(data.lesson);
           if (data.unit) setUnit(data.unit);
           if (data.quizId) setQuizId(data.quizId);
+          if (data.playlist && Array.isArray(data.playlist) && data.playlist.length > 0) {
+            setPlaylist(data.playlist);
+          }
           setIsEnrolled(Boolean(data.isEnrolled || data.lesson.isFreePreview));
           setIsCompleted(Boolean(data.isCompleted));
         }
@@ -79,6 +85,9 @@ export default function LessonPlayerPage({
         if (data?.lesson) {
           setLesson(data.lesson);
           if (data.unit) setUnit(data.unit);
+          if (data.playlist && Array.isArray(data.playlist) && data.playlist.length > 0) {
+            setPlaylist(data.playlist);
+          }
           setIsEnrolled(Boolean(data.isEnrolled || data.lesson.isFreePreview));
         }
       })
@@ -90,7 +99,7 @@ export default function LessonPlayerPage({
   const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
   const isAccessible = isEnrolled || Boolean(lesson.isFreePreview);
 
-  const unitLessons = INITIAL_LESSONS.filter((l) => l.unitId === unit.id).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+  const unitLessons = playlist.length > 0 ? playlist : INITIAL_LESSONS.filter((l) => l.unitId === unit.id).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
   const currentIndex = unitLessons.findIndex((l) => l.slug === lessonSlug || l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? unitLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex >= 0 && currentIndex < unitLessons.length - 1 ? unitLessons[currentIndex + 1] : null;

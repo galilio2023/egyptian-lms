@@ -31,7 +31,7 @@ export const HonorBoardSection: React.FC = () => {
         </div>
 
         {/* Interactive Grade Selector Tabs */}
-        <div className="flex items-center justify-center gap-2 overflow-x-auto pb-4 mb-10 max-w-full">
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 mb-10 max-w-full no-scrollbar px-2">
           {INITIAL_GRADES.map((g) => (
             <button
               key={g.id}

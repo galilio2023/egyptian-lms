@@ -62,7 +62,7 @@ export function QuizActiveHeader({
       {/* Question Progress Dots */}
       <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
         <span>السؤال {currentIndex + 1} من {totalQuestions}</span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar py-1">
           {quiz.questions.map((q, idx) => {
             const isAnswered = !!selectedAnswers[q.id];
             const isCurrent = idx === currentIndex;
@@ -71,15 +71,19 @@ export function QuizActiveHeader({
                 key={q.id}
                 type="button"
                 onClick={() => onSelectIndex(idx)}
-                className={`w-3 h-3 rounded-full cursor-pointer transition-all ${
-                  isCurrent
-                    ? "bg-indigo-600 ring-4 ring-indigo-100 scale-110"
-                    : isAnswered
-                    ? "bg-emerald-500"
-                    : "bg-slate-200"
-                }`}
+                className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center cursor-pointer group shrink-0"
                 title={`السؤال ${idx + 1}`}
-              />
+              >
+                <span
+                  className={`w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full transition-all block ${
+                    isCurrent
+                      ? "bg-indigo-600 ring-4 ring-indigo-100 scale-110"
+                      : isAnswered
+                      ? "bg-emerald-500 group-hover:scale-110"
+                      : "bg-slate-200 group-hover:bg-slate-300"
+                  }`}
+                />
+              </button>
             );
           })}
         </div>

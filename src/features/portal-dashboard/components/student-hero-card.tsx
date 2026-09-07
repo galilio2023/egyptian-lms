@@ -21,28 +21,28 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
   const xpPercentage = Math.min(100, Math.round((student.xpPoints / student.nextLevelXp) * 100));
 
   return (
-    <div className="modern-card p-6 sm:p-8 bg-gradient-vibrant text-white border-0 shadow-xl shadow-purple-600/25 relative overflow-hidden">
+    <div className="modern-card p-5 sm:p-8 bg-gradient-vibrant text-white border-0 shadow-xl shadow-purple-600/25 relative overflow-hidden rounded-3xl">
       {/* Glowing Aura Rings */}
       <div className="absolute -bottom-10 -end-10 w-72 h-72 bg-white/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-0 start-1/3 w-64 h-64 bg-pink-400/20 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Floating Cheerful Toys inside Student Hero */}
-      <div className="absolute top-3 end-4 sm:end-12 animate-float-slow pointer-events-none opacity-85 hover:opacity-100 transition-opacity">
-        <ToyDinoDinoSvg className="w-14 h-14 sm:w-20 sm:h-20 drop-shadow-lg" />
+      {/* Cheerful Decorative Toys positioned safely in open center space */}
+      <div className="absolute -top-2 end-1/3 w-20 h-20 sm:w-28 sm:h-28 pointer-events-none opacity-15 sm:opacity-25 animate-float-slow">
+        <ToyDinoDinoSvg className="w-full h-full drop-shadow-md" />
       </div>
-      <div className="absolute bottom-2 start-4 sm:start-24 animate-float-reverse pointer-events-none opacity-80 hover:opacity-100 transition-opacity">
-        <ToyPrincessUnicornSvg className="w-12 h-12 sm:w-16 sm:h-16 drop-shadow-lg" />
+      <div className="absolute -bottom-3 start-1/2 -translate-x-1/2 w-16 h-16 sm:w-24 sm:h-24 pointer-events-none opacity-15 sm:opacity-20 animate-float-reverse">
+        <ToyPrincessUnicornSvg className="w-full h-full drop-shadow-md" />
       </div>
 
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-3.5">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30">
-            <ActiveMascotSvg className="w-5 h-5" />
+        <div className="space-y-3.5 w-full md:w-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30">
+            <ActiveMascotSvg className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>المستوى {student.levelNumber}: {activeMascot.title}</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight">
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white leading-tight">
             أهلاً بك يا بطل اللغة الإنجليزية {student.name} 👋
           </h1>
           
@@ -54,8 +54,9 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
           <div className="space-y-1.5 max-w-md pt-1">
             <div className="flex items-center justify-between text-xs font-black text-white">
               <span>المستوى {student.levelNumber}</span>
-              <span className="text-amber-200 font-bold">
-                {student.xpPoints} / {student.nextLevelXp} XP (باقي {student.nextLevelXp - student.xpPoints} للمستوى التالي)
+              <span className="text-amber-200 font-bold text-[11px] sm:text-xs">
+                {student.xpPoints} / {student.nextLevelXp} XP
+                <span className="hidden sm:inline"> (باقي {student.nextLevelXp - student.xpPoints} للمستوى التالي)</span>
               </span>
             </div>
             <div className="w-full h-3 bg-purple-950/40 rounded-full overflow-hidden p-0.5 border border-white/30 backdrop-blur-sm">
@@ -67,22 +68,22 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
           </div>
         </div>
 
-        {/* Gamification Stats */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-3xl p-4 text-center min-w-[110px] shadow-lg">
-            <div className="flex items-center justify-center gap-1.5 text-amber-300 mb-1">
-              <XpGemSvg className="w-5 h-5 drop-shadow" />
-              <span className="text-xs font-black">نقاط XP</span>
+        {/* Gamification Stats - Symmetrical 2-column on mobile, prominent on desktop */}
+        <div className="grid grid-cols-2 w-full md:w-auto md:flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 text-center shadow-lg flex-1 md:flex-initial md:min-w-[125px]">
+            <div className="flex items-center justify-center gap-1.5 text-amber-300 mb-1 sm:mb-1.5">
+              <XpGemSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" />
+              <span className="text-xs sm:text-sm font-black">نقاط XP</span>
             </div>
-            <div className="text-2xl font-black text-white">{student.xpPoints}</div>
+            <div className="text-xl sm:text-3xl font-black text-white">{student.xpPoints}</div>
           </div>
 
-          <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-3xl p-4 text-center min-w-[110px] shadow-lg">
-            <div className="flex items-center justify-center gap-1.5 text-orange-300 mb-1">
-              <StreakFlameSvg className="w-5 h-5 drop-shadow" />
-              <span className="text-xs font-black">حماس متتالي</span>
+          <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 text-center shadow-lg flex-1 md:flex-initial md:min-w-[125px]">
+            <div className="flex items-center justify-center gap-1.5 text-orange-300 mb-1 sm:mb-1.5">
+              <StreakFlameSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" />
+              <span className="text-xs sm:text-sm font-black">حماس متتالي</span>
             </div>
-            <div className="text-2xl font-black text-white">{student.streakDays} أيام</div>
+            <div className="text-xl sm:text-3xl font-black text-white">{student.streakDays} أيام</div>
           </div>
         </div>
       </div>
