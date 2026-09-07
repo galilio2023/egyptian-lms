@@ -499,6 +499,15 @@ export const platformSettings = pgTable('platform_settings', {
   instapayAddress: text('instapay_address').default('academy@instapay'),
   heroVideoUrl: text('hero_video_url').default('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8').notNull(),
   sampleLectures: jsonb('sample_lectures').$type<FreeSampleLecture[]>().notNull(),
+  enableHeroToys: boolean('enable_hero_toys').default(true).notNull(),
+  enableHeroPhonicsStrip: boolean('enable_hero_phonics_strip').default(true).notNull(),
+  enableMascotCards: boolean('enable_mascot_cards').default(true).notNull(),
+  themeVibe: text('theme_vibe').default('playful_kids').notNull(),
+  toySquad: text('toy_squad').default('all_toys').notNull(),
+  accentColorPalette: text('accent_color_palette').default('purple').notNull(),
+  backgroundStyle: text('background_style').default('default_gradient').notNull(),
+  customBackgroundUrl: text('custom_background_url'),
+  cardVibeStyle: text('card_vibe_style').default('cartoon_playful').notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 

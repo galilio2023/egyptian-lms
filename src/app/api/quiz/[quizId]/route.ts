@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { INITIAL_QUIZ } from "@/lib/db/mock-data";
+import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and, or, isNull, gt } from "drizzle-orm";
@@ -51,6 +51,28 @@ export async function GET(
       title: INITIAL_QUIZ.title,
       timeLimitMinutes: INITIAL_QUIZ.timeLimitMinutes,
       passPercentage: INITIAL_QUIZ.passPercentage,
+      questions: safeQuestions,
+    });
+  }
+
+  // 1.1 Check if it matches adventure quizzes map
+  const advQuiz = ADVENTURE_QUIZZES_MAP[quizId];
+  if (advQuiz) {
+    const safeQuestions = seededShuffle(advQuiz.questions, studentSeed).map((q) => ({
+      id: q.id,
+      text: q.text,
+      audioUrl: q.audioUrl,
+      options: seededShuffle(q.options, `${studentSeed}_${q.id}`).map((opt) => ({
+        id: opt.id,
+        text: opt.text,
+      })),
+    }));
+
+    return NextResponse.json({
+      id: advQuiz.id,
+      title: advQuiz.title,
+      timeLimitMinutes: advQuiz.timeLimitMinutes,
+      passPercentage: advQuiz.passPercentage,
       questions: safeQuestions,
     });
   }

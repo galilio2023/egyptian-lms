@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (cleanRef) {
-        let existingReceiptHashes: Record<string, string> = {};
+        const existingReceiptHashes: Record<string, string> = {};
         try {
           const pastOrders = await db
             .select({ id: schema.order.id, ref: schema.order.referenceNumber })

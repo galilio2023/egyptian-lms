@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { INITIAL_QUIZ } from "@/lib/db/mock-data";
+import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, or, isNull, gt } from "drizzle-orm";
+import { eq, and, or, isNull, gt, sql } from "drizzle-orm";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     // Require session ownership for targetUserId (IDOR CWE-639 protection)
     const targetUserId = session?.user?.id || null;
 
-    // Attempt to load questions from database if UUID format
-    let quiz = INITIAL_QUIZ;
-    let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = INITIAL_QUIZ.questions;
+    // Attempt to load questions from database if UUID format, or fallback to adventure quiz map / initial quiz
+    let quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
+    let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = quiz.questions;
     let maxAttempts = 3;
     let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
 
@@ -227,33 +227,33 @@ export async function POST(request: NextRequest) {
 
     // Database attempt persistence & XP update (P0: Persistence must succeed before dispatching notifications)
     if (targetUserId) {
-      // 1. Log attempt if quizId is a valid Postgres UUID
-      if (isUUID) {
-        await db.insert(schema.quizAttempt).values({
-          quizId: quiz.id,
-          userId: targetUserId,
-          score: correctCount,
-          totalPossibleScore: totalQuestions,
-          passed,
-          timeSpentSeconds: timeSpentSeconds || 60,
-          userAnswers: answers,
+      try {
+        await db.transaction(async (tx) => {
+          // 1. Log attempt if quizId is a valid Postgres UUID
+          if (isUUID) {
+            await tx.insert(schema.quizAttempt).values({
+              quizId: quiz.id,
+              userId: targetUserId,
+              score: correctCount,
+              totalPossibleScore: totalQuestions,
+              passed,
+              timeSpentSeconds: timeSpentSeconds || 60,
+              userAnswers: answers,
+            });
+          }
+
+          // 2. Increment student profile XP only if earnedXp > 0 (prevents replay farming)
+          if (earnedXp > 0) {
+            await tx
+              .update(schema.studentProfile)
+              .set({
+                xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${earnedXp}`,
+              })
+              .where(eq(schema.studentProfile.userId, targetUserId));
+          }
         });
-      }
-
-      // 2. Increment student profile XP only if earnedXp > 0 (prevents replay farming)
-      if (earnedXp > 0) {
-        const [profile] = await db
-          .select()
-          .from(schema.studentProfile)
-          .where(eq(schema.studentProfile.userId, targetUserId))
-          .limit(1);
-
-        if (profile) {
-          await db
-            .update(schema.studentProfile)
-            .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-            .where(eq(schema.studentProfile.userId, targetUserId));
-        }
+      } catch (txErr) {
+        console.warn("Quiz attempt persistence DB note:", txErr);
       }
     }
 

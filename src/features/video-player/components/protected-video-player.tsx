@@ -15,6 +15,7 @@ export interface ProtectedVideoPlayerProps {
   studentName?: string;
   studentPhone?: string;
   title?: string;
+  initialSeekSeconds?: number;
 }
 
 export function ProtectedVideoPlayer({
@@ -22,6 +23,7 @@ export function ProtectedVideoPlayer({
   studentName = "طالب المنصة التعليمية",
   studentPhone = "01000000000",
   title = "المحاضرة التفاعلية",
+  initialSeekSeconds,
 }: ProtectedVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,6 +73,34 @@ export function ProtectedVideoPlayer({
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Diagnostic Remediation Helper: Auto-seek to targeted concept timestamp
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const tParam = urlParams.get("t");
+    const targetSeek = initialSeekSeconds ?? (tParam ? parseFloat(tParam) : null);
+
+    if (targetSeek && targetSeek > 0) {
+      const vid = videoRef.current;
+      if (!vid) return;
+
+      const performSeek = () => {
+        if (vid) {
+          vid.currentTime = targetSeek;
+          const mins = Math.floor(targetSeek / 60);
+          const secs = Math.floor(targetSeek % 60).toString().padStart(2, "0");
+          toast.info(`🎯 تم نقلك مباشرة إلى فقرة شرح هذا المفهوم (${mins}:${secs})`);
+        }
+      };
+
+      if (vid.readyState >= 1) {
+        performSeek();
+      } else {
+        vid.addEventListener("loadedmetadata", performSeek, { once: true });
+      }
+    }
+  }, [initialSeekSeconds]);
 
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, {

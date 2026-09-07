@@ -420,7 +420,6 @@ export async function POST(request: NextRequest) {
     const ADMIN_TEACHER_ONLY_ACTIONS = [
       "approve_order",
       "reject_order",
-      "reset_device",
       "toggle_ban",
       "ban_student",
       "unban_student",
@@ -429,6 +428,7 @@ export async function POST(request: NextRequest) {
       "delete_lesson",
       "delete_question",
       "update_settings",
+      "reset_settings",
       "generate_secure_vouchers",
       "save_vouchers",
       "delete_live_session",
@@ -578,6 +578,23 @@ export async function POST(request: NextRequest) {
         } catch (err) {
           console.warn("DB session reset note:", err);
         }
+
+        logSecurityEvent({
+          eventType: "device_transferred",
+          severity: userRole === "assistant" ? "medium" : "low",
+          userId: session.user.id,
+          studentPhone,
+          description: userRole === "assistant"
+            ? `قام المساعد (${session.user.name || "المساعد"}) بفك ربط جهاز الطالب (${studentPhone || studentId}) بناءً على تفويض ولي الأمر.`
+            : `قام المعلم المشرف (${session.user.name}) بفك ربط جهاز الطالب (${studentPhone || studentId}).`,
+          details: {
+            performedByUserId: session.user.id,
+            performedByRole: userRole,
+            performedByName: session.user.name,
+            targetStudentId: studentId,
+            targetStudentPhone: studentPhone,
+          },
+        });
 
         return NextResponse.json({
           success: true,
@@ -1027,6 +1044,15 @@ export async function POST(request: NextRequest) {
           instapayAddress?: string;
           heroVideoUrl?: string;
           sampleLectures?: schema.FreeSampleLecture[];
+          enableHeroToys?: boolean;
+          enableHeroPhonicsStrip?: boolean;
+          enableMascotCards?: boolean;
+          themeVibe?: string;
+          toySquad?: string;
+          accentColorPalette?: string;
+          backgroundStyle?: string;
+          customBackgroundUrl?: string;
+          cardVibeStyle?: string;
         };
 
         try {
@@ -1060,16 +1086,87 @@ export async function POST(request: NextRequest) {
               instapayAddress: settingsPayload.instapayAddress || INITIAL_PLATFORM_SETTINGS.instapayAddress,
               heroVideoUrl: settingsPayload.heroVideoUrl || INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
               sampleLectures: settingsPayload.sampleLectures || [],
+              enableHeroToys: settingsPayload.enableHeroToys ?? INITIAL_PLATFORM_SETTINGS.enableHeroToys,
+              enableHeroPhonicsStrip: settingsPayload.enableHeroPhonicsStrip ?? INITIAL_PLATFORM_SETTINGS.enableHeroPhonicsStrip,
+              enableMascotCards: settingsPayload.enableMascotCards ?? INITIAL_PLATFORM_SETTINGS.enableMascotCards,
+              themeVibe: settingsPayload.themeVibe || INITIAL_PLATFORM_SETTINGS.themeVibe,
+              toySquad: settingsPayload.toySquad || INITIAL_PLATFORM_SETTINGS.toySquad,
+              accentColorPalette: settingsPayload.accentColorPalette || INITIAL_PLATFORM_SETTINGS.accentColorPalette,
+              backgroundStyle: settingsPayload.backgroundStyle || INITIAL_PLATFORM_SETTINGS.backgroundStyle,
+              customBackgroundUrl: settingsPayload.customBackgroundUrl ?? INITIAL_PLATFORM_SETTINGS.customBackgroundUrl,
+              cardVibeStyle: settingsPayload.cardVibeStyle || INITIAL_PLATFORM_SETTINGS.cardVibeStyle,
             });
           }
           invalidatePlatformSettingsCache();
         } catch (dbErr) {
           console.warn("Update platform settings note:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء حفظ الإعدادات في قاعدة البيانات." },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json({
           success: true,
-          message: "تم حفظ وتحديث إعدادات المنصة وهواتف التواصل ومحاضرات الكاروسيل بنجاح.",
+          message: "تم حفظ وتحديث إعدادات المنصة والهوية البصرية ومحاضرات الكاروسيل بنجاح.",
+        });
+      }
+
+      case "reset_settings": {
+        try {
+          const [existing] = await db
+            .select()
+            .from(schema.platformSettings)
+            .where(eq(schema.platformSettings.id, "default"))
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(schema.platformSettings)
+              .set({
+                academyNameArabic: INITIAL_PLATFORM_SETTINGS.academyNameArabic,
+                academyNameEnglish: INITIAL_PLATFORM_SETTINGS.academyNameEnglish,
+                teacherNameArabic: INITIAL_PLATFORM_SETTINGS.teacherNameArabic,
+                teacherNameEnglish: INITIAL_PLATFORM_SETTINGS.teacherNameEnglish,
+                teacherTitle: INITIAL_PLATFORM_SETTINGS.teacherTitle,
+                teacherBio: INITIAL_PLATFORM_SETTINGS.teacherBio,
+                whatsappNumber: INITIAL_PLATFORM_SETTINGS.whatsappNumber,
+                hotlineNumber: INITIAL_PLATFORM_SETTINGS.hotlineNumber,
+                inquiriesNumber: INITIAL_PLATFORM_SETTINGS.inquiriesNumber,
+                vodafoneCashNumber: INITIAL_PLATFORM_SETTINGS.vodafoneCashNumber,
+                instapayAddress: INITIAL_PLATFORM_SETTINGS.instapayAddress,
+                heroVideoUrl: INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
+                sampleLectures: INITIAL_PLATFORM_SETTINGS.sampleLectures,
+                enableHeroToys: INITIAL_PLATFORM_SETTINGS.enableHeroToys,
+                enableHeroPhonicsStrip: INITIAL_PLATFORM_SETTINGS.enableHeroPhonicsStrip,
+                enableMascotCards: INITIAL_PLATFORM_SETTINGS.enableMascotCards,
+                themeVibe: INITIAL_PLATFORM_SETTINGS.themeVibe,
+                toySquad: INITIAL_PLATFORM_SETTINGS.toySquad,
+                accentColorPalette: INITIAL_PLATFORM_SETTINGS.accentColorPalette,
+                backgroundStyle: INITIAL_PLATFORM_SETTINGS.backgroundStyle,
+                customBackgroundUrl: INITIAL_PLATFORM_SETTINGS.customBackgroundUrl,
+                cardVibeStyle: INITIAL_PLATFORM_SETTINGS.cardVibeStyle,
+                updatedAt: new Date(),
+              })
+              .where(eq(schema.platformSettings.id, "default"));
+          } else {
+            await db.insert(schema.platformSettings).values({
+              ...INITIAL_PLATFORM_SETTINGS,
+            });
+          }
+          invalidatePlatformSettingsCache();
+        } catch (dbErr) {
+          console.warn("Reset platform settings note:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء استعادة الإعدادات الافتراضية في قاعدة البيانات." },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          settings: INITIAL_PLATFORM_SETTINGS,
+          message: "تمت استعادة كافة الإعدادات القياسية الافتراضية بنجاح!",
         });
       }
 
