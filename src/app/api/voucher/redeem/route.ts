@@ -47,25 +47,11 @@ export async function POST(request: NextRequest) {
 
     const cleanCode = code.trim().toUpperCase();
 
-    // Determine current student user ID
-    let currentUserId = session?.user?.id;
-    if (!currentUserId && studentPhone) {
-      try {
-        const [userRecord] = await db
-          .select({ id: schema.user.id })
-          .from(schema.user)
-          .where(eq(schema.user.phoneNumber, studentPhone))
-          .limit(1);
-        if (userRecord) currentUserId = userRecord.id;
-      } catch {
-        // Fallback
-      }
-    }
-
-    // Require student identity to prevent unlinked voucher code burning
+    // Require authenticated student session to prevent IDOR / unlinked voucher code burning
+    const currentUserId = session?.user?.id;
     if (!currentUserId) {
       return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولاً أو إدخال رقم موبايل الطالب المسجل لشحن الكارت وتفعيل الوحدة الدراسية في حسابه." },
+        { error: "يجب تسجيل الدخول أولاً بحساب الطالب المعتمد لشحن الكارت وتفعيل الوحدة الدراسية في حسابه." },
         { status: 401 }
       );
     }
@@ -114,7 +100,7 @@ export async function POST(request: NextRequest) {
           .returning();
 
         if (!redeemedVoucher) {
-          return { alreadyRedeemed: true };
+          return { success: false, alreadyRedeemed: true, voucher: null };
         }
 
         await tx
@@ -129,7 +115,7 @@ export async function POST(request: NextRequest) {
             set: { isActive: true, enrolledAt: new Date() },
           });
 
-        return { success: true, voucher: redeemedVoucher };
+        return { success: true, alreadyRedeemed: false, voucher: redeemedVoucher };
       });
 
       if (txResult.alreadyRedeemed || !txResult.voucher) {

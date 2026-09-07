@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, or, isNull, gt, ne } from "drizzle-orm";
+import { eq, and, or, isNull, isNotNull, gt, ne } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { INITIAL_UNITS } from "@/lib/db/mock-data";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
@@ -220,7 +220,20 @@ export async function POST(request: NextRequest) {
       }
 
       if (cleanRef) {
-        ocrScanData = scanEgyptianReceipt(cleanRef, verifiedPrice) as unknown as Record<string, unknown>;
+        let existingReceiptHashes: Record<string, string> = {};
+        try {
+          const pastOrders = await db
+            .select({ id: schema.order.id, ref: schema.order.referenceNumber })
+            .from(schema.order)
+            .where(isNotNull(schema.order.referenceNumber))
+            .limit(100);
+          for (const o of pastOrders) {
+            if (o.ref) existingReceiptHashes[o.ref] = o.id;
+          }
+        } catch {
+          // Fallback map
+        }
+        ocrScanData = scanEgyptianReceipt(cleanRef, verifiedPrice, existingReceiptHashes) as unknown as Record<string, unknown>;
       }
     }
 
@@ -259,14 +272,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Paymob checkout requires a valid persisted database order
+    if (paymentMethod.startsWith("paymob") && !insertedOrderId) {
+      return NextResponse.json(
+        { error: "تعذر بدء عملية الدفع عبر باي موب لعدم حفظ الطلب في قاعدة البيانات. يرجى تسجيل الدخول وإعادة المحاولة." },
+        { status: 400 }
+      );
+    }
+
     const orderIdToReturn = insertedOrderId || fallbackOrderId;
     let paymobCheckoutUrl: string | undefined;
 
     // Trigger outbound Paymob session if selected payment method is Paymob
-    if (paymentMethod.startsWith("paymob")) {
+    if (paymentMethod.startsWith("paymob") && insertedOrderId) {
       try {
         const paymobResult = await initiatePaymobPayment({
-          orderId: orderIdToReturn,
+          orderId: insertedOrderId,
           amountEgp: verifiedPrice,
           unitTitle: verifiedTitle,
           studentName: session?.user?.name || undefined,

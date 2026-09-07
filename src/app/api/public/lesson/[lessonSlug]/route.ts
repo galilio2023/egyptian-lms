@@ -207,7 +207,7 @@ export async function GET(
         quizId: dbQuiz?.id || INITIAL_QUIZ.id,
         playlist: dbPlaylist.map((p) => ({
           ...p,
-          videoUrl: p.isFreePreview ? secureVideoUrl : "",
+          videoUrl: (canAccessVideo || p.isFreePreview) ? secureVideoUrl : null,
         })),
         lesson: {
           id: dbLesson.id,
@@ -262,7 +262,12 @@ export async function GET(
     });
 
     const mockPlaylist = INITIAL_LESSONS.filter((l) => l.unitId === mockUnit.id)
-      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+      .map((l) => ({
+        ...l,
+        videoUrl: (mockIsEnrolled || l.isFreePreview) ? l.videoUrl : null,
+        pdfAttachmentUrl: (mockIsEnrolled || l.isFreePreview) ? (l.pdfAttachmentUrl || null) : null,
+      }));
 
     return NextResponse.json({
       success: true,

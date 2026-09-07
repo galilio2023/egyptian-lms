@@ -41,7 +41,6 @@ export default function QuizRoomPage({
 
     // 2. Fetch quiz dynamically from backend if not static adventure quiz
     if (!ADVENTURE_QUIZZES_MAP[quizId]) {
-      setIsLoadingQuiz(true);
       fetch(`/api/quiz/${quizId}`)
         .then(async (res) => {
           if (!active) return;
@@ -52,7 +51,8 @@ export default function QuizRoomPage({
           return res.json();
         })
         .then((data) => {
-          if (active && data?.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+          if (!active) return;
+          if (data?.questions && Array.isArray(data.questions) && data.questions.length > 0) {
             setQuiz({
               id: data.id || quizId,
               unitId: data.unitId || "default",
@@ -62,6 +62,9 @@ export default function QuizRoomPage({
               passPercentage: data.passPercentage || 60,
               questions: data.questions,
             });
+            setQuizError(null);
+          } else {
+            throw new Error("لا توجد أسئلة مضافة لهذا الاختبار حالياً من قبل المعلم.");
           }
         })
         .catch((err: unknown) => {

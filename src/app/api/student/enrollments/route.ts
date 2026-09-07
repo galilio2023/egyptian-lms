@@ -27,16 +27,19 @@ export async function GET() {
     const clientDeviceId = headerList.get("x-device-id") || (cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null);
     const sessionDeviceId = (session.session as { deviceId?: string } | undefined)?.deviceId;
 
-    if (sessionDeviceId && clientDeviceId && sessionDeviceId !== clientDeviceId) {
-      return NextResponse.json({
-        success: false,
-        error: "حساب الطالب مسجل ومفتوح على جهاز آخر. لا يمكن فتح الحساب من جهازين في نفس الوقت وفقاً لسياسة المنصة.",
-        isDeviceLocked: true,
-        requiresParentTransfer: true,
-        enrolledUnitIds: [],
-        enrollments: [],
-        nextLesson: null,
-      }, { status: 403 });
+    // Enforce single-device restriction on active portal requests
+    if (sessionDeviceId) {
+      if (!clientDeviceId || sessionDeviceId !== clientDeviceId) {
+        return NextResponse.json({
+          success: false,
+          error: "حساب الطالب مسجل ومفتوح على جهاز آخر أو تعذر التحقق من هوية جهازك. يرجى تسجيل الدخول من جهازك المعتمد.",
+          isDeviceLocked: true,
+          requiresParentTransfer: true,
+          enrolledUnitIds: [],
+          enrollments: [],
+          nextLesson: null,
+        }, { status: 403 });
+      }
     }
 
     if (!sessionDeviceId && clientDeviceId && session.session?.id) {

@@ -49,7 +49,11 @@ export function BroadcastComposerForm() {
         const actualCount = result.data?.sentCount ?? targetCount;
         setSentCount(actualCount);
         toast.success(`🎉 تم إرسال الرسائل بنجاح إلى ${actualCount} ولي أمر عبر WhatsApp API.`);
+      } else {
+        toast.error(result.error || "تعذر إرسال الرسائل الجماعية عبر واتساب.");
       }
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || "حدث خطأ غير متوقع أثناء إرسال الرسائل.");
     } finally {
       setIsSending(false);
     }

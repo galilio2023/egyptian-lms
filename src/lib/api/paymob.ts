@@ -8,10 +8,12 @@
 
 const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY || "";
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID || "";
+const PAYMOB_CARD_INTEGRATION_ID = process.env.PAYMOB_CARD_INTEGRATION_ID || PAYMOB_INTEGRATION_ID;
+const PAYMOB_WALLET_INTEGRATION_ID = process.env.PAYMOB_WALLET_INTEGRATION_ID || PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID || "";
 
 export function isPaymobConfigured(): boolean {
-  return Boolean(PAYMOB_API_KEY && PAYMOB_INTEGRATION_ID);
+  return Boolean(PAYMOB_API_KEY && (PAYMOB_INTEGRATION_ID || PAYMOB_CARD_INTEGRATION_ID || PAYMOB_WALLET_INTEGRATION_ID));
 }
 
 export interface PaymobInitiateOptions {
@@ -27,7 +29,7 @@ export interface PaymobInitiateOptions {
 export interface PaymobInitiateResult {
   success: boolean;
   gatewayOrderId?: string;
-  checkoutUrl: string;
+  checkoutUrl?: string;
   isSandbox: boolean;
   message?: string;
 }
@@ -49,6 +51,9 @@ async function getPaymobAuthToken(): Promise<string> {
   }
 
   const data = await res.json();
+  if (!data?.token || typeof data.token !== "string") {
+    throw new Error("Paymob Auth response missing valid token");
+  }
   return data.token;
 }
 
@@ -88,6 +93,9 @@ async function registerPaymobOrder(
   }
 
   const data = await res.json();
+  if (data?.id === undefined || data?.id === null) {
+    throw new Error("Paymob Order Registration response missing valid order ID");
+  }
   return String(data.id);
 }
 
@@ -98,6 +106,7 @@ async function generatePaymentKey(
   authToken: string,
   paymobOrderId: string,
   amountCents: number,
+  paymentMethod: string,
   studentName = "Student",
   studentPhone = "01000000000",
   studentEmail = "student@elite-academy.edu.eg"
@@ -108,6 +117,10 @@ async function generatePaymentKey(
 
   const cleanPhone = studentPhone.replace(/\D/g, "");
   const formattedPhone = cleanPhone.startsWith("01") ? `+2${cleanPhone}` : `+201000000000`;
+
+  const chosenIntegrationId = paymentMethod === "paymob_card"
+    ? PAYMOB_CARD_INTEGRATION_ID
+    : PAYMOB_WALLET_INTEGRATION_ID || PAYMOB_INTEGRATION_ID;
 
   const res = await fetch("https://accept.paymob.com/api/acceptance/payment_keys", {
     method: "POST",
@@ -133,7 +146,7 @@ async function generatePaymentKey(
         state: "Cairo",
       },
       currency: "EGP",
-      integration_id: Number(PAYMOB_INTEGRATION_ID) || 0,
+      integration_id: Number(chosenIntegrationId) || 0,
       lock_order_when_paid: "true",
     }),
     signal: AbortSignal.timeout(10000),
@@ -145,6 +158,9 @@ async function generatePaymentKey(
   }
 
   const data = await res.json();
+  if (!data?.token || typeof data.token !== "string") {
+    throw new Error("Paymob Payment Key response missing valid token");
+  }
   return data.token;
 }
 
@@ -163,8 +179,6 @@ export async function initiatePaymobPayment(
       orderId: options.orderId,
       amount: String(options.amountEgp),
       unitTitle: options.unitTitle,
-      method: options.paymentMethod,
-      sandbox: "true",
     });
 
     return {
@@ -188,6 +202,7 @@ export async function initiatePaymobPayment(
       authToken,
       paymobOrderId,
       amountCents,
+      options.paymentMethod,
       options.studentName,
       options.studentPhone,
       options.studentEmail
@@ -207,20 +222,10 @@ export async function initiatePaymobPayment(
     };
   } catch (error) {
     console.error("Paymob API integration error:", error);
-    // Graceful fallback to sandbox rather than failing completely
-    const params = new URLSearchParams({
-      orderId: options.orderId,
-      amount: String(options.amountEgp),
-      unitTitle: options.unitTitle,
-      error: "gateway_timeout",
-    });
-
     return {
-      success: true,
-      gatewayOrderId: `paymob-err-${Date.now()}`,
-      checkoutUrl: `/?paymob_sandbox=1&${params.toString()}`,
-      isSandbox: true,
-      message: "تعذر الاتصال المباشر ببوابة باي موب، تم التبديل إلى نمط التحصيل الاحتياطي.",
+      success: false,
+      isSandbox: false,
+      message: "تعذر الاتصال ببوابة باي موب لمعالجة الدفع. يرجى المحاولة لاحقاً أو اختيار وسيلة دفع بديلة.",
     };
   }
 }

@@ -509,7 +509,7 @@ export async function POST(request: NextRequest) {
 
           return NextResponse.json({
             success: true,
-            message: `تم تفعيل الاشتراك بنجاح للطالب (${studentName || "المشترك"}) وإرسال إشعار التفعيل لولي الأمر على واتساب (${parentPhone || "المسجل"}).`,
+            message: `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل.`,
           });
         } catch (err) {
           console.error("DB operation error for approve_order:", err);
@@ -925,7 +925,7 @@ export async function POST(request: NextRequest) {
           if (parents.length > 0) {
             // Process real phone records (capped at batch limit to avoid gateway starvation)
             const batch = parents.slice(0, 50);
-            await Promise.allSettled(
+            const results = await Promise.allSettled(
               batch.map((p) =>
                 sendAutomatedWhatsAppNotification({
                   to: p.parentPhoneNumber,
@@ -933,21 +933,16 @@ export async function POST(request: NextRequest) {
                 })
               )
             );
-            sentCount = parents.length;
-          } else {
-            sentCount = recipientCount || 1;
-            // Simulated fallback dispatch
-            await sendAutomatedWhatsAppNotification({
-              to: "01000000000",
-              message: messageText,
-            });
+            sentCount = results.filter((r) => r.status === "fulfilled" && (r.value as { success?: boolean })?.success !== false).length;
           }
 
           return NextResponse.json({
             success: true,
             sentCount,
             deliveredAt: new Date().toISOString(),
-            message: `تم إرسال الرسالة الجماعية بنجاح عبر API واتساب إلى ${sentCount} ولي أمر.`,
+            message: sentCount > 0 
+              ? `تم إرسال الرسالة بنجاح عبر API واتساب إلى ${sentCount} ولي أمر.`
+              : "لم يتم العثور على أرقام أولياء أمور مسجلة ومطابقة للشروط المحددة.",
           });
         } catch (broadcastErr) {
           console.error("Error executing WhatsApp broadcast:", broadcastErr);
