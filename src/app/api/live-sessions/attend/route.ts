@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 
 export async function POST(request: NextRequest) {
@@ -102,35 +102,30 @@ export async function POST(request: NextRequest) {
     // Atomic idempotent attendance registration against unique index (sessionId, userId)
     let awardedXp = 0;
     try {
-      const insertResult = await db
-        .insert(schema.liveSessionAttendance)
-        .values({
-          sessionId: liveRecord.id,
-          userId,
-          joinedAt: new Date(),
-        })
-        .onConflictDoNothing()
-        .returning({ id: schema.liveSessionAttendance.id });
+      await db.transaction(async (tx) => {
+        const insertResult = await tx
+          .insert(schema.liveSessionAttendance)
+          .values({
+            sessionId: liveRecord.id,
+            userId,
+            joinedAt: new Date(),
+          })
+          .onConflictDoNothing()
+          .returning({ id: schema.liveSessionAttendance.id });
 
-      // If newly registered, award +50 XP to student profile
-      if (insertResult && insertResult.length > 0) {
-        awardedXp = 50;
-        const [profile] = await db
-          .select({ xp: schema.studentProfile.xpPoints })
-          .from(schema.studentProfile)
-          .where(eq(schema.studentProfile.userId, userId))
-          .limit(1);
-
-        if (profile) {
-          await db
+        // If newly registered (first attendance), atomically award +50 XP to student profile
+        if (insertResult && insertResult.length > 0) {
+          awardedXp = 50;
+          await tx
             .update(schema.studentProfile)
-            .set({ xpPoints: (profile.xp || 0) + awardedXp })
+            .set({
+              xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${awardedXp}`,
+            })
             .where(eq(schema.studentProfile.userId, userId));
         }
-      }
+      });
     } catch (dbErr) {
       console.warn("Live session attendance DB note:", dbErr);
-      awardedXp = 50;
     }
 
     logSecurityEvent({

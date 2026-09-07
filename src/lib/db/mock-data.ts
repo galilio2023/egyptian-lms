@@ -778,6 +778,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Letter /z/ (Zebra)', isCorrect: false },
         ],
         explanation: 'الأسد Lion يبدأ بصوت حرف L الصوتي /l/.',
+        remedialLessonSlug: 'phonics-and-letters',
+        remedialTimestampSeconds: 75,
       },
       {
         id: 'qz-2',
@@ -789,6 +791,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'fin', isCorrect: false },
         ],
         explanation: 'الفيل يمتلك خرطوماً طويلاً Trunk.',
+        remedialLessonSlug: 'phonics-and-letters',
+        remedialTimestampSeconds: 140,
       },
       {
         id: 'qz-3',
@@ -800,6 +804,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'grass', isCorrect: false },
         ],
         explanation: 'القرود تعشق أكل الموز Bananas.',
+        remedialLessonSlug: 'phonics-and-letters',
+        remedialTimestampSeconds: 210,
       },
       {
         id: 'qz-4',
@@ -809,6 +815,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-2', text: 'No, it is green.', isCorrect: false },
         ],
         explanation: 'الحمار الوحشي Zebra مخطط باللونين الأبيض والأسود.',
+        remedialLessonSlug: 'phonics-and-letters',
+        remedialTimestampSeconds: 280,
       },
     ],
   },
@@ -829,6 +837,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'are', isCorrect: false },
         ],
         explanation: 'نستخدم الفعل المساعد can للتعبير عن القدرة والمهارة: I can climb walls.',
+        remedialLessonSlug: 'meet-my-family-lesson-1',
+        remedialTimestampSeconds: 60,
       },
       {
         id: 'qs-2',
@@ -840,6 +850,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'They', isCorrect: false },
         ],
         explanation: 'بيتر باركر مذكر مفرد، والضمير المناسب له هو He.',
+        remedialLessonSlug: 'this-is-these-are-grammar',
+        remedialTimestampSeconds: 110,
       },
       {
         id: 'qs-3',
@@ -851,6 +863,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Brave', isCorrect: false },
         ],
         explanation: 'عكس كلمة Strong (قوي) هي Weak (ضعيف).',
+        remedialLessonSlug: 'meet-my-family-lesson-1',
+        remedialTimestampSeconds: 180,
       },
       {
         id: 'qs-4',
@@ -862,6 +876,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'speed', isCorrect: false },
         ],
         explanation: 'شعار سبايدر مان الشهير: مع القوة العظيمة تأتي مسؤولية عظيمة.',
+        remedialLessonSlug: 'grade-2-unit-1-exam-prep',
+        remedialTimestampSeconds: 220,
       },
     ],
   },
@@ -882,6 +898,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Black', isCorrect: false },
         ],
         explanation: 'الموز الأصفر الناضج لونه Yellow.',
+        remedialLessonSlug: 'family-members-and-home',
+        remedialTimestampSeconds: 90,
       },
       {
         id: 'qf-2',
@@ -893,6 +911,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'driver', isCorrect: false },
         ],
         explanation: 'المثل الإنجليزي الشهير: تفاحة يومياً تغنيك عن الطبيب doctor.',
+        remedialLessonSlug: 'family-members-and-home',
+        remedialTimestampSeconds: 150,
       },
       {
         id: 'qf-3',
@@ -904,6 +924,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Lemon', isCorrect: false },
         ],
         explanation: 'الفراولة Strawberry فاكهة حمراء وبذورها على السطح الخارجي.',
+        remedialLessonSlug: 'toys-and-demonstratives',
+        remedialTimestampSeconds: 130,
       },
       {
         id: 'qf-4',
@@ -915,6 +937,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'OVEN', isCorrect: false },
         ],
         explanation: 'البرتقال البرتقالي اللذيذ هو ORANGE.',
+        remedialLessonSlug: 'phonics-p-t-counting',
+        remedialTimestampSeconds: 100,
       },
     ],
   },
@@ -935,6 +959,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Eight', isCorrect: false },
         ],
         explanation: 'الرقم 7 يُكتب بالإنجليزية S-E-V-E-N.',
+        remedialLessonSlug: 'phonics-p-t-counting',
+        remedialTimestampSeconds: 85,
       },
       {
         id: 'qn-2',
@@ -946,6 +972,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Ten (10)', isCorrect: false },
         ],
         explanation: '2 + 3 = 5 (Five).',
+        remedialLessonSlug: 'phonics-p-t-counting',
+        remedialTimestampSeconds: 160,
       },
       {
         id: 'qn-3',
@@ -957,6 +985,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Two Catss', isCorrect: false },
         ],
         explanation: 'نضيف حرف s لتحويل المفرد إلى جمع: Cat -> Cats.',
+        remedialLessonSlug: 'simple-sentences',
+        remedialTimestampSeconds: 120,
       },
       {
         id: 'qn-4',
@@ -968,6 +998,8 @@ export const ADVENTURE_QUIZZES_MAP: Record<string, MockQuiz> = {
           { id: 'opt-4', text: 'Twelve days', isCorrect: false },
         ],
         explanation: 'يحتوي الأسبوع على 7 أيام: Seven days.',
+        remedialLessonSlug: 'simple-sentences',
+        remedialTimestampSeconds: 190,
       },
     ],
   },

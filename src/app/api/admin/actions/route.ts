@@ -1100,6 +1100,10 @@ export async function POST(request: NextRequest) {
           invalidatePlatformSettingsCache();
         } catch (dbErr) {
           console.warn("Update platform settings note:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء حفظ الإعدادات في قاعدة البيانات." },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json({
@@ -1153,6 +1157,10 @@ export async function POST(request: NextRequest) {
           invalidatePlatformSettingsCache();
         } catch (dbErr) {
           console.warn("Reset platform settings note:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء استعادة الإعدادات الافتراضية في قاعدة البيانات." },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json({

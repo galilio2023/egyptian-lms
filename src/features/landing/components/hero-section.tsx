@@ -141,6 +141,50 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ teacherName, settings 
         },
       ];
     }
+    if (squad === "all_toys") {
+      return [
+        {
+          name: "الديناصور داينو 🦕",
+          catchphrase: "Dino Loves Phonics!",
+          description: "رفيقك في نطق الحروف والصوتيات",
+          SvgIcon: ToyDinoDinoSvg,
+          badgeColorClass: "text-emerald-800 bg-emerald-100",
+          borderColorClass: "border-emerald-300",
+          shadowColorClass: "shadow-emerald-500/15",
+          animationClass: "animate-float-slow",
+        },
+        {
+          name: "صاروخ الفضاء 🚀",
+          catchphrase: "Blast Off to Success!",
+          description: "انطلاق في عالم الإنجليزية الممتعة",
+          SvgIcon: ToyRocketShuttleSvg,
+          badgeColorClass: "text-sky-800 bg-sky-100",
+          borderColorClass: "border-sky-300",
+          shadowColorClass: "shadow-sky-500/15",
+          animationClass: "animate-pulse-soft",
+        },
+        {
+          name: "اليونيكورن السحري 🦄",
+          catchphrase: "Magic Phonics Power!",
+          description: "رحلة خيالية ممتعة في نطق الحروف",
+          SvgIcon: ToyPrincessUnicornSvg,
+          badgeColorClass: "text-pink-800 bg-pink-100",
+          borderColorClass: "border-pink-300",
+          shadowColorClass: "shadow-pink-500/15",
+          animationClass: "animate-float-reverse",
+        },
+        {
+          name: "تفاحة الماجما 🍎🔥",
+          catchphrase: "Magma Super Power!",
+          description: "طاقة وحماس التعلم الذكي",
+          SvgIcon: ToyMagmaAppleSvg,
+          badgeColorClass: "text-red-900 bg-red-100",
+          borderColorClass: "border-red-400",
+          shadowColorClass: "shadow-red-500/20",
+          animationClass: "animate-toy-wiggle",
+        },
+      ];
+    }
     // Default: Dino Safari
     return [
       {

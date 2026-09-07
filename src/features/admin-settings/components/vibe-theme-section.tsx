@@ -437,16 +437,17 @@ export function VibeThemeSection({
               {presets.map((p) => {
                 const isSelected = settings.themeVibe === p.id;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={p.id}
                     onClick={() => handleApplyPreset(p)}
-                    className={`relative p-4 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                    className={`relative p-4 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between text-right w-full focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       isSelected
                         ? "border-purple-600 bg-purple-50/80 shadow-lg shadow-purple-500/15 scale-[1.02]"
                         : "border-slate-200 bg-white hover:border-purple-300 hover:bg-slate-50/60"
                     }`}
                   >
-                    <div>
+                    <div className="w-full">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-black text-slate-900">{p.title}</span>
                         {isSelected ? (
@@ -465,11 +466,11 @@ export function VibeThemeSection({
                       </p>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500 font-semibold w-full">
                       <span>الألعاب: {p.toys ? "مفعلة ✅" : "مخفية ⛔"}</span>
                       <span>الكروت: {p.cardVibe}</span>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -554,10 +555,11 @@ export function VibeThemeSection({
                 {toySquads.map((squad) => {
                   const isSelected = (settings.toySquad || "all_toys") === squad.id;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={squad.id}
                       onClick={() => onChange("toySquad", squad.id)}
-                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all text-right ${
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all text-right w-full focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                         isSelected
                           ? "border-purple-600 bg-purple-50/70 shadow-md shadow-purple-500/10"
                           : "border-slate-200 bg-white hover:border-purple-300"
@@ -575,7 +577,7 @@ export function VibeThemeSection({
                       <p className="text-[10px] text-slate-500 leading-relaxed">
                         {squad.desc}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -595,10 +597,11 @@ export function VibeThemeSection({
               {backgroundStyles.map((bg) => {
                 const isSelected = (settings.backgroundStyle || "default_gradient") === bg.id;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={bg.id}
                     onClick={() => onChange("backgroundStyle", bg.id)}
-                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all text-right ${
+                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all text-right w-full focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       isSelected
                         ? "border-purple-600 bg-white shadow-md shadow-purple-500/10"
                         : "border-slate-200 bg-white/80 hover:border-purple-300"
@@ -610,7 +613,7 @@ export function VibeThemeSection({
                     </div>
                     <div className="text-xs font-bold text-slate-900">{bg.label}</div>
                     <div className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{bg.desc}</div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -652,16 +655,17 @@ export function VibeThemeSection({
                 {cardStyles.map((cs) => {
                   const isSelected = (settings.cardVibeStyle || "cartoon_playful") === cs.id;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={cs.id}
                       onClick={() => onChange("cardVibeStyle", cs.id)}
-                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all text-right flex flex-col justify-between ${
+                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all text-right flex flex-col justify-between w-full focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                         isSelected
                           ? "border-purple-600 bg-purple-50/70 shadow-sm"
                           : "border-slate-200 bg-white hover:border-purple-300"
                       }`}
                     >
-                      <div>
+                      <div className="w-full">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-bold text-slate-900">{cs.title}</span>
                           {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />}
@@ -670,7 +674,7 @@ export function VibeThemeSection({
                           {cs.desc}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -687,10 +691,11 @@ export function VibeThemeSection({
                 {colorPalettes.map((cp) => {
                   const isSelected = (settings.accentColorPalette || "purple") === cp.id;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={cp.id}
                       onClick={() => onChange("accentColorPalette", cp.id)}
-                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-2.5 ${
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-2.5 w-full focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                         isSelected
                           ? "border-purple-600 bg-purple-50/50 shadow-sm font-black"
                           : "border-slate-200 bg-white hover:border-purple-300 font-bold"
@@ -698,7 +703,7 @@ export function VibeThemeSection({
                     >
                       <div className={`w-4 h-4 rounded-full ${cp.class} shadow-sm shrink-0`} />
                       <span className="text-xs text-slate-800">{cp.label}</span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

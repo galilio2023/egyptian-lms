@@ -37,7 +37,17 @@ export function PrintableCertificate({
   onClose,
 }: PrintableCertificateProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
-  const certId = certificateHash || `CERT-${Math.abs(studentName.split("").reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)).toString(16).toUpperCase()}-2026`;
+  const currentYear = new Date().getFullYear();
+  const certId =
+    certificateHash ||
+    `CERT-${Math.abs(
+      `${studentName}:${quizTitle}:${courseTitle}:${scorePercentage}`
+        .split("")
+        .reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)
+    )
+      .toString(16)
+      .toUpperCase()
+      .padStart(8, "0")}-${currentYear}`;
 
   const handlePrint = () => {
     window.print();
