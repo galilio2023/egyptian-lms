@@ -45,7 +45,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي لداينو 🦕"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 xl:w-40 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 drop-shadow-2xl">
             <ToyDinoDinoSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-emerald-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-emerald-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -61,7 +61,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي للتمساح 🐊"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 xl:w-36 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyAlligatorGatorSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-green-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-green-600/30 border border-white group-hover:scale-105 transition-transform">
@@ -77,7 +77,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي لليونيكورن 🦄"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 xl:w-36 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyPrincessUnicornSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-pink-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-pink-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -95,7 +95,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي للكمثرى 🍐"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 xl:w-40 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-28 sm:h-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 drop-shadow-2xl">
             <ToyHappyPearSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-lime-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-lime-500/30 border border-white group-hover:scale-105 transition-transform">
@@ -111,7 +111,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي لتفاحة ماجما 🍎"
       >
         <div className="relative group text-center">
-          <div className="w-16 h-16 sm:w-24 sm:h-24 lg:w-32 xl:w-36 drop-shadow-2xl">
+          <div className="w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyMagmaAppleSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-gradient-to-r from-red-600 to-amber-500 text-white text-[10px] sm:text-xs font-black px-3 py-0.5 rounded-full shadow-lg shadow-red-600/30 border border-amber-200 group-hover:scale-105 transition-transform">
@@ -127,7 +127,7 @@ export function FloatingKidsToysHeroDecor() {
         title="انقر للاستماع للنطق الصوتي لدبدوب تيدي 🧸"
       >
         <div className="relative group text-center">
-          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 xl:w-36 drop-shadow-2xl">
+          <div className="w-14 h-14 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 drop-shadow-2xl">
             <ToyTeddyBearSvg className="w-full h-full" />
           </div>
           <span className="hidden sm:inline-block mt-1 whitespace-nowrap bg-amber-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow-lg shadow-amber-500/30 border border-white group-hover:scale-105 transition-transform">

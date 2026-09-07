@@ -29,7 +29,7 @@ export const MascotChampionCard: React.FC<MascotChampionCardProps> = ({
         <SvgIcon className="w-full h-full" />
       </div>
       <div className="min-w-0 flex-1">
-        <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full inline-block ${badgeColorClass} whitespace-nowrap`}>
+        <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full inline-block max-w-full overflow-hidden text-ellipsis ${badgeColorClass} whitespace-nowrap`}>
           {name}
         </span>
         <span className="text-xs sm:text-sm font-black text-slate-900 block mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
