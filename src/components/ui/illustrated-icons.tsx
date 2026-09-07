@@ -499,39 +499,66 @@ export function XpGemSvg({ className = "w-8 h-8", size }: SvgProps) {
   );
 }
 
-// 10. WhatsApp Messaging Bubble (Neon Emerald + Speech Notch + Ripple)
-export function WhatsAppBubbleSvg({ className = "w-10 h-10", size }: SvgProps) {
+// 10. WhatsApp Messaging Bubble (Volumetric 3D Gloss + Bold Official Handset)
+export function WhatsApp3DIconSvg({ className = "w-10 h-10", size }: SvgProps) {
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       style={size ? { width: size, height: size } : undefined}
     >
       <defs>
-        <linearGradient id="waGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#25D366" />
-          <stop offset="100%" stopColor="#128C7E" />
+        {/* Rich 3D Volumetric Radial Gradient (Official WhatsApp Colors) */}
+        <radialGradient id="wa3DGrad" cx="35%" cy="26%" r="72%">
+          <stop offset="0%" stopColor="#4EFA8A" />
+          <stop offset="25%" stopColor="#25D366" />
+          <stop offset="65%" stopColor="#1EBE5D" />
+          <stop offset="88%" stopColor="#128C7E" />
+          <stop offset="100%" stopColor="#0B6647" />
+        </radialGradient>
+
+        {/* Soft Upper Dome Curvature Gleam */}
+        <linearGradient id="waTopGleam" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
         </linearGradient>
-        <filter id="waShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="5" stdDeviation="5" floodColor="#25D366" floodOpacity="0.45" />
+
+        {/* 3D Handset Relief Shadow */}
+        <filter id="waHandsetShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0.7" stdDeviation="0.6" floodColor="#075E54" floodOpacity="0.55" />
         </filter>
       </defs>
 
-      <circle cx="50" cy="50" r="42" fill="url(#waGrad)" filter="url(#waShadow)" />
-      
-      {/* Tail notch */}
-      <path d="M30 68L26 80L38 76" fill="#128C7E" />
-
-      {/* Phone Handset Icon */}
+      {/* Main 3D Volumetric WhatsApp Bubble */}
       <path
-        d="M66 58C65 57 62 55 60 54C58 53 57 53 56 55C55 57 53 58 52 58C50 57 47 55 45 53C43 51 41 48 40 46C40 45 41 43 43 42C45 41 45 40 44 38C43 36 41 33 40 32C38 31 37 31 36 32C34 33 32 35 32 37C32 40 34 45 38 50C42 55 47 58 52 60C55 61 57 60 59 58C61 56 62 54 63 53C64 52 64 51 63 50C62 49 61 48 60 47"
+        d="M12 2C6.48 2 2 6.48 2 12C2 13.85 2.5 15.58 3.37 17.07L2.1 21.9L7.05 20.6C8.5 21.48 10.2 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
+        fill="url(#wa3DGrad)"
+      />
+
+      {/* Top Glass/Curvature Reflection Arc */}
+      <ellipse
+        cx="11.5"
+        cy="5.8"
+        rx="6.5"
+        ry="2.2"
+        fill="url(#waTopGleam)"
+        transform="rotate(-6 11.5 5.8)"
+      />
+
+      {/* Bold Official WhatsApp Telephone Handset with 3D Relief Shadow */}
+      <path
+        d="M17.47 14.38C17.17 14.23 15.71 13.51 15.44 13.41C15.17 13.31 14.97 13.26 14.77 13.56C14.57 13.86 14 14.53 13.83 14.73C13.66 14.93 13.49 14.95 13.19 14.8C12.89 14.65 11.93 14.34 10.8 13.33C9.92 12.54 9.32 11.57 9.15 11.27C8.98 10.97 9.13 10.81 9.28 10.66C9.41 10.53 9.58 10.32 9.73 10.15C9.88 9.98 9.93 9.86 10.03 9.66C10.13 9.46 10.08 9.29 10 9.14C9.92 8.99 9.33 7.53 9.08 6.94C8.84 6.36 8.59 6.44 8.41 6.43C8.24 6.42 8.04 6.42 7.84 6.42C7.64 6.42 7.32 6.49 7.05 6.79C6.78 7.09 6.01 7.81 6.01 9.27C6.01 10.73 7.08 12.14 7.23 12.34C7.38 12.54 9.33 15.54 12.31 16.83C13.02 17.14 13.57 17.32 14 17.46C14.71 17.69 15.36 17.66 15.87 17.58C16.44 17.5 17.63 16.87 17.88 16.18C18.13 15.49 18.13 14.89 18.05 14.77C17.98 14.65 17.78 14.58 17.47 14.38Z"
         fill="#FFFFFF"
+        filter="url(#waHandsetShadow)"
       />
     </svg>
   );
 }
+
+// Alias for backward compatibility
+export const WhatsAppBubbleSvg = WhatsApp3DIconSvg;
 
 // 11. Worksheets & Study Notes PDF Binder
 export function WorksheetPdfSvg({ className = "w-10 h-10", size }: SvgProps) {

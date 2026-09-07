@@ -62,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
         className={cn("fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity", backdropClassName)}
@@ -72,19 +72,19 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Dialog Shell */}
       <div
         className={cn(
-          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-8",
+          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col",
           maxWidthStyles[effectiveMaxWidth],
           className
         )}
       >
         {/* Header */}
         {(title || icon) && (
-          <div className="flex items-center justify-between p-6 border-b border-purple-100 bg-purple-50/40">
-            <div className="flex items-center gap-3">
-              {icon && <div className="text-purple-600">{icon}</div>}
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-purple-100 bg-purple-50/40 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {icon && <div className="text-purple-600 shrink-0">{icon}</div>}
               <div>
                 {title && (
-                  <h3 className="text-lg font-black text-slate-900 leading-snug">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                     {title}
                   </h3>
                 )}
@@ -98,7 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -106,11 +106,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">{children}</div>
 
         {/* Optional Footer */}
         {footer && (
-          <div className="p-4 sm:px-6 bg-slate-50 border-t border-purple-100 flex items-center justify-end gap-2.5">
+          <div className="p-3.5 sm:px-6 bg-slate-50 border-t border-purple-100 flex flex-wrap items-center justify-end gap-2.5 shrink-0">
             {footer}
           </div>
         )}

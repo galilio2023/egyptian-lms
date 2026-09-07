@@ -21,6 +21,56 @@ export async function GET() {
 
     const now = new Date();
 
+    // Check single-device restriction on active portal requests
+    const clientCookie = headerList.get("cookie") || "";
+    const cookieMatch = clientCookie.match(/(?:^|;\s*)elite_device_id=([^;]*)/);
+    const clientDeviceId = headerList.get("x-device-id") || (cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null);
+    const sessionDeviceId = (session.session as { deviceId?: string } | undefined)?.deviceId;
+
+    // Enforce single-device restriction on active portal requests
+    if (sessionDeviceId) {
+      if (!clientDeviceId || sessionDeviceId !== clientDeviceId) {
+        return NextResponse.json({
+          success: false,
+          error: "حساب الطالب مسجل ومفتوح على جهاز آخر أو تعذر التحقق من هوية جهازك. يرجى تسجيل الدخول من جهازك المعتمد.",
+          isDeviceLocked: true,
+          requiresParentTransfer: true,
+          enrolledUnitIds: [],
+          enrollments: [],
+          nextLesson: null,
+        }, { status: 403 });
+      }
+    }
+
+    if (!sessionDeviceId && clientDeviceId && session.session?.id) {
+      try {
+        await db
+          .update(schema.session)
+          .set({ deviceId: clientDeviceId, updatedAt: new Date() })
+          .where(eq(schema.session.id, session.session.id));
+      } catch {
+        // Fallback
+      }
+    }
+
+    // Fetch student profile details (grade level, xp, etc.)
+    const [profile] = await db
+      .select()
+      .from(schema.studentProfile)
+      .where(eq(schema.studentProfile.userId, session.user.id))
+      .limit(1);
+
+    if (profile?.isBanned) {
+      return NextResponse.json({
+        success: false,
+        error: "تم إيقاف هذا الحساب مؤقتاً لمخالفة شروط الاستخدام.",
+        isBanned: true,
+        enrolledUnitIds: [],
+        enrollments: [],
+        nextLesson: null,
+      }, { status: 403 });
+    }
+
     // Query active and non-expired student enrollments from database
     const dbEnrollments = await db
       .select({
@@ -43,13 +93,6 @@ export async function GET() {
           )
         )
       );
-
-    // Fetch student profile details (grade level, xp, etc.)
-    const [profile] = await db
-      .select()
-      .from(schema.studentProfile)
-      .where(eq(schema.studentProfile.userId, session.user.id))
-      .limit(1);
 
     const enrolledUnitIds = dbEnrollments.map((e) => e.unitId);
     const completedLessons = await db

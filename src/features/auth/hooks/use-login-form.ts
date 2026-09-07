@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { signIn, signOut } from "@/lib/auth/auth-client";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { apiPost } from "@/lib/api/api-client";
+import { getOrCreateDeviceId } from "@/lib/utils/device";
 
 export interface DeviceLockedInfo {
   requiresParentTransfer?: boolean;
@@ -45,11 +46,7 @@ export function useLoginForm() {
     }
 
     try {
-      let deviceId = "device-dev";
-      if (typeof window !== "undefined") {
-        deviceId = localStorage.getItem("elite_device_id") || `dev-${Math.random().toString(36).substring(2, 11)}`;
-        localStorage.setItem("elite_device_id", deviceId);
-      }
+      const deviceId = getOrCreateDeviceId();
 
       const result = await signIn.email({
         email: `${cleanPhone}@elite-academy.edu.eg`,
@@ -109,10 +106,7 @@ export function useLoginForm() {
     e.preventDefault();
     setIsTransferring(true);
     try {
-      let deviceId = "device-dev";
-      if (typeof window !== "undefined") {
-        deviceId = localStorage.getItem("elite_device_id") || "device-dev";
-      }
+      const deviceId = getOrCreateDeviceId();
 
       const cleanStdPhone = validateEgyptianPhone(phoneNumber);
       const res = await apiPost(

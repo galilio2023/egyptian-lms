@@ -257,41 +257,59 @@ export async function POST(request: NextRequest) {
 
     // 3. Process Transaction Outcome
     if (isSuccess) {
-      // Atomic status update
-      await db
-        .update(schema.order)
-        .set({
-          paymentStatus: "completed",
-          gatewayTransactionId: transactionId,
-          gatewayOrderId: gatewayOrderId || targetOrder.gatewayOrderId,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.order.id, targetOrder.id));
+      // FinTech Price & Currency Verification: Ensure amount_cents matches recorded unit price
+      const expectedCents = Math.round(targetOrder.amountEgp * 100);
+      const receivedCents = Number(obj.amount_cents);
+      const receivedCurrency = obj.currency ? String(obj.currency).toUpperCase() : "EGP";
 
-      // Activate Course Enrollment
-      const [existingEnrollment] = await db
-        .select()
-        .from(schema.enrollment)
-        .where(
-          and(
-            eq(schema.enrollment.userId, targetOrder.userId),
-            eq(schema.enrollment.unitId, targetOrder.unitId)
-          )
-        )
-        .limit(1);
-
-      if (!existingEnrollment) {
-        await db.insert(schema.enrollment).values({
-          userId: targetOrder.userId,
-          unitId: targetOrder.unitId,
-          isActive: true,
+      if (receivedCents !== expectedCents || receivedCurrency !== "EGP") {
+        logSecurityEvent({
+          eventType: "rate_limit_triggered",
+          severity: "critical",
+          description: `🚨 Paymob payment amount mismatch: Expected ${expectedCents} cents, received ${receivedCents} ${receivedCurrency}`,
+          details: { orderId: targetOrder.id, expectedCents, receivedCents, currency: receivedCurrency },
         });
-      } else if (!existingEnrollment.isActive) {
+
         await db
-          .update(schema.enrollment)
-          .set({ isActive: true })
-          .where(eq(schema.enrollment.id, existingEnrollment.id));
+          .update(schema.order)
+          .set({
+            paymentStatus: "manual_review",
+            reviewerNotes: `تنبيه أمني: المبلغ المدفوع (${receivedCents / 100} ${receivedCurrency}) لا يطابق سعر الكورس المطلوب (${targetOrder.amountEgp} ج.م).`,
+            gatewayTransactionId: transactionId,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.order.id, targetOrder.id));
+
+        return NextResponse.json(
+          { error: "Amount or currency mismatch. Flagged for manual review." },
+          { status: 400 }
+        );
       }
+
+      // Atomic transaction: update order status and activate enrollment
+      await db.transaction(async (tx) => {
+        await tx
+          .update(schema.order)
+          .set({
+            paymentStatus: "completed",
+            gatewayTransactionId: transactionId,
+            gatewayOrderId: gatewayOrderId || targetOrder.gatewayOrderId,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.order.id, targetOrder.id));
+
+        await tx
+          .insert(schema.enrollment)
+          .values({
+            userId: targetOrder.userId,
+            unitId: targetOrder.unitId,
+            isActive: true,
+          })
+          .onConflictDoUpdate({
+            target: [schema.enrollment.userId, schema.enrollment.unitId],
+            set: { isActive: true, enrolledAt: new Date() },
+          });
+      });
 
       logSecurityEvent({
         eventType: "voucher_redeem_success",

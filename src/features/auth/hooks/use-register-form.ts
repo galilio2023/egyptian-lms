@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth/auth-client";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { apiPost } from "@/lib/api/api-client";
+import { getOrCreateDeviceId } from "@/lib/utils/device";
 
 export function useRegisterForm() {
   const router = useRouter();
@@ -82,11 +83,7 @@ export function useRegisterForm() {
     }
 
     try {
-      let deviceId = "device-dev";
-      if (typeof window !== "undefined") {
-        deviceId = localStorage.getItem("elite_device_id") || `dev-${Math.random().toString(36).substring(2, 11)}`;
-        localStorage.setItem("elite_device_id", deviceId);
-      }
+      const deviceId = getOrCreateDeviceId();
 
       const result = await signUp.email({
         name: fullname.trim(),

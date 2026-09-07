@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, or, and, isNull, gt, lt, desc } from "drizzle-orm";
-import { INITIAL_LESSONS, INITIAL_UNITS } from "@/lib/db/mock-data";
+import { eq, or, and, isNull, gt, lt, desc, sql } from "drizzle-orm";
+import { INITIAL_LESSONS, INITIAL_UNITS, INITIAL_QUIZ } from "@/lib/db/mock-data";
 import { generateBunnyPlaybackUrl } from "@/lib/video/bunny";
 
 export async function GET(
@@ -26,7 +26,8 @@ export async function GET(
       .limit(1);
 
     if (dbLesson) {
-      const [dbUnit] = await db
+      // Parallelize independent database queries to reduce network latency
+      const unitQuery = db
         .select({
           id: schema.courseUnit.id,
           gradeId: schema.courseUnit.gradeId,
@@ -42,13 +43,8 @@ export async function GET(
         .where(eq(schema.courseUnit.id, dbLesson.unitId))
         .limit(1);
 
-      // Verify entitlement
-      let isEnrolled = false;
-      if (dbLesson.isFreePreview) {
-        isEnrolled = true;
-      } else if (currentUserId && dbLesson.unitId) {
-        try {
-          const [activeEnrollment] = await db
+      const enrollmentQuery = currentUserId && !dbLesson.isFreePreview
+        ? db
             .select()
             .from(schema.enrollment)
             .where(
@@ -62,14 +58,52 @@ export async function GET(
                 )
               )
             )
-            .limit(1);
-          if (activeEnrollment) {
-            isEnrolled = true;
-          }
-        } catch {
-          // DB check fallback
-        }
-      }
+            .limit(1)
+        : Promise.resolve([]);
+
+      const progressQuery = currentUserId
+        ? db
+            .select({ id: schema.lessonProgress.id })
+            .from(schema.lessonProgress)
+            .where(
+              and(
+                eq(schema.lessonProgress.userId, currentUserId),
+                eq(schema.lessonProgress.lessonId, dbLesson.id)
+              )
+            )
+            .limit(1)
+        : Promise.resolve([]);
+
+      const playlistQuery = db
+        .select({
+          id: schema.lesson.id,
+          unitId: schema.lesson.unitId,
+          title: schema.lesson.title,
+          slug: schema.lesson.slug,
+          orderIndex: schema.lesson.orderIndex,
+          isFreePreview: schema.lesson.isFreePreview,
+          videoDuration: sql<string>`concat(round(coalesce(${schema.lesson.videoDurationSeconds}, 1200) / 60), ' دقيقة')`,
+        })
+        .from(schema.lesson)
+        .where(eq(schema.lesson.unitId, dbLesson.unitId))
+        .orderBy(schema.lesson.orderIndex);
+
+      const quizQuery = db
+        .select({ id: schema.quiz.id })
+        .from(schema.quiz)
+        .where(or(eq(schema.quiz.unitId, dbLesson.unitId), eq(schema.quiz.lessonId, dbLesson.id)))
+        .limit(1);
+
+      const [[dbUnit], activeEnrollmentList, completedProgressList, dbPlaylist, [dbQuiz]] = await Promise.all([
+        unitQuery,
+        enrollmentQuery,
+        progressQuery,
+        playlistQuery,
+        quizQuery,
+      ]);
+
+      // Verify entitlement
+      let isEnrolled = Boolean(dbLesson.isFreePreview || (activeEnrollmentList && activeEnrollmentList.length > 0));
 
       // Check prerequisite gating
       let isPrerequisiteBlocked = false;
@@ -154,18 +188,8 @@ export async function GET(
 
       const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || undefined;
       const canAccessVideo = isEnrolled && !isPrerequisiteBlocked;
-      const [completedProgress] = currentUserId
-        ? await db
-            .select({ id: schema.lessonProgress.id })
-            .from(schema.lessonProgress)
-            .where(
-              and(
-                eq(schema.lessonProgress.userId, currentUserId),
-                eq(schema.lessonProgress.lessonId, dbLesson.id)
-              )
-            )
-            .limit(1)
-        : [];
+      const completedProgress = completedProgressList && completedProgressList[0];
+
       const secureVideoUrl = generateBunnyPlaybackUrl({
         provider: dbLesson.videoProvider,
         videoId: dbLesson.videoId,
@@ -180,6 +204,11 @@ export async function GET(
         isPrerequisiteBlocked,
         prerequisiteMessage,
         isCompleted: Boolean(completedProgress),
+        quizId: dbQuiz?.id || INITIAL_QUIZ.id,
+        playlist: dbPlaylist.map((p) => ({
+          ...p,
+          videoUrl: (canAccessVideo || p.isFreePreview) ? secureVideoUrl : null,
+        })),
         lesson: {
           id: dbLesson.id,
           unitId: dbLesson.unitId,
@@ -232,10 +261,20 @@ export async function GET(
       expiresInSeconds: 7200,
     });
 
+    const mockPlaylist = INITIAL_LESSONS.filter((l) => l.unitId === mockUnit.id)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+      .map((l) => ({
+        ...l,
+        videoUrl: (mockIsEnrolled || l.isFreePreview) ? l.videoUrl : null,
+        pdfAttachmentUrl: (mockIsEnrolled || l.isFreePreview) ? (l.pdfAttachmentUrl || null) : null,
+      }));
+
     return NextResponse.json({
       success: true,
       isEnrolled: mockIsEnrolled,
       isLocked: !mockIsEnrolled,
+      quizId: INITIAL_QUIZ.id,
+      playlist: mockPlaylist,
       lesson: {
         ...mockLesson,
         videoUrl: mockIsEnrolled ? secureMockUrl : null,
@@ -250,6 +289,8 @@ export async function GET(
       success: true,
       isEnrolled: fallbackLesson.isFreePreview,
       isLocked: !fallbackLesson.isFreePreview,
+      quizId: INITIAL_QUIZ.id,
+      playlist: INITIAL_LESSONS.slice(0, 4),
       lesson: {
         ...fallbackLesson,
         videoUrl: fallbackLesson.isFreePreview ? fallbackLesson.videoUrl : null,

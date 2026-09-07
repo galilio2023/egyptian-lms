@@ -149,7 +149,10 @@ export const quiz = pgTable('quiz', {
   maxAttempts: integer('max_attempts').default(3).notNull(),
   poolSize: integer('pool_size'), // إذا تم تحديده، يتم تقديم عدد محدود عشوائي من الأسئلة لكل طالب
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('quiz_unit_id_idx').on(table.unitId),
+  index('quiz_lesson_id_idx').on(table.lessonId),
+]);
 
 export interface QuizOption {
   id: string;
@@ -168,7 +171,9 @@ export const quizQuestion = pgTable('quiz_question', {
   explanation: text('explanation'),
   points: integer('points').default(1).notNull(),
   orderIndex: integer('order_index').default(0).notNull(),
-});
+}, (table) => [
+  index('quiz_question_quiz_id_idx').on(table.quizId),
+]);
 
 export const quizAttempt = pgTable('quiz_attempt', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -225,7 +230,11 @@ export const order = pgTable('order', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
   index('order_user_id_idx').on(table.userId),
+  index('order_unit_id_idx').on(table.unitId),
   index('order_idempotency_key_idx').on(table.idempotencyKey),
+  index('order_reference_number_idx').on(table.referenceNumber),
+  index('order_payment_status_idx').on(table.paymentStatus),
+  index('order_created_at_idx').on(table.createdAt),
 ]);
 
 // Center Scratch Card / Voucher Codes (كروت شحن السناتر والمكتبات)
@@ -241,6 +250,7 @@ export const voucherCode = pgTable('voucher_code', {
 }, (table) => [
   index('voucher_code_idx').on(table.code),
   index('voucher_unit_id_idx').on(table.unitId),
+  index('voucher_redeemed_idx').on(table.isRedeemed, table.code),
 ]);
 
 // Relations

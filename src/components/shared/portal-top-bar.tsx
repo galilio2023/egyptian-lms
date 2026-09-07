@@ -18,19 +18,19 @@ export function PortalTopBar({
   maxWidthClass = "max-w-5xl",
 }: PortalTopBarProps) {
   return (
-    <header className="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-3 pb-1">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-purple-100/90 shadow-xs">
       <div
-        className={`${maxWidthClass} mx-auto rounded-full bg-white/90 backdrop-blur-xl border border-purple-200/80 shadow-[0_8px_30px_rgba(139,92,246,0.1)] px-5 py-2.5 flex items-center justify-between`}
+        className={`${maxWidthClass} mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3`}
       >
         <Link
           href={backHref}
-          className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-purple-700 transition-colors"
+          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-purple-700 transition-colors min-w-0"
         >
-          <ArrowRight className="w-4 h-4 text-purple-600" />
-          <span>{backLabel}</span>
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" />
+          <span className="truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">{backLabel}</span>
         </Link>
 
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
       </div>
     </header>
   );

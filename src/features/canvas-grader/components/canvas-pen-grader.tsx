@@ -26,6 +26,7 @@ export function CanvasPenGrader({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [savedAnnotations, setSavedAnnotations] = useState<Record<number, string>>({});
+  const [mobileTab, setMobileTab] = useState<"canvas" | "sidebar">("canvas");
 
   const totalPages = Math.max(1, submission.studentImages.length);
   const currentImage = submission.studentImages[currentPageIndex];
@@ -114,9 +115,35 @@ export function CanvasPenGrader({
           onClose={onClose}
         />
 
+        {/* Mobile View Mode Switcher (< lg) */}
+        <div className="lg:hidden flex items-center bg-slate-950 p-2 border-b border-slate-800 gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMobileTab("canvas")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              mobileTab === "canvas"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            <span>رسم وتصحيح الكراسة 🎨</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("sidebar")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              mobileTab === "sidebar"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            <span>رصد الدرجة والملاحظات 📝</span>
+          </button>
+        </div>
+
         <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Main Drawing & Canvas View */}
-          <div className="lg:col-span-8 xl:col-span-9 flex flex-col bg-slate-950/60 overflow-hidden border-e border-slate-800">
+          <div className={`lg:col-span-8 xl:col-span-9 ${mobileTab === "canvas" ? "flex" : "hidden"} lg:flex flex-col bg-slate-950/60 overflow-hidden border-e border-slate-800`}>
             <GraderToolbar
               currentTool={currentTool}
               brushColor={brushColor}
@@ -176,6 +203,7 @@ export function CanvasPenGrader({
             onChangeNotes={setFeedbackNotes}
             onSave={() => handleSaveAndNotify(false)}
             onSaveNext={() => handleSaveAndNotify(true)}
+            className={`${mobileTab === "sidebar" ? "flex flex-1" : "hidden"} lg:flex`}
           />
         </div>
       </div>

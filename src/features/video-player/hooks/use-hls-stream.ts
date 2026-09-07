@@ -7,6 +7,7 @@ export type QualityMode = "auto" | "low" | "high";
 
 export interface UseHlsStreamOptions {
   qualityMode?: QualityMode;
+  onQualityModeChange?: (mode: QualityMode) => void;
 }
 
 export function useHlsStream(
@@ -14,15 +15,19 @@ export function useHlsStream(
   src: string,
   options: UseHlsStreamOptions = {}
 ) {
-  const { qualityMode = "auto" } = options;
+  const { qualityMode = "auto", onQualityModeChange } = options;
 
   const hlsRef = useRef<Hls | null>(null);
   const [availableLevels, setAvailableLevels] = useState<Level[]>([]);
   const [currentLevel, setCurrentLevel] = useState<number>(-1);
-  const [isHlsSupported, setIsHlsSupported] = useState<boolean>(false);
+  const [isHlsSupported, setIsHlsSupported] = useState(false);
 
   useEffect(() => {
-    setIsHlsSupported(Hls.isSupported());
+    const timer = setTimeout(() => {
+      setIsHlsSupported(Hls.isSupported());
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // تطبيق وضع جودة التشغيل على مستوى hls الحالي
@@ -102,6 +107,10 @@ export function useHlsStream(
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      onQualityModeChange?.("auto");
+      try {
+        localStorage.removeItem("elite_data_saver");
+      } catch {}
       video.src = src;
     }
 
@@ -111,7 +120,7 @@ export function useHlsStream(
         hlsRef.current = null;
       }
     };
-  }, [src, videoRef]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [src, videoRef, onQualityModeChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // تطبيق تغيير وضع الجودة على الـ hls الحالي دون إعادة تهيئة البث
   useEffect(() => {

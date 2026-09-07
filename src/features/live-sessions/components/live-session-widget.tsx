@@ -121,14 +121,14 @@ export function LiveSessionWidget({
   };
 
   return (
-    <div className="modern-card p-6 bg-gradient-to-br from-purple-900 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-2xl border-2 border-purple-500/30 relative overflow-hidden space-y-5">
+    <div className="modern-card p-4 sm:p-6 bg-gradient-to-br from-purple-900 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-2xl border-2 border-purple-500/30 relative overflow-hidden space-y-4 sm:space-y-5">
       {/* Background Decorative Element */}
       <div className="absolute top-0 end-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-purple-800/60 pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-purple-800/60 pb-3 sm:pb-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             {isLive ? (
               <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-rose-600/40 animate-pulse">
                 <Radio className="w-4 h-4" />
@@ -145,7 +145,7 @@ export function LiveSessionWidget({
             </span>
           </div>
 
-          <h3 className="text-lg sm:text-xl font-black text-white">
+          <h3 className="text-base sm:text-xl font-black text-white leading-snug">
             {session.title}
           </h3>
         </div>
@@ -162,35 +162,35 @@ export function LiveSessionWidget({
 
       {/* Countdown Timer Block (if not live yet) */}
       {!isLive && (
-        <div className="p-4 rounded-2xl bg-purple-950/60 border border-purple-500/30 space-y-2">
+        <div className="p-3 sm:p-4 rounded-2xl bg-purple-950/60 border border-purple-500/30 space-y-2">
           <span className="text-[11px] font-bold text-purple-300 block text-center">
             الوقت المتبقي حتى انطلاق البث المباشر:
           </span>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
-              <div className="text-xl sm:text-2xl font-black text-amber-300">{timeLeft.days}</div>
-              <div className="text-[10px] text-purple-300 font-bold">أيام</div>
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
+              <div className="text-lg sm:text-2xl font-black text-amber-300">{timeLeft.days}</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-300 font-bold">أيام</div>
             </div>
-            <div className="p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
-              <div className="text-xl sm:text-2xl font-black text-white">{timeLeft.hours}</div>
-              <div className="text-[10px] text-purple-300 font-bold">ساعات</div>
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
+              <div className="text-lg sm:text-2xl font-black text-white">{timeLeft.hours}</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-300 font-bold">ساعات</div>
             </div>
-            <div className="p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
-              <div className="text-xl sm:text-2xl font-black text-white">{timeLeft.minutes}</div>
-              <div className="text-[10px] text-purple-300 font-bold">دقائق</div>
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
+              <div className="text-lg sm:text-2xl font-black text-white">{timeLeft.minutes}</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-300 font-bold">دقائق</div>
             </div>
-            <div className="p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
-              <div className="text-xl sm:text-2xl font-black text-pink-400 animate-pulse">{timeLeft.seconds}</div>
-              <div className="text-[10px] text-purple-300 font-bold">ثواني</div>
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-900/50 border border-purple-700/50">
+              <div className="text-lg sm:text-2xl font-black text-pink-400 animate-pulse">{timeLeft.seconds}</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-300 font-bold">ثواني</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Meeting Action Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
         {session.meetingPassword && (
-          <div className="flex items-center gap-2 text-xs text-purple-200">
+          <div className="flex items-center justify-between sm:justify-start gap-2 text-xs text-purple-200">
             <span>كلمة مرور الحصة:</span>
             <code className="px-2.5 py-1 rounded-lg bg-black/40 font-mono font-bold text-amber-300 border border-purple-700">
               {session.meetingPassword}
@@ -209,7 +209,7 @@ export function LiveSessionWidget({
           onClick={handleJoinMeeting}
           className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer ${
             isLive 
-              ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-105 animate-bounce" 
+              ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-102" 
               : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-400/25"
           }`}
         >

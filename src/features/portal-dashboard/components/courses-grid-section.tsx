@@ -56,7 +56,7 @@ export const CoursesGridSection: React.FC<CoursesGridSectionProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={onToggleViewAllGrades}
@@ -79,7 +79,7 @@ export const CoursesGridSection: React.FC<CoursesGridSectionProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {displayedUnits.map((unit) => {
           const isUnlocked =
             enrolledUnitIds.includes(unit.id) || enrolledUnitIds.includes(unit.slug);

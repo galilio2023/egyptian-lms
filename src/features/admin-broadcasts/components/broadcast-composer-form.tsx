@@ -32,7 +32,7 @@ export function BroadcastComposerForm() {
     const targetCount = selectedGrade === "all" ? 3050 : 510;
 
     try {
-      const result = await executeAdminAction(
+      const result = await executeAdminAction<{ sentCount?: number }>(
         "send_broadcast",
         {
           gradeSlug: selectedGrade,
@@ -40,14 +40,20 @@ export function BroadcastComposerForm() {
           recipientCount: targetCount,
         },
         {
-          successMessage: `🎉 تم إرسال الرسائل بنجاح إلى ${targetCount} ولي أمر عبر WhatsApp API.`,
+          showToast: false,
           errorMessage: "حدث خطأ أثناء إرسال الرسائل.",
         }
       );
 
       if (result.success) {
-        setSentCount(targetCount);
+        const actualCount = result.data?.sentCount ?? targetCount;
+        setSentCount(actualCount);
+        toast.success(`🎉 تم إرسال الرسائل بنجاح إلى ${actualCount} ولي أمر عبر WhatsApp API.`);
+      } else {
+        toast.error(result.error || "تعذر إرسال الرسائل الجماعية عبر واتساب.");
       }
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || "حدث خطأ غير متوقع أثناء إرسال الرسائل.");
     } finally {
       setIsSending(false);
     }

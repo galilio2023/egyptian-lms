@@ -41,8 +41,8 @@ export function EgyptianCheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in-50">
-      <div className="modern-card w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-5 border-2 border-purple-200 shadow-2xl bg-white relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in-50 overflow-y-auto">
+      <div className="modern-card w-full max-w-lg rounded-3xl p-4 sm:p-8 space-y-4 sm:space-y-5 border-2 border-purple-200 shadow-2xl bg-white relative my-auto max-h-[92dvh] overflow-y-auto">
         <CheckoutHeader unit={unit} onClose={onClose} />
 
         {isSubmitted ? (

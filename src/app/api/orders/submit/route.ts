@@ -3,11 +3,13 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, or, isNull, gt, ne } from "drizzle-orm";
+import { eq, and, or, isNull, isNotNull, gt, ne } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { INITIAL_UNITS } from "@/lib/db/mock-data";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { initiatePaymobPayment } from "@/lib/api/paymob";
+import { scanEgyptianReceipt, generateReceiptHash } from "@/lib/receipt-scanner";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -206,6 +208,35 @@ export async function POST(request: NextRequest) {
     let insertedOrderId: string | null = null;
     const fallbackOrderId = `ord-${Date.now().toString().slice(-6)}`;
 
+    // Heuristic OCR scanning & receipt fingerprinting for manual transfers
+    let computedReceiptHash: string | null = null;
+    let ocrScanData: Record<string, unknown> | null = null;
+
+    if (paymentMethod.includes("manual")) {
+      if (receiptImageUrl) {
+        computedReceiptHash = generateReceiptHash(receiptImageUrl);
+      } else if (cleanRef) {
+        computedReceiptHash = generateReceiptHash(cleanRef);
+      }
+
+      if (cleanRef) {
+        let existingReceiptHashes: Record<string, string> = {};
+        try {
+          const pastOrders = await db
+            .select({ id: schema.order.id, ref: schema.order.referenceNumber })
+            .from(schema.order)
+            .where(isNotNull(schema.order.referenceNumber))
+            .limit(100);
+          for (const o of pastOrders) {
+            if (o.ref) existingReceiptHashes[o.ref] = o.id;
+          }
+        } catch {
+          // Fallback map
+        }
+        ocrScanData = scanEgyptianReceipt(cleanRef, verifiedPrice, existingReceiptHashes) as unknown as Record<string, unknown>;
+      }
+    }
+
     // Try database insertion
     try {
       if (userId && isUUID) {
@@ -217,22 +248,73 @@ export async function POST(request: NextRequest) {
           paymentStatus: paymentMethod.startsWith("paymob") ? "pending" : "manual_review",
           referenceNumber: cleanRef || `REF-${Date.now()}`,
           receiptImageUrl: receiptImageUrl || null,
+          receiptHash: computedReceiptHash,
+          ocrData: ocrScanData,
           idempotencyKey: effectiveIdempotencyKey,
         }).returning({ id: schema.order.id });
 
         if (insertedOrder) {
           insertedOrderId = insertedOrder.id;
+        } else {
+          return NextResponse.json(
+            { error: "تعذر تسجيل الطلب في قاعدة البيانات. يرجى المحاولة مرة أخرى." },
+            { status: 500 }
+          );
         }
       }
     } catch (dbErr) {
-      console.warn("Order DB insert fallback:", dbErr);
+      console.error("Order DB insert error:", dbErr);
+      if (userId && isUUID) {
+        return NextResponse.json(
+          { error: "حدث خطأ أثناء حفظ الطلب في قاعدة البيانات. يرجى التحقق من صحة البيانات أو مراجعة الدعم." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Paymob checkout requires a valid persisted database order
+    if (paymentMethod.startsWith("paymob") && !insertedOrderId) {
+      return NextResponse.json(
+        { error: "تعذر بدء عملية الدفع عبر باي موب لعدم حفظ الطلب في قاعدة البيانات. يرجى تسجيل الدخول وإعادة المحاولة." },
+        { status: 400 }
+      );
     }
 
     const orderIdToReturn = insertedOrderId || fallbackOrderId;
+    let paymobCheckoutUrl: string | undefined;
+
+    // Trigger outbound Paymob session if selected payment method is Paymob
+    if (paymentMethod.startsWith("paymob") && insertedOrderId) {
+      try {
+        const paymobResult = await initiatePaymobPayment({
+          orderId: insertedOrderId,
+          amountEgp: verifiedPrice,
+          unitTitle: verifiedTitle,
+          studentName: session?.user?.name || undefined,
+          studentPhone: cleanStd || undefined,
+          studentEmail: session?.user?.email || undefined,
+          paymentMethod: paymentMethod as "paymob_wallet" | "paymob_card",
+        });
+
+        if (paymobResult.checkoutUrl) {
+          paymobCheckoutUrl = paymobResult.checkoutUrl;
+        }
+
+        if (paymobResult.gatewayOrderId && insertedOrderId) {
+          await db
+            .update(schema.order)
+            .set({ gatewayOrderId: paymobResult.gatewayOrderId })
+            .where(eq(schema.order.id, insertedOrderId));
+        }
+      } catch (paymobErr) {
+        console.warn("Paymob initiation note:", paymobErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       orderId: orderIdToReturn,
+      paymobCheckoutUrl,
       status: paymentMethod.startsWith("paymob") ? "pending" : "manual_review",
       message: paymentMethod.startsWith("paymob")
         ? "جاري التحويل إلى بوابة باي موب للدفع الآمن..."

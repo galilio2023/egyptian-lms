@@ -36,7 +36,11 @@ export const ADMIN_NAV_ITEMS: NavItemConfig[] = [
   { href: "/admin/security", label: "سجل الأمان ومكافحة التهديدات", Svg: ShieldAlert, badge: "🛡️ آمن" },
 ];
 
-export const AdminNavLinks: React.FC = () => {
+export interface AdminNavLinksProps {
+  onItemClick?: () => void;
+}
+
+export const AdminNavLinks: React.FC<AdminNavLinksProps> = ({ onItemClick }) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userRole = session?.user?.role;
@@ -59,6 +63,7 @@ export const AdminNavLinks: React.FC = () => {
           <Link
             key={item.href}
             href={item.href}
+            onClick={onItemClick}
             className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
               isActive
                 ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/25 scale-[1.02]"

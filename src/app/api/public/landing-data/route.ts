@@ -7,33 +7,51 @@ import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 export async function GET() {
   try {
-    // 1. Fetch live published units from database
-    const dbUnits = await db
-      .select({
-        id: schema.courseUnit.id,
-        gradeId: schema.courseUnit.gradeId,
-        gradeSlug: schema.grade.slug,
-        gradeTitle: schema.grade.titleEnglish,
-        title: schema.courseUnit.title,
-        slug: schema.courseUnit.slug,
-        description: schema.courseUnit.description,
-        thumbnailUrl: schema.courseUnit.thumbnailUrl,
-        priceEgp: schema.courseUnit.price,
-        orderIndex: schema.courseUnit.orderIndex,
-        isPublished: schema.courseUnit.isPublished,
-      })
-      .from(schema.courseUnit)
-      .leftJoin(schema.grade, eq(schema.courseUnit.gradeId, schema.grade.id))
-      .where(eq(schema.courseUnit.isPublished, true))
-      .orderBy(schema.courseUnit.orderIndex);
+    // Concurrently fetch units, lessons, leaderboard, and platform settings
+    const [dbUnits, dbLessons, topStudents, settings] = await Promise.all([
+      db
+        .select({
+          id: schema.courseUnit.id,
+          gradeId: schema.courseUnit.gradeId,
+          gradeSlug: schema.grade.slug,
+          gradeTitle: schema.grade.titleEnglish,
+          title: schema.courseUnit.title,
+          slug: schema.courseUnit.slug,
+          description: schema.courseUnit.description,
+          thumbnailUrl: schema.courseUnit.thumbnailUrl,
+          priceEgp: schema.courseUnit.price,
+          orderIndex: schema.courseUnit.orderIndex,
+          isPublished: schema.courseUnit.isPublished,
+        })
+        .from(schema.courseUnit)
+        .leftJoin(schema.grade, eq(schema.courseUnit.gradeId, schema.grade.id))
+        .where(eq(schema.courseUnit.isPublished, true))
+        .orderBy(schema.courseUnit.orderIndex),
 
-    // Fetch lessons count for each unit
-    const dbLessons = await db
-      .select({
-        id: schema.lesson.id,
-        unitId: schema.lesson.unitId,
-      })
-      .from(schema.lesson);
+      db
+        .select({
+          id: schema.lesson.id,
+          unitId: schema.lesson.unitId,
+        })
+        .from(schema.lesson),
+
+      db
+        .select({
+          id: schema.studentProfile.id,
+          name: schema.user.name,
+          gradeLevel: schema.studentProfile.gradeLevel,
+          governorate: schema.studentProfile.governorate,
+          schoolName: schema.studentProfile.schoolName,
+          xpPoints: schema.studentProfile.xpPoints,
+        })
+        .from(schema.studentProfile)
+        .leftJoin(schema.user, eq(schema.studentProfile.userId, schema.user.id))
+        .where(eq(schema.studentProfile.isBanned, false))
+        .orderBy(desc(schema.studentProfile.xpPoints))
+        .limit(20),
+
+      getPlatformSettings(),
+    ]);
 
     const formattedUnits = dbUnits.map((u) => {
       const lessonCount = dbLessons.filter((l) => l.unitId === u.id).length;
@@ -53,32 +71,20 @@ export async function GET() {
       };
     });
 
-    // 2. Fetch top student champions by XP
-    const topStudents = await db
-      .select({
-        id: schema.studentProfile.id,
-        name: schema.user.name,
-        gradeLevel: schema.studentProfile.gradeLevel,
-        governorate: schema.studentProfile.governorate,
-        schoolName: schema.studentProfile.schoolName,
-        xpPoints: schema.studentProfile.xpPoints,
-      })
-      .from(schema.studentProfile)
-      .leftJoin(schema.user, eq(schema.studentProfile.userId, schema.user.id))
-      .where(eq(schema.studentProfile.isBanned, false))
-      .orderBy(desc(schema.studentProfile.xpPoints))
-      .limit(20);
-
-    // 3. Fetch dynamic platform settings (branding, phones, carousel lectures)
-    const settings = await getPlatformSettings();
-
-    return NextResponse.json({
-      success: true,
-      units: formattedUnits.length > 0 ? formattedUnits : INITIAL_UNITS,
-      grades: INITIAL_GRADES,
-      topStudents,
-      settings,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        units: formattedUnits.length > 0 ? formattedUnits : INITIAL_UNITS,
+        grades: INITIAL_GRADES,
+        topStudents,
+        settings,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (err) {
     console.warn("Public landing data DB fallback:", err);
     return NextResponse.json({

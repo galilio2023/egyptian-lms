@@ -47,19 +47,13 @@ export async function POST(request: NextRequest) {
 
     const cleanCode = code.trim().toUpperCase();
 
-    // Determine current student user ID
-    let currentUserId = session?.user?.id;
-    if (!currentUserId && studentPhone) {
-      try {
-        const [userRecord] = await db
-          .select({ id: schema.user.id })
-          .from(schema.user)
-          .where(eq(schema.user.phoneNumber, studentPhone))
-          .limit(1);
-        if (userRecord) currentUserId = userRecord.id;
-      } catch {
-        // Fallback
-      }
+    // Require authenticated student session to prevent IDOR / unlinked voucher code burning
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: "يجب تسجيل الدخول أولاً بحساب الطالب المعتمد لشحن الكارت وتفعيل الوحدة الدراسية في حسابه." },
+        { status: 401 }
+      );
     }
 
     // 1. Atomic query & update to prevent concurrency race conditions
@@ -88,23 +82,43 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Atomic conditional update
-      const [redeemedVoucher] = await db
-        .update(schema.voucherCode)
-        .set({
-          isRedeemed: true,
-          redeemedByUserId: currentUserId || null,
-          redeemedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.voucherCode.code, cleanCode),
-            eq(schema.voucherCode.isRedeemed, false)
+      // Atomic transaction: mark voucher redeemed and activate course enrollment
+      const txResult = await db.transaction(async (tx) => {
+        const [redeemedVoucher] = await tx
+          .update(schema.voucherCode)
+          .set({
+            isRedeemed: true,
+            redeemedByUserId: currentUserId,
+            redeemedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.voucherCode.code, cleanCode),
+              eq(schema.voucherCode.isRedeemed, false)
+            )
           )
-        )
-        .returning();
+          .returning();
 
-      if (!redeemedVoucher) {
+        if (!redeemedVoucher) {
+          return { success: false, alreadyRedeemed: true, voucher: null };
+        }
+
+        await tx
+          .insert(schema.enrollment)
+          .values({
+            userId: currentUserId,
+            unitId: redeemedVoucher.unitId,
+            isActive: true,
+          })
+          .onConflictDoUpdate({
+            target: [schema.enrollment.userId, schema.enrollment.unitId],
+            set: { isActive: true, enrolledAt: new Date() },
+          });
+
+        return { success: true, alreadyRedeemed: false, voucher: redeemedVoucher };
+      });
+
+      if (txResult.alreadyRedeemed || !txResult.voucher) {
         logSecurityEvent({
           eventType: "voucher_redeem_failed",
           severity: "low",
@@ -131,41 +145,14 @@ export async function POST(request: NextRequest) {
         ipAddress: clientIp,
         userAgent,
         description: `تم شحن كارت الشحن بنجاح وتفعيل الوحدة الدراسية: ${cleanCode}`,
-        details: { unitId: redeemedVoucher.unitId, batchName: redeemedVoucher.batchName },
+        details: { unitId: txResult.voucher.unitId, batchName: txResult.voucher.batchName },
       });
-
-      // Create course enrollment if student ID is present
-      if (currentUserId) {
-        const [existingEnrollment] = await db
-          .select()
-          .from(schema.enrollment)
-          .where(
-            and(
-              eq(schema.enrollment.userId, currentUserId),
-              eq(schema.enrollment.unitId, redeemedVoucher.unitId)
-            )
-          )
-          .limit(1);
-
-        if (!existingEnrollment) {
-          await db.insert(schema.enrollment).values({
-            userId: currentUserId,
-            unitId: redeemedVoucher.unitId,
-            isActive: true,
-          });
-        } else if (!existingEnrollment.isActive) {
-          await db
-            .update(schema.enrollment)
-            .set({ isActive: true })
-            .where(eq(schema.enrollment.id, existingEnrollment.id));
-        }
-      }
 
       return NextResponse.json({
         success: true,
         message: "🎉 تم شحن الكود وتفعيل الوحدة الدراسية بنجاح!",
-        unitId: redeemedVoucher.unitId,
-        batchName: redeemedVoucher.batchName,
+        unitId: txResult.voucher.unitId,
+        batchName: txResult.voucher.batchName,
       });
     } catch (dbErr) {
       console.warn("Voucher DB lookup error:", dbErr);

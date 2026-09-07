@@ -39,11 +39,9 @@ export async function GET(
       .limit(1);
 
     if (dbUnit) {
-      // Check if student has active non-expired enrollment in this unit
-      let isEnrolled = false;
-      if (currentUserId) {
-        try {
-          const [activeEnrollment] = await db
+      // Parallelize unit lessons, enrollment check, and unit quiz queries
+      const enrollmentQuery = currentUserId
+        ? db
             .select({ id: schema.enrollment.id })
             .from(schema.enrollment)
             .where(
@@ -54,39 +52,50 @@ export async function GET(
                 or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
               )
             )
-            .limit(1);
-          if (activeEnrollment) isEnrolled = true;
-        } catch {
-          // DB check fallback
-        }
-      }
+            .limit(1)
+        : Promise.resolve([]);
 
-      // Fetch lessons for this unit
-      const dbLessons = await db
+      const lessonsQuery = db
         .select()
         .from(schema.lesson)
         .where(eq(schema.lesson.unitId, dbUnit.id))
         .orderBy(schema.lesson.orderIndex);
 
-      // Fetch which lessons actually have quizzes or homework assignments
+      const quizQuery = db
+        .select()
+        .from(schema.quiz)
+        .where(eq(schema.quiz.unitId, dbUnit.id))
+        .limit(1);
+
+      const [activeEnrollmentList, dbLessons, [dbQuiz]] = await Promise.all([
+        enrollmentQuery,
+        lessonsQuery,
+        quizQuery,
+      ]);
+
+      const isEnrolled = Boolean(activeEnrollmentList && activeEnrollmentList.length > 0);
+
+      // Fetch which lessons actually have quizzes or homework assignments concurrently
       const unitLessonIds = dbLessons.map((l) => l.id);
       const lessonsWithQuiz = new Set<string>();
       const lessonsWithHw = new Set<string>();
 
       if (unitLessonIds.length > 0) {
         try {
-          const existingQuizzes = await db
-            .select({ lessonId: schema.quiz.lessonId })
-            .from(schema.quiz)
-            .where(inArray(schema.quiz.lessonId, unitLessonIds));
+          const [existingQuizzes, existingHw] = await Promise.all([
+            db
+              .select({ lessonId: schema.quiz.lessonId })
+              .from(schema.quiz)
+              .where(inArray(schema.quiz.lessonId, unitLessonIds)),
+            db
+              .select({ lessonId: schema.homeworkAssignment.lessonId })
+              .from(schema.homeworkAssignment)
+              .where(inArray(schema.homeworkAssignment.lessonId, unitLessonIds)),
+          ]);
+
           existingQuizzes.forEach((q) => {
             if (q.lessonId) lessonsWithQuiz.add(q.lessonId);
           });
-
-          const existingHw = await db
-            .select({ lessonId: schema.homeworkAssignment.lessonId })
-            .from(schema.homeworkAssignment)
-            .where(inArray(schema.homeworkAssignment.lessonId, unitLessonIds));
           existingHw.forEach((h) => {
             if (h.lessonId) lessonsWithHw.add(h.lessonId);
           });
@@ -95,34 +104,36 @@ export async function GET(
         }
       }
 
-      // Fetch passed quizzes and submitted homework for current user in this unit
+      // Fetch passed quizzes and submitted homework for current user in this unit concurrently
       const userPassedQuizLessonIds = new Set<string>();
       const userSubmittedHwLessonIds = new Set<string>();
 
       if (currentUserId && isEnrolled) {
         try {
-          const passedAttempts = await db
-            .select({ lessonId: schema.quiz.lessonId })
-            .from(schema.quizAttempt)
-            .innerJoin(schema.quiz, eq(schema.quizAttempt.quizId, schema.quiz.id))
-            .where(
-              and(
-                eq(schema.quizAttempt.userId, currentUserId),
-                eq(schema.quizAttempt.passed, true)
+          const [passedAttempts, userSubmissions] = await Promise.all([
+            db
+              .select({ lessonId: schema.quiz.lessonId })
+              .from(schema.quizAttempt)
+              .innerJoin(schema.quiz, eq(schema.quizAttempt.quizId, schema.quiz.id))
+              .where(
+                and(
+                  eq(schema.quizAttempt.userId, currentUserId),
+                  eq(schema.quizAttempt.passed, true)
+                )
+              ),
+            db
+              .select({ lessonId: schema.homeworkAssignment.lessonId })
+              .from(schema.homeworkSubmission)
+              .innerJoin(
+                schema.homeworkAssignment,
+                eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id)
               )
-            );
+              .where(eq(schema.homeworkSubmission.userId, currentUserId)),
+          ]);
+
           passedAttempts.forEach((p) => {
             if (p.lessonId) userPassedQuizLessonIds.add(p.lessonId);
           });
-
-          const userSubmissions = await db
-            .select({ lessonId: schema.homeworkAssignment.lessonId })
-            .from(schema.homeworkSubmission)
-            .innerJoin(
-              schema.homeworkAssignment,
-              eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id)
-            )
-            .where(eq(schema.homeworkSubmission.userId, currentUserId));
           userSubmissions.forEach((s) => {
             if (s.lessonId) userSubmittedHwLessonIds.add(s.lessonId);
           });
@@ -177,13 +188,6 @@ export async function GET(
           prerequisiteMessage,
         };
       });
-
-      // Fetch quiz for this unit
-      const [dbQuiz] = await db
-        .select()
-        .from(schema.quiz)
-        .where(eq(schema.quiz.unitId, dbUnit.id))
-        .limit(1);
 
       return NextResponse.json({
         success: true,
