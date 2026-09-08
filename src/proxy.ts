@@ -9,6 +9,13 @@ export function proxy(request: NextRequest) {
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("__Secure-better-auth.session_token")?.value;
 
+  // Allow public adventure quizzes (/portal/quiz/*) so landing page quizzes are immediately playable
+  if (pathname.startsWith("/portal/quiz")) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
+
   // Student Portal Route Protection (/portal/*)
   if (pathname.startsWith("/portal")) {
     if (!sessionToken) {
