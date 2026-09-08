@@ -452,6 +452,7 @@ export async function POST(request: NextRequest) {
     const ADMIN_TEACHER_ONLY_ACTIONS = [
       "approve_order",
       "reject_order",
+      "manual_enroll_student",
       "toggle_ban",
       "ban_student",
       "unban_student",
@@ -754,7 +755,7 @@ export async function POST(request: NextRequest) {
             if (cleanParent) {
               try {
                 const settings = await getPlatformSettings();
-                await sendAutomatedWhatsAppNotification({
+                const waRes = await sendAutomatedWhatsAppNotification({
                   to: cleanParent,
                   message: `🎉 *${settings.academyNameArabic} — تأكيد الاشتراك المباشر بالسنتر*\n` +
                     `ولي أمر البطل / ${studentRecord.name} 🌟\n` +
@@ -762,7 +763,7 @@ export async function POST(request: NextRequest) {
                     `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
                     `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
                 });
-                parentNotified = true;
+                parentNotified = Boolean(waRes.success);
               } catch (waErr) {
                 console.warn("Manual enroll WhatsApp note:", waErr);
               }
@@ -1229,14 +1230,16 @@ export async function POST(request: NextRequest) {
                 .limit(1);
               if (foundUnit) unitIdToBind = foundUnit.id;
             }
-
-            if (!unitIdToBind) {
-              const [anyUnit] = await db.select({ id: schema.courseUnit.id }).from(schema.courseUnit).limit(1);
-              if (anyUnit) unitIdToBind = anyUnit.id;
-            }
           }
 
-          if (unitIdToBind && vouchers && vouchers.length > 0) {
+          if (!unitIdToBind) {
+            return NextResponse.json(
+              { error: "لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها." },
+              { status: 400 }
+            );
+          }
+
+          if (vouchers && vouchers.length > 0) {
             const recordsToInsert = vouchers.map((v) => ({
               code: v.code.trim().toUpperCase(),
               unitId: unitIdToBind!,
@@ -1253,13 +1256,17 @@ export async function POST(request: NextRequest) {
             insertedCount = inserted.length;
           }
         } catch (dbErr) {
-          console.warn("Voucher batch DB insert note:", dbErr);
+          console.error("Voucher batch DB insert error:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء حفظ كروت الشحن في قاعدة البيانات." },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json({
           success: true,
-          count: insertedCount || vouchers?.length || 0,
-          message: `تم حفظ ${insertedCount || vouchers?.length || 0} كارت شحن بنجاح في قاعدة البيانات وتفعيلها للاستخدام الفوري.`,
+          count: insertedCount,
+          message: `تم حفظ ${insertedCount} كارت شحن بنجاح في قاعدة البيانات وتفعيلها للاستخدام الفوري.`,
         });
       }
 
@@ -1446,14 +1453,16 @@ export async function POST(request: NextRequest) {
                 .limit(1);
               if (foundUnit) unitIdToBind = foundUnit.id;
             }
-
-            if (!unitIdToBind) {
-              const [anyUnit] = await db.select({ id: schema.courseUnit.id }).from(schema.courseUnit).limit(1);
-              if (anyUnit) unitIdToBind = anyUnit.id;
-            }
           }
 
-          if (unitIdToBind && generatedList.length > 0) {
+          if (!unitIdToBind) {
+            return NextResponse.json(
+              { error: "لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها." },
+              { status: 400 }
+            );
+          }
+
+          if (generatedList.length > 0) {
             const recordsToInsert = generatedList.map((v) => ({
               code: v.code.trim().toUpperCase(),
               unitId: unitIdToBind!,
@@ -1470,14 +1479,18 @@ export async function POST(request: NextRequest) {
             insertedCount = inserted.length;
           }
         } catch (dbErr) {
-          console.warn("Secure voucher DB batch persistence note:", dbErr);
+          console.error("Secure voucher DB batch persistence error:", dbErr);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء حفظ كروت الشحن المولدة في قاعدة البيانات." },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json({
           success: true,
           vouchers: generatedList,
-          count: insertedCount || generatedList.length,
-          message: `تم توليد ${generatedList.length} كارت شحن عالي التشفير وحفظها بنجاح في قاعدة البيانات.`,
+          count: insertedCount,
+          message: `تم توليد وحفظ ${insertedCount} كارت شحن عالي التشفير بنجاح في قاعدة البيانات.`,
         });
       }
 

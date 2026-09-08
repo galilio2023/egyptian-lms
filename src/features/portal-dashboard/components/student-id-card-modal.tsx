@@ -8,6 +8,7 @@ import { EliteLogoBadge } from "@/components/ui/illustrated-icons";
 export interface StudentIDCardModalProps {
   isOpen: boolean;
   onClose: () => void;
+  studentId?: string;
   studentName: string;
   studentPhone: string;
   gradeTitle: string;
@@ -18,6 +19,7 @@ export interface StudentIDCardModalProps {
 export function StudentIDCardModal({
   isOpen,
   onClose,
+  studentId,
   studentName,
   studentPhone,
   gradeTitle,
@@ -29,12 +31,12 @@ export function StudentIDCardModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    // Opaque token / pass identifier (no PII like studentName or phone exposed to scanners)
+    const passIdentifier = studentId || `pass_${studentPhone.replace(/\D/g, "").slice(-8)}`;
     const qrPayload = JSON.stringify({
-      stdName: studentName,
-      stdPhone: studentPhone,
-      grade: gradeTitle,
-      academy: academyName,
-      ver: "1.0",
+      passId: passIdentifier,
+      type: "attendance_pass",
+      ver: "2.0",
     });
 
     QRCode.toDataURL(qrPayload, {
@@ -47,7 +49,7 @@ export function StudentIDCardModal({
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.warn("QR Generation note:", err));
-  }, [isOpen, studentName, studentPhone, gradeTitle, academyName]);
+  }, [isOpen, studentId, studentPhone]);
 
   if (!isOpen) return null;
 

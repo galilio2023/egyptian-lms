@@ -25,7 +25,12 @@ async function seed() {
   console.log("Creating/verifying admin and teacher users...");
   const adminPhone = "01000000000";
   const adminEmail = `${adminPhone}@elite-academy.edu.eg`;
-  const adminDefaultPassword = process.env.ADMIN_SEED_PASSWORD || "Admin123456!";
+  const adminDefaultPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminDefaultPassword) {
+    throw new Error(
+      "❌ ADMIN_SEED_PASSWORD is required in environment variables to run seed safely. Please specify a high-entropy password in your .env."
+    );
+  }
 
   const [existingAdmin] = await db
     .select()
@@ -72,7 +77,7 @@ async function seed() {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    console.log(`✅ Admin account created with login: ${adminPhone} / ${adminDefaultPassword}`);
+    console.log(`✅ Admin credential account created for login: ${adminPhone}`);
   }
 
   // 2. Seed Grades

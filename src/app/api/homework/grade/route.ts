@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     if (verifiedParentPhone) {
       const settings = await getPlatformSettings();
-      const effectiveAssignmentTitle = assignmentTitle || existingSub.assignmentTitle || "كراسة التدريبات";
+      const effectiveAssignmentTitle = existingSub.assignmentTitle || assignmentTitle || "كراسة التدريبات";
       const rawTextMessage = 
         `🌟 *تقرير تصحيح كراسة الواجب - ${settings.academyNameArabic}*\n` +
         `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +

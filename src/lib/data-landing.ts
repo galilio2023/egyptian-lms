@@ -1,7 +1,7 @@
-﻿import { db } from "@/lib/db";
+import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { INITIAL_UNITS, type MockUnit } from "@/lib/db/mock-data";
+import { INITIAL_PLATFORM_SETTINGS, INITIAL_UNITS, type MockUnit } from "@/lib/db/mock-data";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 export async function getLandingPageData() {
@@ -60,10 +60,9 @@ export async function getLandingPageData() {
     };
   } catch (err) {
     console.warn("Server-side landing data fetch fallback:", err);
-    const settings = await getPlatformSettings();
     return {
       units: INITIAL_UNITS,
-      settings,
+      settings: INITIAL_PLATFORM_SETTINGS,
     };
   }
 }

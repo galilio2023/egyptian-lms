@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
           const settings = await getPlatformSettings();
           const studentName = studentUser?.name || "البطل";
           const unitTitle = unitRec?.title || "الوحدة الدراسية";
-          await sendAutomatedWhatsAppNotification({
+          void sendAutomatedWhatsAppNotification({
             to: cleanParentPhone,
             message: `🎉 *${settings.academyNameArabic} - تأكيد سداد الرسوم الإلكترونية*\n` +
               `ولي أمر البطل / ${studentName} 🌟\n` +
@@ -356,6 +356,8 @@ export async function POST(request: NextRequest) {
               `يمكن للطالب الآن الدخول للمنصة ومتابعة الحصص وحل التمارين فوراً!\n` +
               `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
               `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+          }).catch((waErr) => {
+            console.warn("Paymob webhook WhatsApp dispatch background note:", waErr);
           });
         }
       } catch (waErr) {

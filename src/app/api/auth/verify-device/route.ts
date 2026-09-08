@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
               if (cleanParentPhone) {
                 const settings = await getPlatformSettings();
                 const studentName = session?.user?.name || "الطالب";
-                await sendAutomatedWhatsAppNotification({
+                void sendAutomatedWhatsAppNotification({
                   to: cleanParentPhone,
                   message: `🛡️ *${settings.academyNameArabic} — تنبيه أمان الحساب*\n` +
                     `ولي أمر البطل / ${studentName} ⚠️\n` +
@@ -201,6 +201,8 @@ export async function POST(request: NextRequest) {
                     `التاريخ والوقت: ${new Date().toLocaleString("ar-EG")}\n` +
                     `عنوان IP: ${clientIp}\n` +
                     `إذا لم تكن أنت من قام بنقل الحساب، يرجى إبلاغ إدارة المنصة فوراً لمنع مشاركة الحساب.`,
+                }).catch((waErr) => {
+                  console.warn("Device transfer WhatsApp alert background note:", waErr);
                 });
               }
             } catch (waErr) {

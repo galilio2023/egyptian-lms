@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { RefreshCw, AlertOctagon } from "lucide-react";
+import { RefreshCw, AlertOctagon, MessageCircle } from "lucide-react";
 
 export default function GlobalError({
   error,
@@ -13,6 +13,10 @@ export default function GlobalError({
   useEffect(() => {
     console.error("Critical Root Layout Error:", error);
   }, [error]);
+
+  const whatsappMsg = encodeURIComponent(
+    `السلام عليكم، واجهت عطلاً تقنياً غير متوقع في المنصة التعليمية (Root Crash).\nرمز الخطأ: ${error.digest || "غير محدد"}`
+  );
 
   return (
     <html lang="ar" dir="rtl">
@@ -35,13 +39,25 @@ export default function GlobalError({
             </div>
           )}
 
-          <button
-            onClick={() => reset()}
-            className="w-full py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>إعادة تشغيل المنصة (Restart Application)</span>
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => reset()}
+              className="w-full py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>إعادة تشغيل المنصة (Restart Application)</span>
+            </button>
+
+            <a
+              href={`https://wa.me/201000000000?text=${whatsappMsg}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 rounded-2xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              <span>إبلاغ الدعم الفني عبر واتساب (Emergency Report)</span>
+            </a>
+          </div>
         </div>
       </body>
     </html>

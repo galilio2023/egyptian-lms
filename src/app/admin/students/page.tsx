@@ -70,6 +70,9 @@ export default function AdminStudentsPage() {
   const [notifyParentViaWhatsApp, setNotifyParentViaWhatsApp] = useState<boolean>(true);
   const [isSubmittingEnroll, setIsSubmittingEnroll] = useState<boolean>(false);
 
+  // Derive effectiveUnitId to guarantee async units query synchronization
+  const effectiveUnitId = selectedUnitId || (units.length > 0 ? units[0].id : "");
+
   const handleOpenEnrollModal = (student: MockStudent) => {
     setSelectedStudentForEnroll(student);
     if (units.length > 0) {
@@ -84,12 +87,12 @@ export default function AdminStudentsPage() {
   };
 
   const handleConfirmEnroll = async () => {
-    if (!selectedStudentForEnroll || !selectedUnitId) return;
+    if (!selectedStudentForEnroll || !effectiveUnitId) return;
     setIsSubmittingEnroll(true);
     try {
       const success = await enrollStudentInUnit(
         selectedStudentForEnroll.id,
-        selectedUnitId,
+        effectiveUnitId,
         notifyParentViaWhatsApp
       );
       if (success) {
@@ -164,7 +167,7 @@ export default function AdminStudentsPage() {
               variant="primary"
               size="sm"
               onClick={handleConfirmEnroll}
-              disabled={!selectedUnitId || isSubmittingEnroll}
+              disabled={!effectiveUnitId || isSubmittingEnroll}
               className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
             >
               <CheckCircle className="w-4 h-4 me-1.5" />
@@ -204,7 +207,7 @@ export default function AdminStudentsPage() {
                 اختر الوحدة الدراسية المراد تفعيلها:
               </label>
               <select
-                value={selectedUnitId}
+                value={effectiveUnitId}
                 onChange={(e) => setSelectedUnitId(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
               >

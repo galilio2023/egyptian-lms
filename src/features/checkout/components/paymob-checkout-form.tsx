@@ -35,7 +35,7 @@ export function PaymobCheckoutForm({ unit, onSuccess, couponCode }: PaymobChecko
 
       if (data.paymobCheckoutUrl) {
         toast.loading("جاري تحويلك لبوابة الدفع الآمنة...");
-        window.location.href = data.paymobCheckoutUrl;
+        window.location.assign(data.paymobCheckoutUrl);
         return;
       }
 

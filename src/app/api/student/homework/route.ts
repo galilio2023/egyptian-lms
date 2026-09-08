@@ -76,25 +76,43 @@ export async function GET() {
 
     // Fallback to initial homework presets if database has no rows for these units yet
     if (dbAssignments.length === 0) {
+      const filteredAssignments = INITIAL_HOMEWORK_ASSIGNMENTS.filter((a) =>
+        enrolledUnitIds.includes(a.unitId)
+      );
+      const studentSubmissions = INITIAL_HOMEWORK_SUBMISSIONS.filter(
+        (s) => s.studentId === userId
+      );
+
+      let fallbackPendingCount = 0;
+      let fallbackCompletedCount = 0;
+
+      const assignments = filteredAssignments.map((a) => {
+        const sub = studentSubmissions.find((s) => s.assignmentId === a.id);
+        const status = sub ? sub.status : "pending_submission";
+        if (status === "graded") {
+          fallbackCompletedCount++;
+        } else {
+          fallbackPendingCount++;
+        }
+        return {
+          id: a.id,
+          unitId: a.unitId,
+          unitTitle: "الوحدة التأسيسية",
+          title: a.title,
+          instructions: a.instructions,
+          pageNumber: a.pageNumber,
+          maxScore: a.maxScore,
+          dueDate: a.dueDate,
+          submission: sub || null,
+          status,
+        };
+      });
+
       return NextResponse.json({
         success: true,
-        assignments: INITIAL_HOMEWORK_ASSIGNMENTS.map((a) => {
-          const sub = INITIAL_HOMEWORK_SUBMISSIONS.find((s) => s.assignmentId === a.id);
-          return {
-            id: a.id,
-            unitId: a.unitId,
-            unitTitle: "الوحدة التأسيسية",
-            title: a.title,
-            instructions: a.instructions,
-            pageNumber: a.pageNumber,
-            maxScore: a.maxScore,
-            dueDate: a.dueDate,
-            submission: sub || null,
-            status: sub ? sub.status : "pending_submission",
-          };
-        }),
-        pendingCount: 1,
-        completedCount: 0,
+        assignments,
+        pendingCount: fallbackPendingCount,
+        completedCount: fallbackCompletedCount,
         isFallback: true,
       });
     }

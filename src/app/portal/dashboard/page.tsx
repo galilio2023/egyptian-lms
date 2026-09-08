@@ -60,8 +60,8 @@ export default function StudentDashboardPage() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showHomeworkModal, setShowHomeworkModal] = useState(false);
   const [showIdCardModal, setShowIdCardModal] = useState(false);
-  const [currentAssignment, setCurrentAssignment] = useState<MockHomeworkAssignment>(INITIAL_HOMEWORK_ASSIGNMENTS[0]);
-  const [studentSubmission, setStudentSubmission] = useState<MockHomeworkSubmission | undefined>(INITIAL_HOMEWORK_SUBMISSIONS[0]);
+  const [currentAssignment, setCurrentAssignment] = useState<MockHomeworkAssignment | null>(null);
+  const [studentSubmission, setStudentSubmission] = useState<MockHomeworkSubmission | undefined>(undefined);
   const [voucherCodeInput, setVoucherCodeInput] = useState("");
   const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
   const [redeemedUnitTitle, setRedeemedUnitTitle] = useState<string | null>(null);
@@ -133,6 +133,9 @@ export default function StudentDashboardPage() {
           } else {
             setStudentSubmission(undefined);
           }
+        } else if (data?.assignments && data.assignments.length === 0) {
+          setCurrentAssignment(null);
+          setStudentSubmission(undefined);
         }
       })
       .catch(() => {});
@@ -312,11 +315,21 @@ export default function StudentDashboardPage() {
             <LiveSessionWidget session={INITIAL_LIVE_SESSIONS[0]} studentName={currentStudent.name} />
           </div>
           <div className="lg:col-span-5">
-            <StudentHomeworkCard
-              assignment={currentAssignment}
-              submission={studentSubmission}
-              onOpenSubmissionModal={() => setShowHomeworkModal(true)}
-            />
+            {currentAssignment ? (
+              <StudentHomeworkCard
+                assignment={currentAssignment}
+                submission={studentSubmission}
+                onOpenSubmissionModal={() => setShowHomeworkModal(true)}
+              />
+            ) : (
+              <div className="modern-card p-6 bg-linear-to-br from-white via-purple-50/40 to-pink-50/30 border-2 border-purple-200 rounded-3xl shadow-xs text-center flex flex-col items-center justify-center min-h-[220px] h-full space-y-2">
+                <span className="text-3xl">🎉</span>
+                <h4 className="text-sm font-black text-slate-800">لا توجد واجبات معلقة حالياً</h4>
+                <p className="text-xs text-slate-500 font-medium max-w-xs leading-relaxed">
+                  أنت متميز جداً! تم الانتهاء من جميع المهام والواجبات المطلوبة في وحداتك المشترك بها.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -391,7 +404,7 @@ export default function StudentDashboardPage() {
       )}
 
       {/* Homework Submission Modal */}
-      {showHomeworkModal && (
+      {showHomeworkModal && currentAssignment && (
         <HomeworkSubmissionModal
           assignment={currentAssignment}
           existingSubmission={studentSubmission}
@@ -425,6 +438,7 @@ export default function StudentDashboardPage() {
       <StudentIDCardModal
         isOpen={showIdCardModal}
         onClose={() => setShowIdCardModal(false)}
+        studentId={session?.user?.id}
         studentName={currentStudent.name}
         studentPhone={currentStudent.phone}
         gradeTitle={currentStudent.gradeTitle}

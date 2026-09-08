@@ -32,7 +32,7 @@ export default function GlobalError({
   };
 
   const whatsappMsg = encodeURIComponent(
-    `السلام عليكم، واجهت خطأ تقني في المنصة التعليمية.\nرمز الخطأ: ${error.digest || "غير محدد"}\nرسالة الخلل: ${error.message || "Unknown error"}`
+    `السلام عليكم، واجهت خطأ تقني في المنصة التعليمية.\nرمز الخطأ: ${error.digest || "غير محدد"}`
   );
 
   return (
