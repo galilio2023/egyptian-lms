@@ -11,6 +11,7 @@ export async function generateMetadata({
   return {
     title: `اختبار التحدي: ${quiz.title}`,
     description: "اختبر مهاراتك في اللغة الإنجليزية واجمع نقاط XP ومكافآت الأبطال.",
+    robots: { index: false, follow: false },
   };
 }
 

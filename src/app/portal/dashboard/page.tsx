@@ -1,450 +1,55 @@
-"use client";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
+import { getLandingPageData } from "@/lib/data-landing";
+import { getStudentDashboardData } from "@/lib/data-dashboard";
+import { StudentDashboardClient } from "@/features/portal-dashboard/components/student-dashboard-client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import confetti from "canvas-confetti";
-import { Volume2 } from "lucide-react";
-import { useSession } from "@/lib/auth/auth-client";
-import { 
-  INITIAL_UNITS, 
-  INITIAL_LESSONS,
-  INITIAL_HOMEWORK_ASSIGNMENTS, 
-  INITIAL_HOMEWORK_SUBMISSIONS, 
-  INITIAL_LIVE_SESSIONS, 
-  INITIAL_PLATFORM_SETTINGS,
-  MockHomeworkAssignment, 
-  MockHomeworkSubmission,
-  MockUnit,
-  MockPlatformSettings
-} from "@/lib/db/mock-data";
-import { PhonicsSoundBoard } from "@/features/phonics";
-import { PrintableCertificate } from "@/features/certificates";
-import { PwaInstallBanner } from "@/components/ui/pwa-install-banner";
-import { LiveSessionWidget } from "@/features/live-sessions";
-import { HomeworkSubmissionModal } from "@/features/homework";
-import { EgyptianCheckoutModal } from "@/features/checkout";
-import { Modal } from "@/components/ui/modal";
-import { 
-  MascotLionSvg,
-  MascotFalconSvg,
-  MascotRocketSvg,
-  MascotStarSvg
-} from "@/components/ui/illustrated-icons";
-import {
-  type MascotItem,
-  type StudentDashboardProfile,
-  StudentNavHeader,
-  StudentHeroCard,
-  StudentHomeworkCard,
-  MascotSelectorBar,
-  QuickActionPills,
-  WeeklyMissionsCard,
-  CenterVoucherCard,
-  NextLessonBanner,
-  CoursesGridSection,
-  SmartSrsVocabCard,
-  StudentIDCardModal,
-} from "@/features/portal-dashboard";
+export const dynamic = "force-dynamic";
 
-const MASCOTS: MascotItem[] = [
-  { id: "lion", name: "أسد الشجاعة", SvgComponent: MascotLionSvg, title: "مستكشف مبتدئ" },
-  { id: "falcon", name: "صقر التميز", SvgComponent: MascotFalconSvg, title: "بطل الصوتيات" },
-  { id: "rocket", name: "رائد الفضاء", SvgComponent: MascotRocketSvg, title: "فارس الكلمات" },
-  { id: "star", name: "نجم الإيليت", SvgComponent: MascotStarSvg, title: "عبقري الجرامر" },
-];
+export const metadata: Metadata = {
+  title: "لوحة تحكم الطالب البطل",
+  description: "تابع تقدمك الدراسي، واجباتك، ونقاط XP في أكاديمية إيليت.",
+  robots: { index: false, follow: false },
+};
 
-export default function StudentDashboardPage() {
-  const { data: session } = useSession();
-  const [selectedMascot, setSelectedMascot] = useState<MascotItem>(MASCOTS[0]);
-  const [showSoundboardModal, setShowSoundboardModal] = useState(false);
-  const [showCertificateModal, setShowCertificateModal] = useState(false);
-  const [showHomeworkModal, setShowHomeworkModal] = useState(false);
-  const [showIdCardModal, setShowIdCardModal] = useState(false);
-  const [currentAssignment, setCurrentAssignment] = useState<MockHomeworkAssignment | null>(null);
-  const [studentSubmission, setStudentSubmission] = useState<MockHomeworkSubmission | undefined>(undefined);
-  const [voucherCodeInput, setVoucherCodeInput] = useState("");
-  const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
-  const [redeemedUnitTitle, setRedeemedUnitTitle] = useState<string | null>(null);
-  const [enrolledUnitIds, setEnrolledUnitIds] = useState<string[]>([]);
-  const [units, setUnits] = useState<MockUnit[]>(INITIAL_UNITS);
-  const [checkoutUnit, setCheckoutUnit] = useState<MockUnit | null>(null);
-  const [viewAllGrades, setViewAllGrades] = useState(false);
-  const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false);
-  const [settings, setSettings] = useState<MockPlatformSettings>(INITIAL_PLATFORM_SETTINGS);
-  const [nextLesson, setNextLesson] = useState<{
-    title: string;
-    unitTitle: string;
-    durationMinutes: number;
-    slug: string;
-  } | null>(null);
+export default async function StudentDashboardPage() {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
 
-  const [studentProfile, setStudentProfile] = useState<{
-    gradeLevel: number;
-    gradeTitle: string;
-    gradeSlug: string;
-    xpPoints: number;
-    completedLessons: number;
-    parentPhoneNumber?: string;
-  }>({
-    gradeLevel: 1,
-    gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
-    gradeSlug: "grade-1",
-    xpPoints: 450,
-    completedLessons: 0,
-  });
+  if (!session?.user?.id) {
+    redirect("/student-login?callbackUrl=/portal/dashboard");
+  }
 
-  const fetchHomework = () => {
-    fetch("/api/student/homework")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.assignments && data.assignments.length > 0) {
-          const first = data.assignments[0];
-          setCurrentAssignment({
-            id: first.id,
-            unitId: first.unitId,
-            unitTitle: first.unitTitle || "الوحدة الدراسية",
-            gradeSlug: first.gradeSlug || "grade-1",
-            lessonTitle: first.lessonTitle || undefined,
-            title: first.title,
-            instructions: first.instructions,
-            pageNumber: first.pageNumber,
-            maxScore: first.maxScore,
-            dueDate: first.dueDate,
-          });
-          if (first.submission) {
-            setStudentSubmission({
-              id: first.submission.id,
-              assignmentId: first.id,
-              assignmentTitle: first.title,
-              studentId: session?.user?.id || "std-1",
-              studentName: session?.user?.name || "بطل الأكاديمية",
-              studentPhone: ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000",
-              parentPhone: "01000000000",
-              gradeTitle: first.gradeSlug || "Grade 1",
-              status: first.submission.status,
-              score: first.submission.score ?? undefined,
-              maxScore: first.maxScore || 10,
-              feedbackNotes: first.submission.feedbackNotes ?? undefined,
-              studentImages: first.submission.studentImages || [],
-              audioVoiceNoteUrl: first.submission.audioVoiceNoteUrl || undefined,
-              annotatedImages: first.submission.annotatedImages || undefined,
-              submittedAt: first.submission.submittedAt ? new Date(first.submission.submittedAt).toLocaleDateString("ar-EG") : "اليوم",
-            });
-          } else {
-            setStudentSubmission(undefined);
-          }
-        } else if (data?.assignments && data.assignments.length === 0) {
-          setCurrentAssignment(null);
-          setStudentSubmission(undefined);
-        }
-      })
-      .catch(() => {});
-  };
+  const userId = session.user.id;
+  const cookieHeader = headersList.get("cookie");
 
-  useEffect(() => {
-    let active = true;
-    fetch("/api/student/enrollments")
-      .then(async (res) => {
-        if (res.status === 403) {
-          const errData = await res.json().catch(() => ({}));
-          if (errData.isDeviceLocked || errData.isBanned) {
-            toast.error(errData.error || "تم قفل الجلسة على هذا الجهاز.");
-            window.location.href = "/student-login?reason=device_locked";
-            return null;
-          }
-        }
-        return res.ok ? res.json() : null;
-      })
-      .then((data) => {
-        if (active && data) {
-          if (data.profile) setStudentProfile(data.profile);
-          if (data.enrolledUnitIds) setEnrolledUnitIds(data.enrolledUnitIds);
-          if ("nextLesson" in data) setNextLesson(data.nextLesson);
-          setEnrollmentsLoaded(true);
-        }
-      })
-      .catch(() => {
-        if (active) setEnrollmentsLoaded(true);
-      });
+  // Parallel data fetch — no waterfall
+  const [{ units, settings }, dashboardData] = await Promise.all([
+    getLandingPageData(),
+    getStudentDashboardData(userId, cookieHeader),
+  ]);
 
-    fetch("/api/public/landing-data")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (active) {
-          if (data?.units && data.units.length > 0) {
-            setUnits(data.units);
-          }
-          if (data?.settings) {
-            setSettings(data.settings);
-          }
-        }
-      })
-      .catch(() => {});
+  // If student is banned / device locked, redirect to login
+  if (dashboardData.isBanned) {
+    redirect("/student-login?reason=banned");
+  }
 
-    fetchHomework();
+  if (dashboardData.isDeviceLocked) {
+    redirect("/student-login?reason=device_locked");
+  }
 
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const studentName = session?.user?.name || "طالب بطل";
-  const studentPhone = ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
-
-  const currentStudent: StudentDashboardProfile = {
-    name: studentName,
-    phone: studentPhone,
-    gradeTitle: studentProfile.gradeTitle,
-    gradeLevel: studentProfile.gradeLevel,
-    gradeSlug: studentProfile.gradeSlug,
-    xpPoints: studentProfile.xpPoints || 450,
-    nextLevelXp: Math.max(600, Math.ceil(((studentProfile.xpPoints || 450) + 150) / 200) * 200),
-    levelNumber: Math.max(1, Math.floor((studentProfile.xpPoints || 450) / 150) + 1),
-    streakDays: 4,
-    completedLessons: studentProfile.completedLessons,
-    activeQuizzes: 2,
-  };
-
-  const handleRedeemVoucher = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!voucherCodeInput.trim()) {
-      toast.error("يرجى إدخال كود كارت الشحن المكون من أرقام وحروف.");
-      return;
-    }
-    setIsRedeemingVoucher(true);
-    try {
-      const res = await fetch("/api/voucher/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: voucherCodeInput.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        toast.error(data.error || "كود كارت الشحن غير صحيح أو تم استخدامه من قبل.");
-        return;
-      }
-      setRedeemedUnitTitle(data.unitTitle || "الوحدة الدراسية الجديدة");
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
-      toast.success("مبروك يا بطل! تم شحن الكارت وتفعيل الوحدة بنجاح في حسابك 🎉");
-      setVoucherCodeInput("");
-      fetch("/api/student/enrollments")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d?.enrolledUnitIds) setEnrolledUnitIds(d.enrolledUnitIds);
-        });
-    } catch {
-      toast.error("حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.");
-    } finally {
-      setIsRedeemingVoucher(false);
-    }
-  };
-
-  const handleSendToMom = () => {
-    const rawParentPhone = studentProfile.parentPhoneNumber?.trim();
-    const formattedParentPhone = rawParentPhone
-      ? rawParentPhone.startsWith("2")
-        ? rawParentPhone
-        : `20${rawParentPhone.replace(/^0+/, "")}`
-      : "";
-    const msg = encodeURIComponent(
-      `السلام عليكم يا ماما! ❤️\nأنا بطل المنصة التعليمية: ${currentStudent.name}\nجمعت النهاردة ${currentStudent.xpPoints} نقطة XP وعندي حماس ${currentStudent.streakDays} أيام متتالية! 🏆🔥\nالمعلم المشرف بيشجعني وبيقولي شاطر جداً وبطل المنصة! 🥳🎉`
-    );
-    const targetUrl = formattedParentPhone
-      ? `https://wa.me/${formattedParentPhone}?text=${msg}`
-      : `https://wa.me/?text=${msg}`;
-    window.open(targetUrl, "_blank");
-  };
+  const studentUser = session.user as { id: string; name: string; email: string; phoneNumber?: string };
 
   return (
-    <div className="min-h-screen text-slate-900 pb-16">
-      {/* 1. Header */}
-      <StudentNavHeader student={currentStudent} activeMascot={selectedMascot} />
-
-      {/* 2. PWA Prompt */}
-      <PwaInstallBanner />
-
-      {/* 3. Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 space-y-5 sm:space-y-8">
-        {/* Next Lesson Banner - Moved up as top priority */}
-        <div className="flex items-center gap-2 pt-1 sm:pt-4">
-          <span className="text-sm font-black text-slate-900">🎯 محطتك التالية يا بطل</span>
-          <div className="flex-1 h-px bg-purple-200" />
-        </div>
-        <section>
-          <NextLessonBanner
-            lessonTitle={nextLesson?.title ?? INITIAL_LESSONS[0].title}
-            unitTitle={nextLesson?.unitTitle ?? INITIAL_UNITS[0].title}
-            durationMinutes={nextLesson?.durationMinutes ?? Number.parseInt(INITIAL_LESSONS[0].videoDuration, 10)}
-            lessonSlug={nextLesson?.slug ?? INITIAL_LESSONS[0].slug}
-            isCompleted={enrollmentsLoaded && !nextLesson}
-          />
-        </section>
-
-        {/* Welcome Hero */}
-        <StudentHeroCard 
-          student={currentStudent} 
-          activeMascot={selectedMascot} 
-          showToys={settings.enableHeroToys !== false}
-          onOpenIdCard={() => setShowIdCardModal(true)}
-        />
-
-        {/* Daily Smart Spaced-Repetition Vocab Challenge (SM-2 Algorithm) */}
-        <SmartSrsVocabCard
-          onEarnXp={(earnedXp) => {
-            setStudentProfile((prev) => ({
-              ...prev,
-              xpPoints: prev.xpPoints + earnedXp,
-            }));
-            fetch("/api/student/xp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ xpAmount: earnedXp, reason: "srs_daily_challenge" }),
-            }).catch((err) => {
-              console.warn("Failed to persist SRS earned XP in DB:", err);
-            });
-          }}
-        />
-
-        {/* Live Session & Homework Interactive Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-          <div className="lg:col-span-7">
-            <LiveSessionWidget session={INITIAL_LIVE_SESSIONS[0]} studentName={currentStudent.name} />
-          </div>
-          <div className="lg:col-span-5">
-            {currentAssignment ? (
-              <StudentHomeworkCard
-                assignment={currentAssignment}
-                submission={studentSubmission}
-                onOpenSubmissionModal={() => setShowHomeworkModal(true)}
-              />
-            ) : (
-              <div className="modern-card p-6 bg-linear-to-br from-white via-purple-50/40 to-pink-50/30 border-2 border-purple-200 rounded-3xl shadow-xs text-center flex flex-col items-center justify-center min-h-[220px] h-full space-y-2">
-                <span className="text-3xl">🎉</span>
-                <h4 className="text-sm font-black text-slate-800">لا توجد واجبات معلقة حالياً</h4>
-                <p className="text-xs text-slate-500 font-medium max-w-xs leading-relaxed">
-                  أنت متميز جداً! تم الانتهاء من جميع المهام والواجبات المطلوبة في وحداتك المشترك بها.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Courses Grid */}
-        <div id="courses" className="flex items-center gap-2 pt-1 sm:pt-4">
-          <span className="text-sm font-black text-slate-900">📚 وحداتك الدراسية</span>
-          <div className="flex-1 h-px bg-purple-200" />
-        </div>
-        <CoursesGridSection
-          units={units}
-          enrolledUnitIds={enrolledUnitIds}
-          student={currentStudent}
-          viewAllGrades={viewAllGrades}
-          onToggleViewAllGrades={() => setViewAllGrades(!viewAllGrades)}
-          onSelectLockedUnit={setCheckoutUnit}
-        />
-
-        {/* Quick Action Super-Pills */}
-        <div className="flex items-center gap-2 pt-1 sm:pt-4">
-          <span className="text-sm font-black text-slate-900">⚡ أدوات البطل السريعة</span>
-          <div className="flex-1 h-px bg-purple-200" />
-        </div>
-        <QuickActionPills
-          onOpenSoundboard={() => setShowSoundboardModal(true)}
-          onOpenCertificate={() => setShowCertificateModal(true)}
-          onSendToMom={handleSendToMom}
-        />
-
-        {/* Center Voucher Scratch Card Redemption */}
-        <CenterVoucherCard
-          voucherCodeInput={voucherCodeInput}
-          onVoucherCodeChange={setVoucherCodeInput}
-          onSubmit={handleRedeemVoucher}
-          isRedeeming={isRedeemingVoucher}
-          redeemedUnitTitle={redeemedUnitTitle}
-        />
-
-        {/* Weekly Checklist */}
-        <WeeklyMissionsCard studentName={currentStudent.name} />
-
-        {/* Mascot / Avatar Selector */}
-        <MascotSelectorBar
-          mascots={MASCOTS}
-          selectedMascot={selectedMascot}
-          onSelectMascot={setSelectedMascot}
-        />
-      </main>
-
-      {/* Phonics Soundboard Modal with centralized Modal primitive */}
-      <Modal
-        isOpen={showSoundboardModal}
-        onClose={() => setShowSoundboardModal(false)}
-        title="لوحة الصوتيات ونطق الحروف الإنجليزية 🔊"
-        icon={<Volume2 className="w-6 h-6 text-purple-600" />}
-        maxWidth="4xl"
-      >
-        <PhonicsSoundBoard />
-      </Modal>
-
-      {/* Printable Certificate Modal with dynamic academy and teacher branding */}
-      {showCertificateModal && (
-        <PrintableCertificate
-          studentName={currentStudent.name}
-          courseTitle={units[0]?.title || "English Primary 1 (منهج اللغة الإنجليزية)"}
-          quizTitle="اختبار التميز الشامل وبطل المنهج"
-          scorePercentage={100}
-          academyName={settings.academyNameArabic}
-          instructorName={settings.teacherNameArabic}
-          instructorTitle={settings.teacherTitle}
-          onClose={() => setShowCertificateModal(false)}
-        />
-      )}
-
-      {/* Homework Submission Modal */}
-      {showHomeworkModal && currentAssignment && (
-        <HomeworkSubmissionModal
-          assignment={currentAssignment}
-          existingSubmission={studentSubmission}
-          isOpen={showHomeworkModal}
-          onClose={() => setShowHomeworkModal(false)}
-          onSubmitSuccess={(newSub) => {
-            setStudentSubmission(newSub);
-            fetchHomework();
-          }}
-        />
-      )}
-
-      {/* Checkout Modal for Locked Courses */}
-      {checkoutUnit && (
-        <EgyptianCheckoutModal
-          isOpen={Boolean(checkoutUnit)}
-          unit={checkoutUnit}
-          onClose={() => setCheckoutUnit(null)}
-          onSuccess={() => {
-            setCheckoutUnit(null);
-            fetch("/api/student/enrollments")
-              .then((r) => (r.ok ? r.json() : null))
-              .then((d) => {
-                if (d?.enrolledUnitIds) setEnrolledUnitIds(d.enrolledUnitIds);
-              });
-          }}
-        />
-      )}
-
-      {/* Physical Center Student ID Card Modal */}
-      <StudentIDCardModal
-        isOpen={showIdCardModal}
-        onClose={() => setShowIdCardModal(false)}
-        studentId={session?.user?.id}
-        studentName={currentStudent.name}
-        studentPhone={currentStudent.phone}
-        gradeTitle={currentStudent.gradeTitle}
-        academyName={settings.academyNameArabic}
-        xpPoints={currentStudent.xpPoints}
-      />
-    </div>
+    <StudentDashboardClient
+      initialUnits={units}
+      initialSettings={settings}
+      initialDashboardData={dashboardData}
+      studentId={studentUser.id}
+      studentName={studentUser.name}
+      studentPhone={(studentUser.phoneNumber as string | undefined) ?? "01000000000"}
+    />
   );
 }
