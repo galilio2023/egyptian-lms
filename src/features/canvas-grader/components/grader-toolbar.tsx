@@ -7,7 +7,8 @@ import {
   RotateCcw, 
   Eraser, 
   Highlighter, 
-  PenTool 
+  PenTool,
+  Sparkles
 } from "lucide-react";
 import type { ToolType } from "../types";
 
@@ -18,6 +19,8 @@ interface GraderToolbarProps {
   onSelectTool: (tool: ToolType) => void;
   onUndo: () => void;
   onClear: () => void;
+  onAiPregrade?: () => void;
+  isAiGrading?: boolean;
 }
 
 export function GraderToolbar({
@@ -27,6 +30,8 @@ export function GraderToolbar({
   onSelectTool,
   onUndo,
   onClear,
+  onAiPregrade,
+  isAiGrading = false,
 }: GraderToolbarProps) {
   return (
     <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -116,8 +121,21 @@ export function GraderToolbar({
         </button>
       </div>
 
-      {/* Undo & Clear */}
+      {/* AI Pre-Grade, Undo & Clear */}
       <div className="flex items-center gap-2">
+        {onAiPregrade && (
+          <button
+            type="button"
+            onClick={onAiPregrade}
+            disabled={isAiGrading}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold flex items-center gap-1.5 shadow-md shadow-indigo-500/25 transition-all cursor-pointer disabled:opacity-50"
+            title="فحص كراسة الطالب بالذكاء الاصطناعي وتحديد الدرجة والعلامات تلقائياً"
+          >
+            <Sparkles className={`w-3.5 h-3.5 text-amber-300 ${isAiGrading ? "animate-spin" : ""}`} />
+            <span>{isAiGrading ? "جاري الفحص الذكي..." : "🪄 تصحيح ذكي (AI)"}</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onUndo}

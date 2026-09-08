@@ -24,6 +24,21 @@ export interface MockUnit {
   isPublished: boolean;
 }
 
+export interface VideoCheckpointOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface VideoCheckpoint {
+  id: string;
+  timestampSeconds: number;
+  questionText: string;
+  options: VideoCheckpointOption[];
+  explanation?: string;
+  rewardXp?: number;
+}
+
 export interface MockLesson {
   id: string;
   unitId: string;
@@ -39,6 +54,7 @@ export interface MockLesson {
   prerequisiteLessonId?: string;
   isPrerequisiteBlocked?: boolean;
   prerequisiteMessage?: string;
+  checkpoints?: VideoCheckpoint[];
 }
 
 export interface MockQuestion {
@@ -303,6 +319,32 @@ export const INITIAL_LESSONS: MockLesson[] = [
     pdfTitle: 'ملزمة الحروف والكلمات الملونة - الوحدة الأولى.pdf',
     isFreePreview: true,
     orderIndex: 1,
+    checkpoints: [
+      {
+        id: 'cp-1',
+        timestampSeconds: 12,
+        questionText: 'ما هو الصوت الصحيح لحرف B في كلمة (Book)؟',
+        options: [
+          { id: 'opt-1', text: '/b/ كما في البطة والكرة', isCorrect: true },
+          { id: 'opt-2', text: '/p/ بهواء انفجاري قوي', isCorrect: false },
+          { id: 'opt-3', text: '/k/ صوت الكاف', isCorrect: false },
+        ],
+        explanation: 'أحسنت! صوت حرف B مجهور يخرج من الشفتين بنعومة /b/.',
+        rewardXp: 15,
+      },
+      {
+        id: 'cp-2',
+        timestampSeconds: 45,
+        questionText: 'عندما نلتقي بصديقنا في الصباح، ماذا نقول؟',
+        options: [
+          { id: 'opt-2-1', text: 'Goodbye', isCorrect: false },
+          { id: 'opt-2-2', text: 'Hello!', isCorrect: true },
+          { id: 'opt-2-3', text: 'Open your bag', isCorrect: false },
+        ],
+        explanation: 'رائع يا بطل! نقول Hello للترحيب بأصدقائنا في البداية.',
+        rewardXp: 15,
+      },
+    ],
   },
   {
     id: 'les-2',

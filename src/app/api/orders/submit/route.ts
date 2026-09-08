@@ -10,6 +10,7 @@ import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/secu
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { initiatePaymobPayment } from "@/lib/api/paymob";
 import { scanEgyptianReceipt, generateReceiptHash } from "@/lib/receipt-scanner";
+import { verifyEgyptianPaymentReceipt } from "@/lib/ai/receipt-verifier";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -208,44 +209,67 @@ export async function POST(request: NextRequest) {
     let insertedOrderId: string | null = null;
     const fallbackOrderId = `ord-${Date.now().toString().slice(-6)}`;
 
-    // Heuristic OCR scanning & receipt fingerprinting for manual transfers
+    // Intelligent AI & OCR Receipt Verification for manual transfers
     let computedReceiptHash: string | null = null;
     let ocrScanData: Record<string, unknown> | null = null;
+    let isAutoApproved = false;
+    let autoApprovalMessage = "";
 
     if (paymentMethod.includes("manual")) {
-      if (receiptImageUrl) {
-        computedReceiptHash = generateReceiptHash(receiptImageUrl);
-      } else if (cleanRef) {
-        computedReceiptHash = generateReceiptHash(cleanRef);
+      const existingReceiptHashes: Record<string, string> = {};
+      try {
+        const pastOrders = await db
+          .select({ id: schema.order.id, hash: schema.order.receiptHash, ref: schema.order.referenceNumber })
+          .from(schema.order)
+          .limit(100);
+        for (const o of pastOrders) {
+          if (o.hash) existingReceiptHashes[o.hash] = o.id;
+          if (o.ref) existingReceiptHashes[o.ref] = o.id;
+        }
+      } catch {
+        // Fallback map
       }
 
-      if (cleanRef) {
-        const existingReceiptHashes: Record<string, string> = {};
-        try {
-          const pastOrders = await db
-            .select({ id: schema.order.id, ref: schema.order.referenceNumber })
-            .from(schema.order)
-            .where(isNotNull(schema.order.referenceNumber))
-            .limit(100);
-          for (const o of pastOrders) {
-            if (o.ref) existingReceiptHashes[o.ref] = o.id;
-          }
-        } catch {
-          // Fallback map
+      const receiptPayload = receiptImageUrl || cleanRef || "";
+      if (receiptPayload) {
+        const verification = await verifyEgyptianPaymentReceipt({
+          receiptImageOrText: receiptPayload,
+          expectedAmountEgp: verifiedPrice,
+          existingReceiptHashes,
+        });
+
+        computedReceiptHash = verification.receiptHash;
+        ocrScanData = verification as unknown as Record<string, unknown>;
+
+        if (verification.isDuplicate) {
+          return NextResponse.json(
+            { error: verification.summaryArabic },
+            { status: 400 }
+          );
         }
-        ocrScanData = scanEgyptianReceipt(cleanRef, verifiedPrice, existingReceiptHashes) as unknown as Record<string, unknown>;
+
+        if (verification.autoApprovalEligible) {
+          isAutoApproved = true;
+          autoApprovalMessage = verification.summaryArabic;
+        }
       }
     }
 
     // Try database insertion
     try {
       if (userId && isUUID) {
+        const initialStatus = paymentMethod.startsWith("paymob")
+          ? "pending"
+          : isAutoApproved
+          ? "completed"
+          : "manual_review";
+
         const [insertedOrder] = await db.insert(schema.order).values({
           userId: userId,
           unitId: unitId,
           amountEgp: verifiedPrice, // Always server verified!
           paymentMethod: paymentMethod as (typeof schema.paymentMethodEnum.enumValues)[number],
-          paymentStatus: paymentMethod.startsWith("paymob") ? "pending" : "manual_review",
+          paymentStatus: initialStatus,
           referenceNumber: cleanRef || `REF-${Date.now()}`,
           receiptImageUrl: receiptImageUrl || null,
           receiptHash: computedReceiptHash,
@@ -255,6 +279,23 @@ export async function POST(request: NextRequest) {
 
         if (insertedOrder) {
           insertedOrderId = insertedOrder.id;
+
+          // Auto-Fulfillment: If AI verified the receipt, activate enrollment immediately
+          if (isAutoApproved) {
+            try {
+              await db
+                .insert(schema.enrollment)
+                .values({
+                  userId: userId,
+                  unitId: unitId,
+                  isActive: true,
+                  enrolledAt: new Date(),
+                })
+                .onConflictDoNothing();
+            } catch (enrollErr) {
+              console.warn("Auto enrollment activation note:", enrollErr);
+            }
+          }
         } else {
           return NextResponse.json(
             { error: "تعذر تسجيل الطلب في قاعدة البيانات. يرجى المحاولة مرة أخرى." },
@@ -315,9 +356,16 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId: orderIdToReturn,
       paymobCheckoutUrl,
-      status: paymentMethod.startsWith("paymob") ? "pending" : "manual_review",
+      status: paymentMethod.startsWith("paymob")
+        ? "pending"
+        : isAutoApproved
+        ? "completed"
+        : "manual_review",
+      isAutoApproved,
       message: paymentMethod.startsWith("paymob")
         ? "جاري التحويل إلى بوابة باي موب للدفع الآمن..."
+        : isAutoApproved
+        ? `🎉 تم التحقق الذكي من إيصال التحويل بالذكاء الاصطناعي (${autoApprovalMessage}) وتفعيل الكورس للطالب فوراً!`
         : "تم تسجيل طلب التحويل بنجاح وسيقوم فريق السكرتارية بمراجعته وتفعيل الكورس فوراً.",
       orderDetails: {
         id: orderIdToReturn,

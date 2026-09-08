@@ -31,6 +31,8 @@ export function CanvasPenGrader({
   const totalPages = Math.max(1, submission.studentImages.length);
   const currentImage = submission.studentImages[currentPageIndex];
 
+  const [isAiGrading, setIsAiGrading] = useState(false);
+
   const {
     canvasRef,
     handleMouseDown,
@@ -40,6 +42,7 @@ export function CanvasPenGrader({
     handleTouchMove,
     handleUndo,
     handleClearPage,
+    setStrokesForPage,
   } = useCanvasDrawing({
     currentPageIndex,
     imageUrl: currentImage?.imageUrl,
@@ -48,6 +51,47 @@ export function CanvasPenGrader({
     brushColor,
     brushSize,
   });
+
+  const handleAiPregrade = async () => {
+    if (!currentImage?.imageUrl) {
+      toast.error("لا توجد صورة واجب في هذه الصفحة لتصحيحها.");
+      return;
+    }
+    setIsAiGrading(true);
+    toast.info("جاري تحليل حل الطالب ووضع علامات التصحيح بواسطة الذكاء الاصطناعي...");
+    try {
+      const res = await fetch("/api/homework/ai-pregrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          imageUrl: currentImage.imageUrl,
+          assignmentTitle: submission.assignmentTitle,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "تعذر إكمال التصحيح الذكي.");
+        return;
+      }
+
+      if (data.strokes && Array.isArray(data.strokes)) {
+        setStrokesForPage(currentPageIndex, data.strokes);
+      }
+      if (typeof data.score === "number") {
+        setScore(data.score);
+      }
+      if (data.feedbackNotes) {
+        setFeedbackNotes(data.feedbackNotes);
+      }
+
+      toast.success("✨ تم فحص كراسة الطالب بالذكاء الاصطناعي ووضع العلامات والدرجة المقترحة بنجاح!");
+    } catch {
+      toast.error("حدث خطأ في الاتصال أثناء التصحيح الذكي.");
+    } finally {
+      setIsAiGrading(false);
+    }
+  };
 
   const handleSaveAndNotify = async (advanceNext = false) => {
     setIsSaving(true);
@@ -155,6 +199,8 @@ export function CanvasPenGrader({
               onSelectTool={setCurrentTool}
               onUndo={handleUndo}
               onClear={handleClearPage}
+              onAiPregrade={handleAiPregrade}
+              isAiGrading={isAiGrading}
             />
 
             {/* Canvas Scrollable Viewport */}

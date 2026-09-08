@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Volume2, Sparkles, Mic } from "lucide-react";
+import { Volume2, Sparkles, Mic, Lightbulb, Award } from "lucide-react";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import { PhonicsSpeechSvg } from "@/components/ui/illustrated-icons";
 
 interface PhonicsItem {
@@ -14,8 +16,62 @@ interface PhonicsItem {
   category: "vowels" | "digraphs" | "alphabet";
 }
 
+export interface PhoneticDiagnostic {
+  trapDetected?: "p_vs_b" | "sh_vs_s" | "ch_vs_sh" | "th_vs_s" | "vowel_length";
+  adviceArabic: string;
+  tipEmoji: string;
+}
+
+export function diagnoseEgyptianPhoneme(expectedWord: string, transcript: string): PhoneticDiagnostic | null {
+  const exp = expectedWord.toLowerCase().trim();
+  const act = transcript.toLowerCase().trim();
+
+  // 1. P vs B trap (classic Egyptian challenge)
+  if (exp.includes("p") && (act.includes("b") || !act.includes("p"))) {
+    return {
+      trapDetected: "p_vs_b",
+      adviceArabic: "نصيحة المعلم الذكي: حرف الـ P يخرج بهواء خفيف ينفجر من الشفتين (Puff of air)، مش حرف الباء العربي (B). ضع يدك أمام فمك واشعر باندفاع الهواء!",
+      tipEmoji: "💨",
+    };
+  }
+
+  // 2. CH vs SH trap
+  if (exp.includes("ch") && (act.startsWith("sh") || act.includes("sh"))) {
+    return {
+      trapDetected: "ch_vs_sh",
+      adviceArabic: "صوت الـ Ch يبدأ بـ (تـشـ) مع احتكاك واضح في مقدمة اللسان، وليس (شـ) ناعمة.",
+      tipEmoji: "⚡",
+    };
+  }
+
+  // 3. TH trap
+  if (exp.includes("th") && (act.startsWith("s") || act.startsWith("f") || act.startsWith("z"))) {
+    return {
+      trapDetected: "th_vs_s",
+      adviceArabic: "صوت الـ Th يحتاج إخراج طرف اللسان بين الأسنان بلطف كما في حرف (الثاء / الذال).",
+      tipEmoji: "👅",
+    };
+  }
+
+  // 4. SH vs S trap
+  if (exp.includes("sh") && (act.startsWith("s") && !act.startsWith("sh"))) {
+    return {
+      trapDetected: "sh_vs_s",
+      adviceArabic: "صوت الـ Sh هو صوت الشين الصافية (شـ) في أول الكلمة مثل Ship.",
+      tipEmoji: "🚢",
+    };
+  }
+
+  return null;
+}
+
 type PracticeResult =
-  | { status: "scored"; score: number; transcript: string }
+  | { 
+      status: "scored"; 
+      score: number; 
+      transcript: string; 
+      diagnostic?: PhoneticDiagnostic | null;
+    }
   | { status: "unavailable" };
 
 interface SpeechRecognitionResultLike {
@@ -134,7 +190,25 @@ export function PhonicsSoundBoard() {
       }
       
       const transcript = results[0].transcript;
-      setPracticeResult({ status: "scored", score: bestMatch, transcript });
+      const diagnostic = bestMatch < 3 ? diagnoseEgyptianPhoneme(item.exampleWord, transcript) : null;
+      
+      if (bestMatch >= 3) {
+        try {
+          confetti({
+            particleCount: 40,
+            spread: 60,
+            origin: { y: 0.7 },
+          });
+        } catch {}
+        toast.success(`نطق رائع ومثالي لكلمة (${item.exampleWord})! +10 XP 🌟`);
+      }
+
+      setPracticeResult({
+        status: "scored",
+        score: bestMatch,
+        transcript,
+        diagnostic,
+      });
       setIsListening(false);
       setPracticeItemId(null);
     };
@@ -306,6 +380,17 @@ export function PhonicsSoundBoard() {
               </p>
               {practiceResult.transcript && (
                 <p className="text-xs text-slate-500 font-mono">سمعنا: “{practiceResult.transcript}”</p>
+              )}
+
+              {practiceResult.diagnostic && (
+                <div className="p-3.5 rounded-2xl bg-amber-100/80 border border-amber-300 text-amber-950 text-xs text-right space-y-1 mt-2">
+                  <div className="flex items-center gap-1.5 font-black text-amber-900">
+                    <span className="text-base">{practiceResult.diagnostic.tipEmoji}</span>
+                    <Lightbulb className="w-4 h-4 text-amber-700" />
+                    <span>توجيه المدرب الصوتي الذكي:</span>
+                  </div>
+                  <p className="leading-relaxed font-medium">{practiceResult.diagnostic.adviceArabic}</p>
+                </div>
               )}
             </>
           )}

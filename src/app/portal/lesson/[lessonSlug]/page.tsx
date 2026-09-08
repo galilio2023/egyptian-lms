@@ -171,6 +171,7 @@ export default function LessonPlayerPage({
                 studentName={studentName}
                 studentPhone={studentPhone}
                 title={lesson.title}
+                checkpoints={lesson.checkpoints}
               />
             </div>
 

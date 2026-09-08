@@ -108,6 +108,21 @@ export const courseUnit = pgTable('course_unit', {
   index('course_unit_grade_id_idx').on(table.gradeId),
 ]);
 
+export interface VideoCheckpointOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface VideoCheckpoint {
+  id: string;
+  timestampSeconds: number;
+  questionText: string;
+  options: VideoCheckpointOption[];
+  explanation?: string;
+  rewardXp?: number;
+}
+
 export const lesson = pgTable('lesson', {
   id: uuid('id').defaultRandom().primaryKey(),
   unitId: uuid('unit_id').references(() => courseUnit.id, { onDelete: 'cascade' }).notNull(),
@@ -121,6 +136,7 @@ export const lesson = pgTable('lesson', {
   orderIndex: integer('order_index').default(0).notNull(),
   prerequisiteType: text('prerequisite_type').default('none').notNull(), // 'none' | 'previous_quiz_passed' | 'previous_homework_submitted'
   prerequisiteLessonId: uuid('prerequisite_lesson_id').references((): AnyPgColumn => lesson.id, { onDelete: 'set null' }),
+  checkpoints: jsonb('checkpoints').$type<VideoCheckpoint[]>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('lesson_unit_id_idx').on(table.unitId),
