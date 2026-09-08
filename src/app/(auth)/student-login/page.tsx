@@ -1,11 +1,15 @@
-"use client";
-
 import { Suspense } from "react";
-import { AuthLayoutShell, AuthSideCard, LoginCard } from "@/features/auth";
+import type { Metadata } from "next";
+import { AuthSideCard, LoginCard } from "@/features/auth";
+
+export const metadata: Metadata = {
+  title: "تسجيل الدخول",
+  description: "سجّل دخولك الآن لمتابعة المحاضرات الجديدة، حل الاختبارات، وجمع نقاط التميز في لوحة الشرف.",
+};
 
 export default function StudentLoginPage() {
   return (
-    <AuthLayoutShell>
+    <>
       {/* Marketing Hero Column */}
       <AuthSideCard mode="login" />
 
@@ -15,6 +19,6 @@ export default function StudentLoginPage() {
           <LoginCard />
         </Suspense>
       </div>
-    </AuthLayoutShell>
+    </>
   );
 }

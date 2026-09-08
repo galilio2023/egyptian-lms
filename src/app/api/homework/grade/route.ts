@@ -38,9 +38,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const safeScore = Math.max(0, Math.min(10, Math.round(score)));
-    const earnedXp = safeScore >= 8 ? 30 : 15;
-
     let targetUserId: string | null = null;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(submissionId);
     if (!isUUID) {
@@ -50,7 +47,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Persistence must succeed before any notification dispatch
+    // 1. Fetch submission with its assignment to obtain dynamic maxScore
+    const [existingSub] = await db
+      .select({
+        id: schema.homeworkSubmission.id,
+        userId: schema.homeworkSubmission.userId,
+        assignmentId: schema.homeworkSubmission.assignmentId,
+        assignmentTitle: schema.homeworkAssignment.title,
+        assignmentMaxScore: schema.homeworkAssignment.maxScore,
+      })
+      .from(schema.homeworkSubmission)
+      .leftJoin(schema.homeworkAssignment, eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id))
+      .where(eq(schema.homeworkSubmission.id, submissionId))
+      .limit(1);
+
+    if (!existingSub) {
+      return NextResponse.json(
+        { error: "لم يتم العثور على تسليم الواجب المطلوب في قاعدة البيانات." },
+        { status: 404 }
+      );
+    }
+
+    const maxAssignmentScore = existingSub.assignmentMaxScore || 10;
+    const safeScore = Math.max(0, Math.min(maxAssignmentScore, Math.round(score)));
+    const scorePercentage = (safeScore / maxAssignmentScore) * 100;
+    const earnedXp = scorePercentage >= 80 ? 30 : 15;
+
+    // 2. Persistence must succeed before any notification dispatch
     const [updatedSub] = await db.update(schema.homeworkSubmission)
       .set({
         score: safeScore,
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Fetch verified guardian phone from database record (CWE-200 / CWE-532 privacy protection)
+    // 3. Fetch verified guardian phone from database record (CWE-200 / CWE-532 privacy protection)
     let verifiedParentPhone: string | null = null;
     if (targetUserId) {
       try {
@@ -107,17 +130,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Automated server-side dispatch to parent only if verified number exists
+    // 4. Automated server-side dispatch to parent only if verified number exists
     let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
     let whatsappUrl: string | null = null;
 
     if (verifiedParentPhone) {
       const settings = await getPlatformSettings();
+      const effectiveAssignmentTitle = existingSub.assignmentTitle || assignmentTitle || "كراسة التدريبات";
       const rawTextMessage = 
         `🌟 *تقرير تصحيح كراسة الواجب - ${settings.academyNameArabic}*\n` +
         `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
-        `📝 *الواجب:* ${assignmentTitle || "كراسة التدريبات"}\n` +
-        `🎯 *الدرجة المستحقة:* ${safeScore} من 10\n` +
+        `📝 *الواجب:* ${effectiveAssignmentTitle}\n` +
+        `🎯 *الدرجة المستحقة:* ${safeScore} من ${maxAssignmentScore} (%${Math.round(scorePercentage)})\n` +
         `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
         `✍️ *ملاحظات ${settings.teacherNameArabic}:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
         `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +21,9 @@ export default function LessonPlayerPage({
 }) {
   const { data: session } = useSession();
   const { lessonSlug } = use(params);
+  const mockLessonFound = INITIAL_LESSONS.find((l) => l.slug === lessonSlug);
   const [lesson, setLesson] = useState<MockLesson>(() => {
-    return INITIAL_LESSONS.find((l) => l.slug === lessonSlug) || INITIAL_LESSONS[0];
+    return mockLessonFound || INITIAL_LESSONS[0];
   });
   const [unit, setUnit] = useState<MockUnit>(() => {
     return INITIAL_UNITS.find((u) => u.id === lesson.unitId) || INITIAL_UNITS[0];
@@ -33,6 +35,7 @@ export default function LessonPlayerPage({
   const [quizId, setQuizId] = useState(INITIAL_QUIZ.id);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
   const [playlist, setPlaylist] = useState<MockLesson[]>(() =>
     INITIAL_LESSONS.filter((l) => l.unitId === unit.id).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
   );
@@ -40,7 +43,13 @@ export default function LessonPlayerPage({
   useEffect(() => {
     let active = true;
     fetch(`/api/public/lesson/${lessonSlug}`)
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.status === 404 && !mockLessonFound) {
+          if (active) setIsNotFound(true);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
       .then((data) => {
         if (active && data?.lesson) {
           setLesson(data.lesson);
@@ -51,13 +60,19 @@ export default function LessonPlayerPage({
           }
           setIsEnrolled(Boolean(data.isEnrolled || data.lesson.isFreePreview));
           setIsCompleted(Boolean(data.isCompleted));
+        } else if (active && !mockLessonFound) {
+          setIsNotFound(true);
         }
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [lessonSlug]);
+  }, [lessonSlug, mockLessonFound]);
+
+  if (isNotFound) {
+    notFound();
+  }
 
   useEffect(() => {
     if (lesson.isFreePreview) return;

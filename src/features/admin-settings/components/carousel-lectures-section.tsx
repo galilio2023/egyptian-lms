@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Play, Plus, ExternalLink, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,9 +64,11 @@ export function CarouselLecturesSection({
               >
                 {/* Thumbnail Preview */}
                 <div className="relative h-32 w-full rounded-xl overflow-hidden bg-slate-100">
-                  <img
+                  <Image
                     src={lecture.thumbnailUrl}
                     alt={lecture.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-2 start-2 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-black">

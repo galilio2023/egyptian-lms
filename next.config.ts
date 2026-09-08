@@ -23,11 +23,31 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    value: "camera=(self), microphone=(self), geolocation=(), browsing-topics=()",
   },
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.bunnycdn.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.b-cdn.net",
+      },
+    ],
+  },
   async headers() {
     return [
       {

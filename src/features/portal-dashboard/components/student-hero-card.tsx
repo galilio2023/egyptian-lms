@@ -12,12 +12,14 @@ export interface StudentHeroCardProps {
   student: StudentDashboardProfile;
   activeMascot: MascotItem;
   showToys?: boolean;
+  onOpenIdCard?: () => void;
 }
 
 export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
   student,
   activeMascot,
   showToys = true,
+  onOpenIdCard,
 }) => {
   const ActiveMascotSvg = activeMascot.SvgComponent;
   const xpPercentage = Math.min(100, Math.round((student.xpPoints / student.nextLevelXp) * 100));
@@ -42,10 +44,22 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
 
       <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-3.5 w-full md:w-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30">
-            <ActiveMascotSvg className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>المستوى {student.levelNumber}: {activeMascot.title}</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30">
+              <ActiveMascotSvg className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>المستوى {student.levelNumber}: {activeMascot.title}</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            </div>
+
+            {onOpenIdCard && (
+              <button
+                type="button"
+                onClick={onOpenIdCard}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black transition-all hover:scale-105 shadow-sm cursor-pointer"
+              >
+                <span>🪪 بطاقة السنتر (QR Pass)</span>
+              </button>
+            )}
           </div>
 
           <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white leading-tight">

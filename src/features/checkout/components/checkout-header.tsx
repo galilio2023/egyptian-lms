@@ -6,9 +6,14 @@ import type { MockUnit } from "@/lib/db/mock-data";
 interface CheckoutHeaderProps {
   unit: MockUnit;
   onClose: () => void;
+  effectivePrice?: number;
+  discountAmount?: number;
 }
 
-export function CheckoutHeader({ unit, onClose }: CheckoutHeaderProps) {
+export function CheckoutHeader({ unit, onClose, effectivePrice, discountAmount }: CheckoutHeaderProps) {
+  const displayPrice = effectivePrice !== undefined ? effectivePrice : unit.priceEgp;
+  const hasDiscount = Boolean(discountAmount && discountAmount > 0);
+
   return (
     <>
       {/* Close Button */}
@@ -31,10 +36,22 @@ export function CheckoutHeader({ unit, onClose }: CheckoutHeaderProps) {
           {unit.gradeTitle} • {unit.description}
         </p>
         <div className="pt-2 flex items-center justify-center gap-2">
-          <span className="text-3xl font-black text-gradient-purple">{unit.priceEgp} ج.م</span>
-          <span className="text-xs text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-md">
-            / للوحدة كاملة
-          </span>
+          {hasDiscount ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-400 line-through">{unit.priceEgp} ج.م</span>
+              <span className="text-3xl font-black text-emerald-600">{displayPrice} ج.م</span>
+              <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                وفرت {discountAmount} ج.م 🎉
+              </span>
+            </div>
+          ) : (
+            <>
+              <span className="text-3xl font-black text-gradient-purple">{unit.priceEgp} ج.م</span>
+              <span className="text-xs text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-md">
+                / للوحدة كاملة
+              </span>
+            </>
+          )}
         </div>
       </div>
     </>

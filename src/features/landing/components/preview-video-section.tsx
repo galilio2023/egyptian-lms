@@ -1,3 +1,5 @@
+"use client";
+
 import { ProtectedVideoPlayer } from "@/features/video-player";
 import { DrmVideoShieldSvg } from "@/components/ui/illustrated-icons";
 import { type MockPlatformSettings } from "@/lib/db/mock-data";

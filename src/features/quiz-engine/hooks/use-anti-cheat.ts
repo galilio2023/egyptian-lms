@@ -48,6 +48,7 @@ export function useAntiCheat({
   useEffect(() => {
     if (isSubmitted) return;
     let blurTimeout: NodeJS.Timeout | null = null;
+    let intermediateTimeout: NodeJS.Timeout | null = null;
     let graceTimeout: NodeJS.Timeout | null = null;
 
     const triggerSuspiciousLeave = () => {
@@ -55,17 +56,27 @@ export function useAntiCheat({
       
       blurTimeout = setTimeout(() => {
         setTabSwitchWarnings((previousCount) => previousCount + 1);
-      }, 3000);
+      }, 4000);
+
+      intermediateTimeout = setTimeout(() => {
+        toast.warning("⚠️ تنبيه يا بطل: أنت خارج شاشة الاختبار! ارجع فوراً حتى لا يتم تسليم إجاباتك تلقائياً.", {
+          duration: 6000,
+        });
+      }, 15000);
 
       graceTimeout = setTimeout(() => {
-        autoSubmitOnce("عفواً يا بطل! غبت عن شاشة الاختبار لفترة طويلة. تم تسليم إجاباتك تلقائياً.");
-      }, 8000);
+        autoSubmitOnce("عفواً يا بطل! غبت عن شاشة الاختبار لأكثر من نصف دقيقة. تم تسليم إجاباتك تلقائياً حفاظاً على نزاهة الاختبار.");
+      }, 35000);
     };
 
     const cancelSuspiciousLeave = () => {
       if (blurTimeout) {
         clearTimeout(blurTimeout);
         blurTimeout = null;
+      }
+      if (intermediateTimeout) {
+        clearTimeout(intermediateTimeout);
+        intermediateTimeout = null;
       }
       if (graceTimeout) {
         clearTimeout(graceTimeout);
@@ -94,6 +105,8 @@ export function useAntiCheat({
     window.addEventListener("focus", handleWindowFocus);
 
     return () => {
+      if (blurTimeout) clearTimeout(blurTimeout);
+      if (intermediateTimeout) clearTimeout(intermediateTimeout);
       if (graceTimeout) clearTimeout(graceTimeout);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleWindowBlur);

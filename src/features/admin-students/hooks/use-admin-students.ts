@@ -64,6 +64,25 @@ export function useAdminStudents() {
     return result.success;
   };
 
+  const enrollStudentInUnit = async (studentId: string, unitId: string, notifyParent: boolean = true) => {
+    const student = students.find((s) => s.id === studentId);
+    const studentName = student?.name || "الطالب";
+
+    const result = await executeAdminAction(
+      "manual_enroll_student",
+      { studentId, unitId, notifyParent },
+      {
+        successMessage: `تم تفعيل الوحدة الدراسية للطالب (${studentName}) بنجاح!`,
+        errorMessage: "حدث خطأ أثناء تفعيل الاشتراك.",
+      }
+    );
+
+    if (result.success) {
+      await refetch();
+    }
+    return result.success;
+  };
+
   return {
     students,
     filteredStudents: filterState.filteredItems,
@@ -76,5 +95,6 @@ export function useAdminStudents() {
     refetch,
     resetDeviceLock,
     toggleStudentBan,
+    enrollStudentInUnit,
   };
 }

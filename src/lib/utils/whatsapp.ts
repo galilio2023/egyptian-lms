@@ -58,47 +58,60 @@ export async function sendAutomatedWhatsAppNotification({
       };
     }
 
-    try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          instanceId: instanceId || undefined,
-          to: formattedPhone,
-          phone: formattedPhone,
-          message: message,
-          body: message,
-        }),
-        signal: AbortSignal.timeout(10000),
-        redirect: "error",
-      });
+    let attempt = 0;
+    const maxAttempts = 3;
+    let lastError = "";
 
-      if (response.ok) {
-        const data = await response.json().catch(() => ({}));
-        return {
-          success: true,
-          messageId: data.messageId || data.id || `wa-${Date.now()}`,
-          simulated: false,
-        };
-      } else {
-        const errorText = await response.text().catch(() => "");
-        console.warn(`WhatsApp Gateway response error (${response.status}) for ${maskedPhone}`);
-        return {
-          success: false,
-          error: `WhatsApp gateway returned HTTP ${response.status}`,
-        };
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            instanceId: instanceId || undefined,
+            to: formattedPhone,
+            phone: formattedPhone,
+            message: message,
+            body: message,
+          }),
+          signal: AbortSignal.timeout(10000),
+          redirect: "error",
+        });
+
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}));
+          return {
+            success: true,
+            messageId: data.messageId || data.id || `wa-${Date.now()}`,
+            simulated: false,
+          };
+        } else {
+          lastError = `HTTP ${response.status}`;
+          // Only retry on server errors (5xx)
+          if (response.status < 500) {
+            break;
+          }
+        }
+      } catch (err: unknown) {
+        const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+        lastError = isTimeout ? "Timeout (10s)" : "Network connection failed";
       }
-    } catch (err: unknown) {
-      const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-      console.error(`WhatsApp Gateway request failed for ${maskedPhone}:`, isTimeout ? "Timeout" : "Connection failed");
-      return {
-        success: false,
-        error: isTimeout ? "WhatsApp gateway request timed out after 10s" : "WhatsApp gateway connection failed",
-      };
+
+      if (attempt < maxAttempts) {
+        // Exponential backoff: 300ms, 600ms
+        await new Promise((r) => setTimeout(r, attempt * 300));
+      }
     }
+
+    console.warn(`WhatsApp Gateway failed after ${attempt} attempts for ${maskedPhone}: ${lastError}`);
+    return {
+      success: false,
+      error: `WhatsApp gateway failed: ${lastError}`,
+    };
   }
 
   // Graceful simulation mode (only when gateway credentials are not configured)

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import { Toaster } from "sonner";
+import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import "./globals.css";
 
 const cairoFont = Cairo({
@@ -18,10 +19,70 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://elite-academy.edu.eg";
+
 export const metadata: Metadata = {
-  title: "المنصة التعليمية الذكية | منهج اللغة الإنجليزية للمراحل الابتدائية",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: "المنصة التعليمية الذكية للأبطال | منهج اللغة الإنجليزية",
+    template: "%s | أكاديمية إيليت التعليمية",
+  },
   description: "المنصة الرائدة والممتعة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية (Grade 1 - Grade 6). شرح كرتوني تفاعلي، مغامرات واختبارات بمكافآت، ومتابعة دورية لأولياء الأمور.",
-  keywords: ["المنصة التعليمية الذكية", "تعليم انجليزي اطفال", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "تأسيس فونكس"],
+  applicationName: "المنصة التعليمية الذكية",
+  authors: [{ name: "Elite Academy", url: appUrl }],
+  generator: "Next.js",
+  keywords: [
+    "المنصة التعليمية الذكية",
+    "تعليم انجليزي اطفال",
+    "منهج كونكت",
+    "Connect Plus",
+    "Grade 1",
+    "Grade 2",
+    "Grade 3",
+    "Grade 4",
+    "Grade 5",
+    "Grade 6",
+    "تأسيس فونكس وصوتيات",
+    "كويزات تفاعلية",
+  ],
+  creator: "Elite Academy Education",
+  publisher: "Elite Academy",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "المنصة التعليمية الذكية للأبطال | أكاديمية إيليت",
+    description: "المنصة الرائدة في تعليم وتأسيس اللغة الإنجليزية للأطفال والمراحل الابتدائية بشرح تفاعلي كرتوني.",
+    url: "/",
+    siteName: "أكاديمية إيليت التعليمية",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "شعار المنصة التعليمية الذكية للأبطال",
+      },
+    ],
+    locale: "ar_EG",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "المنصة التعليمية الذكية للأبطال | أكاديمية إيليت",
+    description: "شرح تفاعلي كرتوني وكويزات وجوائز تميز في اللغة الإنجليزية للمراحل الابتدائية.",
+    images: ["/icon-512.png"],
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -35,7 +96,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Educational Platform",
+    title: "Elite Academy",
   },
 };
 
@@ -50,6 +111,7 @@ export default function RootLayout({
         className={`min-h-screen text-slate-900 antialiased ${cairoFont.className}`}
         suppressHydrationWarning
       >
+        <ServiceWorkerRegister />
         {children}
         <Toaster richColors position="top-center" dir="rtl" />
       </body>

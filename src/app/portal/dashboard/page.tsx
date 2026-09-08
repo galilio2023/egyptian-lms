@@ -43,6 +43,7 @@ import {
   NextLessonBanner,
   CoursesGridSection,
   SmartSrsVocabCard,
+  StudentIDCardModal,
 } from "@/features/portal-dashboard";
 
 const MASCOTS: MascotItem[] = [
@@ -58,8 +59,9 @@ export default function StudentDashboardPage() {
   const [showSoundboardModal, setShowSoundboardModal] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showHomeworkModal, setShowHomeworkModal] = useState(false);
-  const [currentAssignment] = useState<MockHomeworkAssignment>(INITIAL_HOMEWORK_ASSIGNMENTS[0]);
-  const [studentSubmission, setStudentSubmission] = useState<MockHomeworkSubmission | undefined>(INITIAL_HOMEWORK_SUBMISSIONS[0]);
+  const [showIdCardModal, setShowIdCardModal] = useState(false);
+  const [currentAssignment, setCurrentAssignment] = useState<MockHomeworkAssignment | null>(null);
+  const [studentSubmission, setStudentSubmission] = useState<MockHomeworkSubmission | undefined>(undefined);
   const [voucherCodeInput, setVoucherCodeInput] = useState("");
   const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
   const [redeemedUnitTitle, setRedeemedUnitTitle] = useState<string | null>(null);
@@ -90,6 +92,54 @@ export default function StudentDashboardPage() {
     xpPoints: 450,
     completedLessons: 0,
   });
+
+  const fetchHomework = () => {
+    fetch("/api/student/homework")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.assignments && data.assignments.length > 0) {
+          const first = data.assignments[0];
+          setCurrentAssignment({
+            id: first.id,
+            unitId: first.unitId,
+            unitTitle: first.unitTitle || "الوحدة الدراسية",
+            gradeSlug: first.gradeSlug || "grade-1",
+            lessonTitle: first.lessonTitle || undefined,
+            title: first.title,
+            instructions: first.instructions,
+            pageNumber: first.pageNumber,
+            maxScore: first.maxScore,
+            dueDate: first.dueDate,
+          });
+          if (first.submission) {
+            setStudentSubmission({
+              id: first.submission.id,
+              assignmentId: first.id,
+              assignmentTitle: first.title,
+              studentId: session?.user?.id || "std-1",
+              studentName: session?.user?.name || "بطل الأكاديمية",
+              studentPhone: ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000",
+              parentPhone: "01000000000",
+              gradeTitle: first.gradeSlug || "Grade 1",
+              status: first.submission.status,
+              score: first.submission.score ?? undefined,
+              maxScore: first.maxScore || 10,
+              feedbackNotes: first.submission.feedbackNotes ?? undefined,
+              studentImages: first.submission.studentImages || [],
+              audioVoiceNoteUrl: first.submission.audioVoiceNoteUrl || undefined,
+              annotatedImages: first.submission.annotatedImages || undefined,
+              submittedAt: first.submission.submittedAt ? new Date(first.submission.submittedAt).toLocaleDateString("ar-EG") : "اليوم",
+            });
+          } else {
+            setStudentSubmission(undefined);
+          }
+        } else if (data?.assignments && data.assignments.length === 0) {
+          setCurrentAssignment(null);
+          setStudentSubmission(undefined);
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     let active = true;
@@ -130,6 +180,8 @@ export default function StudentDashboardPage() {
         }
       })
       .catch(() => {});
+
+    fetchHomework();
 
     return () => {
       active = false;
@@ -237,6 +289,7 @@ export default function StudentDashboardPage() {
           student={currentStudent} 
           activeMascot={selectedMascot} 
           showToys={settings.enableHeroToys !== false}
+          onOpenIdCard={() => setShowIdCardModal(true)}
         />
 
         {/* Daily Smart Spaced-Repetition Vocab Challenge (SM-2 Algorithm) */}
@@ -262,11 +315,21 @@ export default function StudentDashboardPage() {
             <LiveSessionWidget session={INITIAL_LIVE_SESSIONS[0]} studentName={currentStudent.name} />
           </div>
           <div className="lg:col-span-5">
-            <StudentHomeworkCard
-              assignment={currentAssignment}
-              submission={studentSubmission}
-              onOpenSubmissionModal={() => setShowHomeworkModal(true)}
-            />
+            {currentAssignment ? (
+              <StudentHomeworkCard
+                assignment={currentAssignment}
+                submission={studentSubmission}
+                onOpenSubmissionModal={() => setShowHomeworkModal(true)}
+              />
+            ) : (
+              <div className="modern-card p-6 bg-linear-to-br from-white via-purple-50/40 to-pink-50/30 border-2 border-purple-200 rounded-3xl shadow-xs text-center flex flex-col items-center justify-center min-h-[220px] h-full space-y-2">
+                <span className="text-3xl">🎉</span>
+                <h4 className="text-sm font-black text-slate-800">لا توجد واجبات معلقة حالياً</h4>
+                <p className="text-xs text-slate-500 font-medium max-w-xs leading-relaxed">
+                  أنت متميز جداً! تم الانتهاء من جميع المهام والواجبات المطلوبة في وحداتك المشترك بها.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -326,25 +389,31 @@ export default function StudentDashboardPage() {
         <PhonicsSoundBoard />
       </Modal>
 
-      {/* Printable Certificate Modal */}
+      {/* Printable Certificate Modal with dynamic academy and teacher branding */}
       {showCertificateModal && (
         <PrintableCertificate
           studentName={currentStudent.name}
-          courseTitle="English Primary 1 (منهج اللغة الإنجليزية)"
-          quizTitle="إختبار حديقة الحيوان السحري (Zoo Adventure Exam)"
-          scorePercentage={95}
+          courseTitle={units[0]?.title || "English Primary 1 (منهج اللغة الإنجليزية)"}
+          quizTitle="اختبار التميز الشامل وبطل المنهج"
+          scorePercentage={100}
+          academyName={settings.academyNameArabic}
+          instructorName={settings.teacherNameArabic}
+          instructorTitle={settings.teacherTitle}
           onClose={() => setShowCertificateModal(false)}
         />
       )}
 
       {/* Homework Submission Modal */}
-      {showHomeworkModal && (
+      {showHomeworkModal && currentAssignment && (
         <HomeworkSubmissionModal
           assignment={currentAssignment}
           existingSubmission={studentSubmission}
           isOpen={showHomeworkModal}
           onClose={() => setShowHomeworkModal(false)}
-          onSubmitSuccess={setStudentSubmission}
+          onSubmitSuccess={(newSub) => {
+            setStudentSubmission(newSub);
+            fetchHomework();
+          }}
         />
       )}
 
@@ -364,6 +433,18 @@ export default function StudentDashboardPage() {
           }}
         />
       )}
+
+      {/* Physical Center Student ID Card Modal */}
+      <StudentIDCardModal
+        isOpen={showIdCardModal}
+        onClose={() => setShowIdCardModal(false)}
+        studentId={session?.user?.id}
+        studentName={currentStudent.name}
+        studentPhone={currentStudent.phone}
+        gradeTitle={currentStudent.gradeTitle}
+        academyName={settings.academyNameArabic}
+        xpPoints={currentStudent.xpPoints}
+      />
     </div>
   );
 }

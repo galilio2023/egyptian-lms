@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       question,
       lessonTitle,
       unitTitle,
+      targetVocabulary = [],
       chatHistory = [],
       studentName = "يا بطل",
     } = body;
@@ -66,10 +67,14 @@ export async function POST(request: NextRequest) {
 
     if (geminiApiKey && geminiApiKey.trim().length > 10) {
       try {
+        const vocabHint = Array.isArray(targetVocabulary) && targetVocabulary.length > 0
+          ? `\nTarget Vocabulary for this lesson: ${targetVocabulary.slice(0, 10).join(", ")}.`
+          : "";
+
         const systemInstruction = `You are "Busy Bee" (النحلة النشيطة 🐝), the beloved mascot and AI study buddy for Egyptian primary students (Grades 1 to 6) learning English (Connect and Connect Plus curriculum).
 Student Name: "${studentName}".
 Current Unit: "${unitTitle || "Connect English"}".
-Current Lesson: "${lessonTitle || "Phonics and Vocabulary"}".
+Current Lesson: "${lessonTitle || "Phonics and Vocabulary"}".${vocabHint}
 
 Pedagogical Rules:
 1. Tone: Cheerful, friendly, encouraging, playful Egyptian Arabic mixed naturally with simple English examples (child-friendly).

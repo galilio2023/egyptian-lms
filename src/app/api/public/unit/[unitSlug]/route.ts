@@ -212,7 +212,10 @@ export async function GET(
     }
 
     // 2. Fallback to mock data
-    const mockUnit = INITIAL_UNITS.find((u) => u.slug === unitSlug || u.id === unitSlug) || INITIAL_UNITS[0];
+    const mockUnit = INITIAL_UNITS.find((u) => u.slug === unitSlug || u.id === unitSlug);
+    if (!mockUnit) {
+      return NextResponse.json({ error: "الوحدة الدراسية غير موجودة" }, { status: 404 });
+    }
     
     // Check enrollment for mock unit
     let mockIsEnrolled = false;

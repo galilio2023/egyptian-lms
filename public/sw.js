@@ -1,7 +1,8 @@
 // Elite Academy LMS - Progressive Web App Service Worker
-const CACHE_NAME = 'elite-academy-v1';
+const CACHE_NAME = 'elite-academy-v2';
 const STATIC_ASSETS = [
   '/',
+  '/offline',
   '/manifest.json',
   '/favicon.ico',
 ];
@@ -55,10 +56,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML Navigation requests: Network-first
+  // HTML Navigation requests: Network-first with offline fallback
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request).then((res) => res || caches.match('/')))
+      fetch(request).catch(() =>
+        caches.match(request).then((res) => res || caches.match('/offline') || caches.match('/'))
+      )
     );
     return;
   }

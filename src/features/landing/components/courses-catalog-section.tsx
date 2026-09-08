@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { INITIAL_GRADES, type MockUnit } from "@/lib/db/mock-data";
 import { UnitCard } from "@/entities/unit";

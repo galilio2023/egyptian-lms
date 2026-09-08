@@ -5,6 +5,9 @@ import * as schema from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { validateEgyptianPhone } from "@/lib/utils";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 
 const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET || "";
 
@@ -318,6 +321,48 @@ export async function POST(request: NextRequest) {
         description: `تم إتمام دفع الكورس بنجاح عبر بوابة باي موب (HMAC Verified + Idempotent): معاملة رقم ${transactionId}`,
         details: { transactionId, orderId: targetOrder.id, amountEgp: targetOrder.amountEgp },
       });
+
+      // Automated WhatsApp payment confirmation to parent
+      try {
+        const [studentUser] = await db
+          .select({ name: schema.user.name })
+          .from(schema.user)
+          .where(eq(schema.user.id, targetOrder.userId))
+          .limit(1);
+
+        const [profile] = await db
+          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, targetOrder.userId))
+          .limit(1);
+
+        const [unitRec] = await db
+          .select({ title: schema.courseUnit.title })
+          .from(schema.courseUnit)
+          .where(eq(schema.courseUnit.id, targetOrder.unitId))
+          .limit(1);
+
+        const cleanParentPhone = profile?.parentPhoneNumber ? validateEgyptianPhone(profile.parentPhoneNumber) : null;
+        if (cleanParentPhone) {
+          const settings = await getPlatformSettings();
+          const studentName = studentUser?.name || "البطل";
+          const unitTitle = unitRec?.title || "الوحدة الدراسية";
+          void sendAutomatedWhatsAppNotification({
+            to: cleanParentPhone,
+            message: `🎉 *${settings.academyNameArabic} - تأكيد سداد الرسوم الإلكترونية*\n` +
+              `ولي أمر البطل / ${studentName} 🌟\n` +
+              `تم بنجاح سداد مبلغ (${targetOrder.amountEgp} ج.م) عبر بوابة باي موب وتفعيل اشتراك (${unitTitle}) في حساب الطالب.\n` +
+              `رقم المعاملة: ${transactionId}\n` +
+              `يمكن للطالب الآن الدخول للمنصة ومتابعة الحصص وحل التمارين فوراً!\n` +
+              `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+              `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+          }).catch((waErr) => {
+            console.warn("Paymob webhook WhatsApp dispatch background note:", waErr);
+          });
+        }
+      } catch (waErr) {
+        console.warn("Paymob webhook WhatsApp dispatch note:", waErr);
+      }
 
       return NextResponse.json({
         success: true,

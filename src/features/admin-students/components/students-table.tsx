@@ -12,6 +12,7 @@ export interface StudentsTableProps {
   students: MockStudent[];
   onResetDevice: (student: MockStudent) => void;
   onToggleBan: (student: MockStudent) => void;
+  onQuickEnroll?: (student: MockStudent) => void;
 }
 
 const TABLE_HEADERS = [
@@ -20,6 +21,7 @@ const TABLE_HEADERS = [
   "موبايل ولي الأمر (واتساب)",
   "المحافظة والصف",
   "نقاط XP",
+  "الكورسات المفعلة",
   "حالة الجهاز",
   <div key="action" className="text-center">إجراءات السكرتارية</div>,
 ];
@@ -28,6 +30,7 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
   students,
   onResetDevice,
   onToggleBan,
+  onQuickEnroll,
 }) => {
   return (
     <>
@@ -85,8 +88,34 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
                 <WhatsAppContactLink phone={std.parentPhone} label="واتساب ولي الأمر" />
               </div>
 
+              {/* Enrolled Courses */}
+              {std.enrolledUnits && std.enrolledUnits.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {std.enrolledUnits.map((u, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-bold border border-purple-200"
+                    >
+                      {u}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Actions */}
-              <div className="pt-2 border-t border-purple-100 flex items-center gap-2">
+              <div className="pt-2 border-t border-purple-100 flex flex-wrap items-center gap-2">
+                {onQuickEnroll && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onQuickEnroll(std)}
+                    className="flex-1 text-[11px] justify-center text-purple-700 border-purple-200 hover:bg-purple-50"
+                    title="تفعيل اشتراك فوري في وحدة دراسية"
+                  >
+                    <span>تفعيل كورس</span>
+                  </Button>
+                )}
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -126,6 +155,7 @@ export const StudentsTable: React.FC<StudentsTableProps> = ({
               student={std}
               onResetDevice={onResetDevice}
               onToggleBan={onToggleBan}
+              onQuickEnroll={onQuickEnroll}
             />
           ))}
         </DataTableCard>

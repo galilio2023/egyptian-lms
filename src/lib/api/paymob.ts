@@ -6,11 +6,61 @@
  * 3. Environment-aware sandbox fallback when API keys are not configured
  */
 
+import crypto from "crypto";
+
 const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY || "";
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID || "";
 const PAYMOB_CARD_INTEGRATION_ID = process.env.PAYMOB_CARD_INTEGRATION_ID || PAYMOB_INTEGRATION_ID;
 const PAYMOB_WALLET_INTEGRATION_ID = process.env.PAYMOB_WALLET_INTEGRATION_ID || PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID || "";
+const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET || "";
+
+export function calculatePaymobHmac(obj: Record<string, unknown>, hmacSecret = PAYMOB_HMAC_SECRET): string {
+  const order = (obj.order as Record<string, unknown>) || {};
+  const sourceData = (obj.source_data as Record<string, unknown>) || {};
+
+  const concatenated = [
+    String(obj.amount_cents ?? ""),
+    String(obj.created_at ?? ""),
+    String(obj.currency ?? ""),
+    String(obj.error_occured ?? "false"),
+    String(obj.has_parent_transaction ?? "false"),
+    String(obj.id ?? ""),
+    String(obj.integration_id ?? ""),
+    String(obj.is_3d_secure ?? "false"),
+    String(obj.is_auth ?? "false"),
+    String(obj.is_capture ?? "false"),
+    String(obj.is_refunded ?? "false"),
+    String(obj.is_standalone_payment ?? "true"),
+    String(obj.is_voided ?? "false"),
+    String(order.id ?? ""),
+    String(obj.owner ?? ""),
+    String(obj.pending ?? "false"),
+    String(sourceData.pan ?? ""),
+    String(sourceData.sub_type ?? ""),
+    String(sourceData.type ?? ""),
+    String(obj.success ?? "false"),
+  ].join("");
+
+  return crypto.createHmac("sha512", hmacSecret).update(concatenated).digest("hex");
+}
+
+export function verifyPaymobWebhookSignature(
+  obj: Record<string, unknown>,
+  providedHmac: string,
+  hmacSecret = PAYMOB_HMAC_SECRET
+): boolean {
+  if (!hmacSecret || !providedHmac) return false;
+  const computedHmac = calculatePaymobHmac(obj, hmacSecret);
+  try {
+    const computedBuffer = Buffer.from(computedHmac, "hex");
+    const providedBuffer = Buffer.from(providedHmac, "hex");
+    if (computedBuffer.length !== providedBuffer.length) return false;
+    return crypto.timingSafeEqual(computedBuffer, providedBuffer);
+  } catch {
+    return computedHmac === providedHmac;
+  }
+}
 
 export function isPaymobConfigured(): boolean {
   return Boolean(PAYMOB_API_KEY && (PAYMOB_INTEGRATION_ID || PAYMOB_CARD_INTEGRATION_ID || PAYMOB_WALLET_INTEGRATION_ID));

@@ -227,7 +227,10 @@ export async function GET(
     }
 
     // Fallback for mock data
-    const mockLesson = INITIAL_LESSONS.find((l) => l.slug === lessonSlug || l.id === lessonSlug) || INITIAL_LESSONS[0];
+    const mockLesson = INITIAL_LESSONS.find((l) => l.slug === lessonSlug || l.id === lessonSlug);
+    if (!mockLesson) {
+      return NextResponse.json({ error: "الدرس غير موجود" }, { status: 404 });
+    }
     const mockUnit = INITIAL_UNITS.find((u) => u.id === mockLesson.unitId) || INITIAL_UNITS[0];
 
     let mockIsEnrolled = Boolean(mockLesson.isFreePreview);
