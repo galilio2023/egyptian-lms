@@ -9,6 +9,7 @@ import { invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
 import { getRecentSecurityLogs, logSecurityEvent, SecurityAuditRecord } from "@/lib/security/audit-logger";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { validateEgyptianPhone } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -507,9 +508,41 @@ export async function POST(request: NextRequest) {
             }
           });
 
+          // Automated WhatsApp confirmation to parent
+          let targetParentPhone = parentPhone;
+          if (!targetParentPhone && targetUserId) {
+            const [profile] = await db
+              .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+              .from(schema.studentProfile)
+              .where(eq(schema.studentProfile.userId, targetUserId))
+              .limit(1);
+            if (profile?.parentPhoneNumber) targetParentPhone = profile.parentPhoneNumber;
+          }
+
+          let parentNotified = false;
+          const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+          if (cleanPhone) {
+            try {
+              const waRes = await sendAutomatedWhatsAppNotification({
+                to: cleanPhone,
+                message: `🎉 *أكاديمية تعليمية - تأكيد الاشتراك*\n` +
+                  `ولي أمر البطل / ${studentName || "المشترك"} 🌟\n` +
+                  `تم بنجاح تأكيد سداد الرسوم وتفعيل اشتراك الوحدة الدراسية في حساب الطالب.\n` +
+                  `يمكن للطالب الآن الدخول للمنصة والبدء في مشاهدة الحصص وحل التمارين فوراً!\n` +
+                  `نتمنى له دوام التوفيق والنجاح.`,
+              });
+              parentNotified = Boolean(waRes.success);
+            } catch (e) {
+              console.warn("Approve order WhatsApp dispatch note:", e);
+            }
+          }
+
           return NextResponse.json({
             success: true,
-            message: `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل.`,
+            parentNotified,
+            message: parentNotified
+              ? `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح وإشعار ولي الأمر عبر واتساب.`
+              : `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل.`,
           });
         } catch (err) {
           console.error("DB operation error for approve_order:", err);
@@ -540,9 +573,47 @@ export async function POST(request: NextRequest) {
             })
             .where(eq(schema.order.id, orderId));
 
+          // Automated WhatsApp rejection notice to parent
+          let targetParentPhone = parentPhone;
+          if (!targetParentPhone) {
+            const [orderRecord] = await db
+              .select({ userId: schema.order.userId })
+              .from(schema.order)
+              .where(eq(schema.order.id, orderId))
+              .limit(1);
+            if (orderRecord?.userId) {
+              const [profile] = await db
+                .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+                .from(schema.studentProfile)
+                .where(eq(schema.studentProfile.userId, orderRecord.userId))
+                .limit(1);
+              if (profile?.parentPhoneNumber) targetParentPhone = profile.parentPhoneNumber;
+            }
+          }
+
+          let parentNotified = false;
+          const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+          if (cleanPhone) {
+            try {
+              const waRes = await sendAutomatedWhatsAppNotification({
+                to: cleanPhone,
+                message: `⚠️ *تنبيه بخصوص طلب الاشتراك*\n` +
+                  `نحيطكم علماً بأنه تعذر قبول إيصال التحويل للسبب التالي:\n` +
+                  `"${reason || "إيصال غير واضح أو المبلغ غير مطابق"}"\n` +
+                  `يرجى التأكد من بيانات التحويل وإعادة إرسال الإيصال الصحيح عبر المنصة.`,
+              });
+              parentNotified = Boolean(waRes.success);
+            } catch (e) {
+              console.warn("Reject order WhatsApp dispatch note:", e);
+            }
+          }
+
           return NextResponse.json({
             success: true,
-            message: `تم رفض الطلب بنجاح وتحديث الحالة.`,
+            parentNotified,
+            message: parentNotified
+              ? `تم رفض الطلب وتحديث الحالة وإرسال التنبيه لولي الأمر عبر واتساب بنجاح.`
+              : `تم رفض الطلب بنجاح وتحديث الحالة.`,
           });
         } catch (err) {
           console.error("DB operation error for reject_order:", err);

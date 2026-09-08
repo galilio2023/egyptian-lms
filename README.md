@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/galilio2023/egyptian-lms">
-    <img src="./public/logo.png" alt="Egyptian LMS Platform Logo" width="520" />
+    <img src="./public/icon-192.png" alt="Egyptian LMS Platform Logo" width="192" />
   </a>
 </p>
 

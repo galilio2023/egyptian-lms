@@ -8,3 +8,4 @@ export { WeeklyMissionsCard } from "./components/weekly-missions-card";
 export { CenterVoucherCard } from "./components/center-voucher-card";
 export { NextLessonBanner } from "./components/next-lesson-banner";
 export { CoursesGridSection } from "./components/courses-grid-section";
+export { SmartSrsVocabCard } from "./components/smart-srs-vocab-card";
