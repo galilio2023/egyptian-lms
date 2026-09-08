@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Sparkles, Volume2, RotateCcw, Flame } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -74,6 +74,64 @@ function buildDefaultDeck(): VocabCard[] {
   }));
 }
 
+function calculateNextInterval(
+  card: VocabCard,
+  quality: 1 | 3 | 5
+): { nextInterval: number; nextEaseFactor: number; nextRepetitions: number } {
+  const { intervalDays, repetitions, easeFactor } = card;
+
+  const nextEaseFactor = Math.max(
+    1.3,
+    easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  );
+
+  if (quality === 1) {
+    return {
+      nextInterval: 1,
+      nextEaseFactor,
+      nextRepetitions: 0,
+    };
+  }
+
+  if (quality === 3) {
+    let nextInterval = 1;
+    if (repetitions === 0) {
+      nextInterval = 1;
+    } else if (repetitions === 1) {
+      nextInterval = 3;
+    } else {
+      nextInterval = Math.max(1, Math.round(intervalDays * easeFactor));
+    }
+    return {
+      nextInterval,
+      nextEaseFactor,
+      nextRepetitions: repetitions + 1,
+    };
+  }
+
+  // quality === 5 (Easy)
+  let nextInterval = 2;
+  if (repetitions === 0) {
+    nextInterval = 3;
+  } else if (repetitions === 1) {
+    nextInterval = 5;
+  } else {
+    nextInterval = Math.max(2, Math.round(intervalDays * nextEaseFactor * 1.3));
+  }
+  return {
+    nextInterval,
+    nextEaseFactor,
+    nextRepetitions: repetitions + 1,
+  };
+}
+
+function formatIntervalArabic(days: number): string {
+  if (days <= 1) return "غداً";
+  if (days === 2) return "بعد يومين";
+  if (days >= 3 && days <= 10) return `بعد ${days} أيام`;
+  return `بعد ${days} يوماً`;
+}
+
 export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => void }) {
   const [deck, setDeck] = useState<VocabCard[]>(() => {
     if (typeof window === "undefined") return buildDefaultDeck();
@@ -100,8 +158,24 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isCompletedToday, setIsCompletedToday] = useState(false);
+  const [reviewAhead, setReviewAhead] = useState(false);
 
-  const currentCard = deck[currentIndex];
+  // Filter cards due today (or unreviewed cards)
+  const dueCards = useMemo(() => {
+    const now = new Date();
+    return deck.filter((card) => card.repetitions === 0 || !card.dueDate || new Date(card.dueDate) <= now);
+  }, [deck]);
+
+  const activeDeck = useMemo(() => {
+    if (reviewAhead) return deck;
+    return dueCards;
+  }, [reviewAhead, dueCards, deck]);
+
+  const currentCard = activeDeck[currentIndex];
+
+  const hardInterval = currentCard ? calculateNextInterval(currentCard, 1).nextInterval : 1;
+  const goodInterval = currentCard ? calculateNextInterval(currentCard, 3).nextInterval : 1;
+  const easyInterval = currentCard ? calculateNextInterval(currentCard, 5).nextInterval : 3;
 
   const speak = (text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -116,38 +190,22 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
   const handleRate = (quality: 1 | 3 | 5) => {
     if (!currentCard) return;
 
-    let { intervalDays, repetitions, easeFactor } = currentCard;
-
-    if (quality >= 3) {
-      if (repetitions === 0) {
-        intervalDays = 1;
-      } else if (repetitions === 1) {
-        intervalDays = 3;
-      } else {
-        intervalDays = Math.round(intervalDays * easeFactor);
-      }
-      repetitions += 1;
-    } else {
-      repetitions = 0;
-      intervalDays = 1;
-    }
-
-    easeFactor = Math.max(
-      1.3,
-      easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-    );
+    const { nextInterval, nextEaseFactor, nextRepetitions } = calculateNextInterval(currentCard, quality);
 
     const nextDueDate = new Date();
-    nextDueDate.setDate(nextDueDate.getDate() + intervalDays);
+    nextDueDate.setDate(nextDueDate.getDate() + nextInterval);
 
-    const updatedDeck = [...deck];
-    updatedDeck[currentIndex] = {
-      ...currentCard,
-      intervalDays,
-      repetitions,
-      easeFactor,
-      dueDate: nextDueDate.toISOString(),
-    };
+    const updatedDeck = deck.map((c) =>
+      c.id === currentCard.id
+        ? {
+            ...c,
+            intervalDays: nextInterval,
+            repetitions: nextRepetitions,
+            easeFactor: nextEaseFactor,
+            dueDate: nextDueDate.toISOString(),
+          }
+        : c
+    );
 
     setDeck(updatedDeck);
     try {
@@ -156,7 +214,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
 
     setIsFlipped(false);
 
-    if (currentIndex + 1 < deck.length) {
+    if (currentIndex + 1 < activeDeck.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
       // Completed round!
@@ -181,6 +239,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
   };
 
   const handleRestart = () => {
+    setReviewAhead(true);
     setCurrentIndex(0);
     setIsFlipped(false);
     setIsCompletedToday(false);
@@ -223,7 +282,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
         <div className="space-y-4 relative z-10">
           <div className="flex items-center justify-between text-xs text-purple-300 font-bold px-1">
             <span>
-              بطاقة {currentIndex + 1} من {deck.length}
+              بطاقة {currentIndex + 1} من {activeDeck.length}
             </span>
             <span className="text-amber-300">{currentCard.category}</span>
           </div>
@@ -295,21 +354,21 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
                   onClick={() => handleRate(1)}
                   className="py-2.5 px-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 text-xs font-black transition-all cursor-pointer"
                 >
-                  🔴 صعبة (غداً)
+                  🔴 صعبة ({formatIntervalArabic(hardInterval)})
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRate(3)}
                   className="py-2.5 px-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-black transition-all cursor-pointer"
                 >
-                  🟡 جيدة (بعد 3 أيام)
+                  🟡 جيدة ({formatIntervalArabic(goodInterval)})
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRate(5)}
                   className="py-2.5 px-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/40 text-xs font-black transition-all cursor-pointer"
                 >
-                  🟢 سهلة (بعد أسبوع)
+                  🟢 سهلة ({formatIntervalArabic(easyInterval)})
                 </button>
               </div>
             </div>

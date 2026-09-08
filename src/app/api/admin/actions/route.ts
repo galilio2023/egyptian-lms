@@ -9,6 +9,7 @@ import { invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
 import { getRecentSecurityLogs, logSecurityEvent, SecurityAuditRecord } from "@/lib/security/audit-logger";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { validateEgyptianPhone } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -518,23 +519,30 @@ export async function POST(request: NextRequest) {
             if (profile?.parentPhoneNumber) targetParentPhone = profile.parentPhoneNumber;
           }
 
-          if (targetParentPhone) {
-            const cleanPhone = targetParentPhone.replace(/\D/g, "");
-            if (cleanPhone.length >= 10) {
-              sendAutomatedWhatsAppNotification({
+          let parentNotified = false;
+          const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+          if (cleanPhone) {
+            try {
+              const waRes = await sendAutomatedWhatsAppNotification({
                 to: cleanPhone,
                 message: `🎉 *أكاديمية تعليمية - تأكيد الاشتراك*\n` +
                   `ولي أمر البطل / ${studentName || "المشترك"} 🌟\n` +
                   `تم بنجاح تأكيد سداد الرسوم وتفعيل اشتراك الوحدة الدراسية في حساب الطالب.\n` +
                   `يمكن للطالب الآن الدخول للمنصة والبدء في مشاهدة الحصص وحل التمارين فوراً!\n` +
                   `نتمنى له دوام التوفيق والنجاح.`,
-              }).catch((e) => console.warn("Approve order WhatsApp dispatch note:", e));
+              });
+              parentNotified = Boolean(waRes.success);
+            } catch (e) {
+              console.warn("Approve order WhatsApp dispatch note:", e);
             }
           }
 
           return NextResponse.json({
             success: true,
-            message: `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل وإشعار ولي الأمر.`,
+            parentNotified,
+            message: parentNotified
+              ? `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح وإشعار ولي الأمر عبر واتساب.`
+              : `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل.`,
           });
         } catch (err) {
           console.error("DB operation error for approve_order:", err);
@@ -583,22 +591,29 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          if (targetParentPhone) {
-            const cleanPhone = targetParentPhone.replace(/\D/g, "");
-            if (cleanPhone.length >= 10) {
-              sendAutomatedWhatsAppNotification({
+          let parentNotified = false;
+          const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+          if (cleanPhone) {
+            try {
+              const waRes = await sendAutomatedWhatsAppNotification({
                 to: cleanPhone,
                 message: `⚠️ *تنبيه بخصوص طلب الاشتراك*\n` +
                   `نحيطكم علماً بأنه تعذر قبول إيصال التحويل للسبب التالي:\n` +
                   `"${reason || "إيصال غير واضح أو المبلغ غير مطابق"}"\n` +
                   `يرجى التأكد من بيانات التحويل وإعادة إرسال الإيصال الصحيح عبر المنصة.`,
-              }).catch((e) => console.warn("Reject order WhatsApp dispatch note:", e));
+              });
+              parentNotified = Boolean(waRes.success);
+            } catch (e) {
+              console.warn("Reject order WhatsApp dispatch note:", e);
             }
           }
 
           return NextResponse.json({
             success: true,
-            message: `تم رفض الطلب بنجاح وتحديث الحالة وإرسال التنبيه لولي الأمر.`,
+            parentNotified,
+            message: parentNotified
+              ? `تم رفض الطلب وتحديث الحالة وإرسال التنبيه لولي الأمر عبر واتساب بنجاح.`
+              : `تم رفض الطلب بنجاح وتحديث الحالة.`,
           });
         } catch (err) {
           console.error("DB operation error for reject_order:", err);

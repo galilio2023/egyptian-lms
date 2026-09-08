@@ -246,6 +246,13 @@ export default function StudentDashboardPage() {
               ...prev,
               xpPoints: prev.xpPoints + earnedXp,
             }));
+            fetch("/api/student/xp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ xpAmount: earnedXp, reason: "srs_daily_challenge" }),
+            }).catch((err) => {
+              console.warn("Failed to persist SRS earned XP in DB:", err);
+            });
           }}
         />
 

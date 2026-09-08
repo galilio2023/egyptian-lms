@@ -10,13 +10,15 @@ export interface VoiceNoteRecorderProps {
   onAudioChange: (dataUrl: string | null) => void;
   disabled?: boolean;
   targetWord?: string;
+  onEarnXp?: (xp: number) => void;
 }
 
 export function VoiceNoteRecorder({
   audioUrl,
   onAudioChange,
   disabled = false,
-  targetWord = "Connect Phonics Practice",
+  targetWord,
+  onEarnXp,
 }: VoiceNoteRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -171,7 +173,7 @@ export function VoiceNoteRecorder({
   };
 
   const handleAiCheck = async () => {
-    if (!audioUrl) return;
+    if (!audioUrl || !targetWord || !targetWord.trim()) return;
     setIsCheckingAi(true);
     toast.info("جاري فحص نطق الطالب بواسطة مساعد الفونكس الذكي 🎙️...");
     try {
@@ -180,7 +182,7 @@ export function VoiceNoteRecorder({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           audioDataUrl: audioUrl,
-          targetText: targetWord,
+          targetText: targetWord.trim(),
           gradeLevel: 1,
         }),
       });
@@ -195,6 +197,9 @@ export function VoiceNoteRecorder({
         praiseArabic: data.praiseArabic,
         xpAwarded: data.xpAwarded,
       });
+      if (onEarnXp && data.xpAwarded > 0) {
+        onEarnXp(data.xpAwarded);
+      }
       toast.success("✨ تم تقييم النطق بنجاح بواسطة الذكاء الاصطناعي!");
     } catch {
       toast.error("حدث خطأ في الاتصال أثناء تقييم النطق.");
@@ -273,21 +278,21 @@ export function VoiceNoteRecorder({
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handleAiCheck}
-                disabled={isCheckingAi || disabled}
-                className="px-2.5 py-1 text-[11px] font-black rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm flex items-center gap-1 transition-all disabled:opacity-50 cursor-pointer"
-                title="فحص النطق بمساعد الذكاء الاصطناعي"
-              >
-                {isCheckingAi ? (
-                  <span>جاري الفحص... ⏳</span>
-                ) : (
-                  <>
-                    <span>✨ فحص النطق الذكي</span>
-                  </>
-                )}
-              </button>
+              {targetWord && targetWord.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleAiCheck}
+                  disabled={isCheckingAi || disabled}
+                  className="px-2.5 py-1 text-[11px] font-black rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm flex items-center gap-1 transition-all disabled:opacity-50 cursor-pointer"
+                  title="فحص النطق بمساعد الذكاء الاصطناعي"
+                >
+                  {isCheckingAi ? (
+                    <span>جاري الفحص... ⏳</span>
+                  ) : (
+                    <span>✨ فحص نطق ({targetWord.trim()})</span>
+                  )}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -320,7 +325,7 @@ export function VoiceNoteRecorder({
                   {aiFeedback.praiseArabic}
                 </span>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold">
-                  +{aiFeedback.xpAwarded} XP 🌟
+                  النقاط التقديرية: +{aiFeedback.xpAwarded} XP 🌟
                 </span>
               </div>
             </div>

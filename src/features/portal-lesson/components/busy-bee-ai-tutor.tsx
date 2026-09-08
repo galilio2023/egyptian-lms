@@ -85,6 +85,10 @@ export function BusyBeeAiTutor({
           lessonTitle,
           unitTitle,
           studentName,
+          chatHistory: messages.slice(-6).map((m) => ({
+            role: m.sender === "student" ? "user" : "model",
+            content: m.text,
+          })),
         }),
       });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { executeAdminAction } from "@/lib/api/admin-client";
@@ -22,7 +22,16 @@ export function BroadcastComposerForm() {
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [sentCount, setSentCount] = useState<number | null>(null);
 
+  const aiRequestSeqRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      aiRequestSeqRef.current += 1;
+    };
+  }, []);
+
   const handleGenerateAi = async (topic: string) => {
+    const requestId = ++aiRequestSeqRef.current;
     setIsGeneratingAi(true);
     toast.info("جاري صياغة الرسالة بأسلوب تربوي مشجع بالذكاء الاصطناعي ✨...");
     try {
@@ -47,12 +56,16 @@ export function BroadcastComposerForm() {
         throw new Error(data.error || "تعذر توليد الرسالة.");
       }
 
+      if (requestId !== aiRequestSeqRef.current) return;
       setMessageText(data.messageText);
       toast.success("✨ تم إنشاء الرسالة التربوية بنجاح بواسطة الذكاء الاصطناعي!");
     } catch {
+      if (requestId !== aiRequestSeqRef.current) return;
       toast.error("تعذر إنشاء الرسالة الذكية حالياً.");
     } finally {
-      setIsGeneratingAi(false);
+      if (requestId === aiRequestSeqRef.current) {
+        setIsGeneratingAi(false);
+      }
     }
   };
 

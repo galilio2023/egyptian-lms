@@ -56,7 +56,13 @@ function extractBtEtText(streamContent: string, target: string[]) {
   }
 }
 
+const MAX_PDF_BYTES = 50 * 1024 * 1024; // 50MB limit
+
 export function extractTextFromPdfBuffer(buffer: Buffer): ExtractedPdfDocument {
+  if (buffer.length > MAX_PDF_BYTES) {
+    throw new Error("ملف PDF يتجاوز الحد الأقصى المسموح به (50 ميجابايت).");
+  }
+
   // Validate PDF header signature
   const isPdf = buffer.length >= 4 && buffer.toString("latin1", 0, 5).startsWith("%PDF");
   if (!isPdf) {
@@ -78,9 +84,16 @@ export function extractTextFromPdfBuffer(buffer: Buffer): ExtractedPdfDocument {
   if (textMatches.length < 20) {
     const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
     let streamMatch: RegExpExecArray | null;
-    let decompressedCount = 0;
+    let streamAttempts = 0;
+    let decompressedBytes = 0;
+    const MAX_DECOMPRESSED_BYTES = 2 * 1024 * 1024; // 2MB limit
 
-    while ((streamMatch = streamRegex.exec(content)) !== null && decompressedCount < 40) {
+    while (
+      (streamMatch = streamRegex.exec(content)) !== null &&
+      streamAttempts < 40 &&
+      decompressedBytes < MAX_DECOMPRESSED_BYTES
+    ) {
+      streamAttempts++;
       const rawStream = streamMatch[1];
       try {
         const streamBuffer = Buffer.from(rawStream, "latin1");
@@ -96,7 +109,7 @@ export function extractTextFromPdfBuffer(buffer: Buffer): ExtractedPdfDocument {
         }
 
         if (decompressed) {
-          decompressedCount++;
+          decompressedBytes += decompressed.length;
           extractBtEtText(decompressed, textMatches);
           // If we reached a healthy amount of text, stop to preserve processing speed
           if (textMatches.length >= 200) break;
@@ -109,13 +122,14 @@ export function extractTextFromPdfBuffer(buffer: Buffer): ExtractedPdfDocument {
 
   let rawText = textMatches.join(" ");
 
-  // 4. Fallback for scanned/unstandardized text: extract readable ASCII / Arabic runs
-  if (rawText.length < 50) {
+  // 4. Fallback for scanned/unstandardized text: extract readable ASCII / Arabic runs without discarding extracted text
+  if (rawText.trim().length < 50) {
     const readableBlocks = content.match(/[\x20-\x7E\u0600-\u06FF]{4,}/g);
     if (readableBlocks) {
-      rawText = readableBlocks
+      const fallbackRun = readableBlocks
         .filter((w) => !w.startsWith("/") && !w.startsWith("%") && !w.includes("obj") && !w.includes("endobj"))
         .join(" ");
+      rawText = rawText.trim().length > 0 ? `${rawText} ${fallbackRun}` : fallbackRun;
     }
   }
 

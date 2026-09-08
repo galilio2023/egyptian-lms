@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { checkRateLimit, createRateLimitResponse, getClientIp } from "@/lib/security/rate-limiter";
+import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { diagnoseEgyptianPhoneme } from "@/features/phonics/components/phonics-sound-board";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10MB limit
@@ -19,6 +19,7 @@ interface PhonicsEvaluationResponse {
   pedagogicalAdviceArabic: string;
   praiseArabic: string;
   xpAwarded: number;
+  error?: string;
 }
 
 function parseAudioDataUrl(dataUrl: string) {
@@ -50,11 +51,16 @@ function parseAudioDataUrl(dataUrl: string) {
 export async function POST(request: NextRequest) {
   try {
     const reqHeaders = await headers();
-    const clientIp = getClientIp(reqHeaders);
     const session = await auth.api.getSession({ headers: reqHeaders });
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "يجب تسجيل الدخول أولاً لإجراء التقييم الصوتي." },
+        { status: 401 }
+      );
+    }
 
     // Rate limiting: 20 speech checks per 5 minutes per user/IP
-    const rateKey = `speech-eval:${session?.user?.id || clientIp}`;
+    const rateKey = `speech-eval:${session.user.id}`;
     const rateCheck = checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
@@ -136,7 +142,8 @@ Return JSON in this EXACT schema:
           const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawText) {
             const parsed = JSON.parse(rawText);
-            const score = Math.max(0, Math.min(100, Math.round(parsed.accuracyScore || 70)));
+            const rawScore = Number.isFinite(parsed.accuracyScore) ? Number(parsed.accuracyScore) : 70;
+            const score = Math.max(0, Math.min(100, Math.round(rawScore)));
             const xp = score >= 80 ? 25 : score >= 60 ? 15 : 5;
 
             const responsePayload: PhonicsEvaluationResponse = {
@@ -165,23 +172,22 @@ Return JSON in this EXACT schema:
       }
     }
 
-    // 2. Intelligent Fallback: Rule-Based Phonics Diagnostic
+    // 2. Intelligent Fallback when Gemini Audio Evaluation is unavailable:
+    // Do not award passing score or unearned XP without actual audio analysis
     const diagnostic = diagnoseEgyptianPhoneme(cleanTarget, cleanTarget);
-    const fallbackScore = 85;
     return NextResponse.json({
-      success: true,
-      accuracyScore: fallbackScore,
-      recognizedText: cleanTarget,
-      isPass: true,
+      success: false,
+      accuracyScore: 0,
+      recognizedText: "",
+      isPass: false,
       trapDetected: diagnostic?.trapDetected || null,
-      detectedPhonemes: [
-        { phoneme: cleanTarget.slice(0, 2), status: "perfect" },
-      ],
+      detectedPhonemes: [],
       pedagogicalAdviceArabic:
         diagnostic?.adviceArabic ||
-        "صوتك واضح ونطقك ممتاز جداً يا بطل! كرر الكلمة مرة تانية لتثبيت نغمة الصوت.",
-      praiseArabic: "بطل ومجتهد جداً! 🌟",
-      xpAwarded: 20,
+        "تعذر تحليل التسجيل الصوتي بالذكاء الاصطناعي حالياً. يرجى التأكد من وضوح الصوت والمحاولة لاحقاً.",
+      praiseArabic: "تم حفظ التسجيل الصوتي لمراجعته بواسطة معلم المادة 🎧",
+      xpAwarded: 0,
+      error: "خدمة تقييم النطق الصوتي بالذكاء الاصطناعي غير متوفرة حالياً.",
     } satisfies PhonicsEvaluationResponse);
   } catch (err: unknown) {
     console.error("Phonics evaluate route exception:", err);

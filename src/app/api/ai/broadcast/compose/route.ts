@@ -69,12 +69,26 @@ Guidelines:
           const data = await res.json();
           const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawText) {
-            const parsed = JSON.parse(rawText);
-            return NextResponse.json({
-              success: true,
-              messageText: parsed.messageText,
-              subjectTitle: parsed.subjectTitle,
-            });
+            try {
+              const parsed = JSON.parse(rawText);
+              if (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                typeof parsed.messageText === "string" &&
+                parsed.messageText.trim().length > 0
+              ) {
+                return NextResponse.json({
+                  success: true,
+                  messageText: parsed.messageText.trim(),
+                  subjectTitle:
+                    typeof parsed.subjectTitle === "string" && parsed.subjectTitle.trim()
+                      ? parsed.subjectTitle.trim()
+                      : "إشعار عام",
+                });
+              }
+            } catch {
+              // Parse error, fall through to deterministic template
+            }
           }
         }
       } catch (err) {
