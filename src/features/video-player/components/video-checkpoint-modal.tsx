@@ -53,7 +53,10 @@ export function VideoCheckpointModal({
   };
 
   return (
-    <div className="absolute inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+    <div
+      onClick={(event) => event.stopPropagation()}
+      className="absolute inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+    >
       <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-4 border-amber-400 relative overflow-hidden text-right" dir="rtl">
         {/* Glow Header */}
         <div className="absolute -top-12 -left-12 w-32 h-32 bg-amber-200/50 rounded-full blur-2xl pointer-events-none" />

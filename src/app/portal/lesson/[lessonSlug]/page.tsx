@@ -104,6 +104,26 @@ export default function LessonPlayerPage({
   const prevLesson = currentIndex > 0 ? unitLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex >= 0 && currentIndex < unitLessons.length - 1 ? unitLessons[currentIndex + 1] : null;
 
+  const handleCheckpointComplete = async (checkpointId: string, rewardXp: number) => {
+    try {
+      const response = await fetch("/api/student/lesson-progress", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId: lesson.id, checkpointId, rewardXp }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.checkpointCompleted) {
+        toast.error(result.error || "تعذر حفظ مكافأة نقطة التحقق. حاول مرة أخرى.");
+        return false;
+      }
+      return typeof result.xpAwarded === "number" ? result.xpAwarded : 0;
+    } catch {
+      toast.error("حدث خطأ في الاتصال بالخادم. لم يتم تسجيل مكافأة نقطة التحقق.");
+      return false;
+    }
+  };
+
   const handleCompleteLesson = async () => {
     if (isCompleted || isCompleting) return;
 
@@ -172,6 +192,7 @@ export default function LessonPlayerPage({
                 studentPhone={studentPhone}
                 title={lesson.title}
                 checkpoints={lesson.checkpoints}
+                onCheckpointComplete={handleCheckpointComplete}
               />
             </div>
 

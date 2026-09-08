@@ -154,6 +154,23 @@ export const lessonProgress = pgTable('lesson_progress', {
   uniqueIndex('lesson_progress_user_lesson_unique_idx').on(table.userId, table.lessonId),
 ]);
 
+export const lessonCheckpointProgress = pgTable('lesson_checkpoint_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }).notNull(),
+  lessonId: uuid('lesson_id').references(() => lesson.id, { onDelete: 'cascade' }).notNull(),
+  checkpointId: text('checkpoint_id').notNull(),
+  xpAwarded: integer('xp_awarded').notNull(),
+  completedAt: timestamp('completed_at').defaultNow().notNull(),
+}, (table) => [
+  index('lesson_checkpoint_progress_user_id_idx').on(table.userId),
+  index('lesson_checkpoint_progress_lesson_id_idx').on(table.lessonId),
+  uniqueIndex('lesson_checkpoint_progress_user_checkpoint_unique_idx').on(
+    table.userId,
+    table.lessonId,
+    table.checkpointId
+  ),
+]);
+
 // Interactive Quizzes & Exams
 export const quiz = pgTable('quiz', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -323,6 +340,7 @@ export const lessonRelations = relations(lesson, ({ one, many }) => ({
   }),
   quizzes: many(quiz),
   progress: many(lessonProgress),
+  checkpointProgress: many(lessonCheckpointProgress),
 }));
 
 export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
@@ -332,6 +350,17 @@ export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
   }),
   lesson: one(lesson, {
     fields: [lessonProgress.lessonId],
+    references: [lesson.id],
+  }),
+}));
+
+export const lessonCheckpointProgressRelations = relations(lessonCheckpointProgress, ({ one }) => ({
+  user: one(user, {
+    fields: [lessonCheckpointProgress.userId],
+    references: [user.id],
+  }),
+  lesson: one(lesson, {
+    fields: [lessonCheckpointProgress.lessonId],
     references: [lesson.id],
   }),
 }));
@@ -566,5 +595,4 @@ export const securityAuditLogRelations = relations(securityAuditLog, ({ one }) =
     references: [user.id],
   }),
 }));
-
 

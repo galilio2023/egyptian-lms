@@ -65,12 +65,11 @@ export function CanvasPenGrader({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           submissionId: submission.id,
-          imageUrl: currentImage.imageUrl,
-          assignmentTitle: submission.assignmentTitle,
+          pageNumber: currentImage.pageNumber,
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         toast.error(data.error || "تعذر إكمال التصحيح الذكي.");
         return;
       }

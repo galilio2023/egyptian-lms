@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Volume2, Sparkles, Mic, Lightbulb, Award } from "lucide-react";
+import { Volume2, Sparkles, Mic, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { PhonicsSpeechSvg } from "@/components/ui/illustrated-icons";
@@ -27,7 +27,7 @@ export function diagnoseEgyptianPhoneme(expectedWord: string, transcript: string
   const act = transcript.toLowerCase().trim();
 
   // 1. P vs B trap (classic Egyptian challenge)
-  if (exp.includes("p") && (act.includes("b") || !act.includes("p"))) {
+  if (/p(?!h)/.test(exp) && act.includes("b")) {
     return {
       trapDetected: "p_vs_b",
       adviceArabic: "نصيحة المعلم الذكي: حرف الـ P يخرج بهواء خفيف ينفجر من الشفتين (Puff of air)، مش حرف الباء العربي (B). ضع يدك أمام فمك واشعر باندفاع الهواء!",
@@ -45,7 +45,8 @@ export function diagnoseEgyptianPhoneme(expectedWord: string, transcript: string
   }
 
   // 3. TH trap
-  if (exp.includes("th") && (act.startsWith("s") || act.startsWith("f") || act.startsWith("z"))) {
+  const thIndex = exp.indexOf("th");
+  if (thIndex >= 0 && ["s", "f", "z"].includes(act[thIndex])) {
     return {
       trapDetected: "th_vs_s",
       adviceArabic: "صوت الـ Th يحتاج إخراج طرف اللسان بين الأسنان بلطف كما في حرف (الثاء / الذال).",
@@ -176,20 +177,26 @@ export function PhonicsSoundBoard() {
     recognition.onresult = (event) => {
       const results = event.results[0];
       let bestMatch = 0;
+      let bestTranscript = results[0].transcript;
       const expectedWord = item.exampleWord.toLowerCase();
       
       for (let i = 0; i < results.length; i++) {
         const transcript = results[i].transcript.toLowerCase().trim();
+        let matchScore: number;
         if (transcript === expectedWord || transcript.includes(expectedWord)) {
-          bestMatch = Math.max(bestMatch, 3);
+          matchScore = 3;
         } else if (transcript.split(" ").some((w: string) => w.startsWith(expectedWord.substring(0, 2)))) {
-          bestMatch = Math.max(bestMatch, 2);
+          matchScore = 2;
         } else {
-          bestMatch = Math.max(bestMatch, 1);
+          matchScore = 1;
+        }
+        if (matchScore > bestMatch) {
+          bestMatch = matchScore;
+          bestTranscript = results[i].transcript;
         }
       }
       
-      const transcript = results[0].transcript;
+      const transcript = bestTranscript;
       const diagnostic = bestMatch < 3 ? diagnoseEgyptianPhoneme(item.exampleWord, transcript) : null;
       
       if (bestMatch >= 3) {
@@ -200,7 +207,7 @@ export function PhonicsSoundBoard() {
             origin: { y: 0.7 },
           });
         } catch {}
-        toast.success(`نطق رائع ومثالي لكلمة (${item.exampleWord})! +10 XP 🌟`);
+        toast.success(`نطق رائع ومثالي لكلمة (${item.exampleWord})! 🌟`);
       }
 
       setPracticeResult({

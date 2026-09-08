@@ -3,14 +3,16 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, or, isNull, isNotNull, gt, ne } from "drizzle-orm";
+import { eq, and, or, isNull, gt, sql } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { INITIAL_UNITS } from "@/lib/db/mock-data";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { initiatePaymobPayment } from "@/lib/api/paymob";
-import { scanEgyptianReceipt, generateReceiptHash } from "@/lib/receipt-scanner";
-import { verifyEgyptianPaymentReceipt } from "@/lib/ai/receipt-verifier";
+import {
+  normalizeReceiptReference,
+  verifyEgyptianPaymentReceipt,
+} from "@/lib/ai/receipt-verifier";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -126,7 +128,7 @@ export async function POST(request: NextRequest) {
     // Financial Idempotency Key Computation
     // Standard RFC header "Idempotency-Key" or deterministic hash
     const headerKey = reqHeaders.get("idempotency-key");
-    const cleanRef = referenceNumber?.trim();
+    const cleanRef = normalizeReceiptReference(referenceNumber);
     const effectiveIdempotencyKey = (
       headerKey ||
       clientProvidedKey ||
@@ -171,18 +173,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Duplicate Reference Number Fraud Prevention: Check if reference number was already used on another completed/submitted order
+    // 2. Duplicate Reference Number Fraud Prevention
     if (cleanRef && isUUID) {
       try {
         const [duplicateRef] = await db
-          .select({ id: schema.order.id, userId: schema.order.userId })
+          .select({ id: schema.order.id })
           .from(schema.order)
-          .where(
-            and(
-              eq(schema.order.referenceNumber, cleanRef),
-              ne(schema.order.userId, userId || "")
-            )
-          )
+          .where(sql`upper(regexp_replace(coalesce(${schema.order.referenceNumber}, ''), '\\s+', '', 'g')) = ${cleanRef}`)
           .limit(1);
 
         if (duplicateRef) {
@@ -202,7 +199,11 @@ export async function POST(request: NextRequest) {
           );
         }
       } catch (refCheckErr) {
-        console.warn("Duplicate reference check note:", refCheckErr);
+        console.error("Duplicate reference lookup failed:", refCheckErr);
+        return NextResponse.json(
+          { error: "تعذر التحقق من الرقم المرجعي حالياً. يرجى المحاولة مرة أخرى." },
+          { status: 503 }
+        );
       }
     }
 
@@ -212,34 +213,34 @@ export async function POST(request: NextRequest) {
     // Intelligent AI & OCR Receipt Verification for manual transfers
     let computedReceiptHash: string | null = null;
     let ocrScanData: Record<string, unknown> | null = null;
-    let isAutoApproved = false;
+    let receiptAutoApprovalEligible = false;
     let autoApprovalMessage = "";
+    let persistedReference = cleanRef;
 
     if (paymentMethod.includes("manual")) {
-      const existingReceiptHashes: Record<string, string> = {};
-      try {
-        const pastOrders = await db
-          .select({ id: schema.order.id, hash: schema.order.receiptHash, ref: schema.order.referenceNumber })
-          .from(schema.order)
-          .limit(100);
-        for (const o of pastOrders) {
-          if (o.hash) existingReceiptHashes[o.hash] = o.id;
-          if (o.ref) existingReceiptHashes[o.ref] = o.id;
-        }
-      } catch {
-        // Fallback map
-      }
-
       const receiptPayload = receiptImageUrl || cleanRef || "";
       if (receiptPayload) {
         const verification = await verifyEgyptianPaymentReceipt({
           receiptImageOrText: receiptPayload,
           expectedAmountEgp: verifiedPrice,
-          existingReceiptHashes,
+          findExistingReceipt: async (hashOrReference) => {
+            const [existingOrder] = await db
+              .select({ id: schema.order.id })
+              .from(schema.order)
+              .where(
+                or(
+                  eq(schema.order.receiptHash, hashOrReference),
+                  sql`upper(regexp_replace(coalesce(${schema.order.referenceNumber}, ''), '\\s+', '', 'g')) = ${hashOrReference}`
+                )
+              )
+              .limit(1);
+            return existingOrder?.id;
+          },
         });
 
         computedReceiptHash = verification.receiptHash;
         ocrScanData = verification as unknown as Record<string, unknown>;
+        persistedReference = verification.extractedReference || cleanRef;
 
         if (verification.isDuplicate) {
           return NextResponse.json(
@@ -249,56 +250,69 @@ export async function POST(request: NextRequest) {
         }
 
         if (verification.autoApprovalEligible) {
-          isAutoApproved = true;
+          receiptAutoApprovalEligible = true;
           autoApprovalMessage = verification.summaryArabic;
         }
       }
     }
 
     // Try database insertion
+    let enrollmentActivated = false;
+    const shouldAutoFulfill = Boolean(
+      receiptAutoApprovalEligible &&
+      session?.user?.id &&
+      session.user.id === userId &&
+      isUUID
+    );
     try {
       if (userId && isUUID) {
         const initialStatus = paymentMethod.startsWith("paymob")
           ? "pending"
-          : isAutoApproved
+          : shouldAutoFulfill
           ? "completed"
           : "manual_review";
 
-        const [insertedOrder] = await db.insert(schema.order).values({
+        const orderInsert = db.insert(schema.order).values({
           userId: userId,
           unitId: unitId,
           amountEgp: verifiedPrice, // Always server verified!
           paymentMethod: paymentMethod as (typeof schema.paymentMethodEnum.enumValues)[number],
           paymentStatus: initialStatus,
-          referenceNumber: cleanRef || `REF-${Date.now()}`,
+          referenceNumber: persistedReference || `REF-${Date.now()}`,
           receiptImageUrl: receiptImageUrl || null,
           receiptHash: computedReceiptHash,
           ocrData: ocrScanData,
           idempotencyKey: effectiveIdempotencyKey,
         }).returning({ id: schema.order.id });
 
-        if (insertedOrder) {
-          insertedOrderId = insertedOrder.id;
-
-          // Auto-Fulfillment: If AI verified the receipt, activate enrollment immediately
-          if (isAutoApproved) {
-            try {
-              await db
-                .insert(schema.enrollment)
-                .values({
-                  userId: userId,
-                  unitId: unitId,
-                  isActive: true,
-                  enrolledAt: new Date(),
-                })
-                .onConflictDoNothing();
-            } catch (enrollErr) {
-              console.warn("Auto enrollment activation note:", enrollErr);
-            }
-          }
+        if (shouldAutoFulfill) {
+          const enrollmentInsert = db
+            .insert(schema.enrollment)
+            .values({
+              userId,
+              unitId,
+              isActive: true,
+              enrolledAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [schema.enrollment.userId, schema.enrollment.unitId],
+              set: { isActive: true, enrolledAt: new Date() },
+            })
+            .returning({ id: schema.enrollment.id });
+          const [insertedOrders, activatedEnrollments] = await db.batch([
+            orderInsert,
+            enrollmentInsert,
+          ]);
+          insertedOrderId = insertedOrders[0]?.id || null;
+          enrollmentActivated = Boolean(activatedEnrollments[0]?.id);
         } else {
+          const [insertedOrder] = await orderInsert;
+          insertedOrderId = insertedOrder?.id || null;
+        }
+
+        if (!insertedOrderId || (shouldAutoFulfill && !enrollmentActivated)) {
           return NextResponse.json(
-            { error: "تعذر تسجيل الطلب في قاعدة البيانات. يرجى المحاولة مرة أخرى." },
+            { error: "تعذر تسجيل الطلب وتفعيل الاشتراك. يرجى المحاولة مرة أخرى." },
             { status: 500 }
           );
         }
@@ -322,6 +336,9 @@ export async function POST(request: NextRequest) {
     }
 
     const orderIdToReturn = insertedOrderId || fallbackOrderId;
+    const isAutoApproved = Boolean(
+      shouldAutoFulfill && insertedOrderId && enrollmentActivated
+    );
     let paymobCheckoutUrl: string | undefined;
 
     // Trigger outbound Paymob session if selected payment method is Paymob

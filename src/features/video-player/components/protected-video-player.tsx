@@ -19,7 +19,7 @@ export interface ProtectedVideoPlayerProps {
   title?: string;
   initialSeekSeconds?: number;
   checkpoints?: VideoCheckpoint[];
-  onCheckpointComplete?: (checkpointId: string, rewardXp: number) => void;
+  onCheckpointComplete?: (checkpointId: string, rewardXp: number) => number | false | Promise<number | false>;
 }
 
 export function ProtectedVideoPlayer({
@@ -196,17 +196,33 @@ export function ProtectedVideoPlayer({
     }
   };
 
-  const handleCheckpointSuccess = (rewardXp: number) => {
+  const handleCheckpointSuccess = async (rewardXp: number) => {
     if (!activeCheckpoint) return;
+    let awardedXp: number | undefined;
+    if (onCheckpointComplete) {
+      try {
+        const persistedXp = await onCheckpointComplete(activeCheckpoint.id, rewardXp);
+        if (persistedXp === false) return;
+        awardedXp = persistedXp;
+      } catch {
+        toast.error("تعذر حفظ مكافأة نقطة التحقق. حاول مرة أخرى.");
+        return;
+      }
+    }
     setCompletedCheckpointIds((prev) => {
       const next = new Set(prev);
       next.add(activeCheckpoint.id);
       return next;
     });
     if (onCheckpointComplete) {
-      onCheckpointComplete(activeCheckpoint.id, rewardXp);
+      toast.success(
+        awardedXp && awardedXp > 0
+          ? `🎉 أحسنت! حصلت على +${awardedXp} XP`
+          : "🎉 أحسنت! تم تسجيل نقطة التحقق مسبقاً"
+      );
+    } else {
+      toast.success("🎉 أحسنت! إجابة صحيحة");
     }
-    toast.success(`🎉 أحسنت! حصلت على +${rewardXp} XP`);
   };
 
   const handleResumeFromCheckpoint = () => {
@@ -227,12 +243,13 @@ export function ProtectedVideoPlayer({
 
     // In-Video Checkpoint Inspection
     if (checkpoints && checkpoints.length > 0 && !activeCheckpoint) {
-      const pendingCheckpoint = checkpoints.find(
-        (cp) =>
-          !completedCheckpointIds.has(cp.id) &&
-          cur >= cp.timestampSeconds &&
-          cur <= cp.timestampSeconds + 3
-      );
+      const pendingCheckpoint = checkpoints
+        .filter(
+          (cp) =>
+            !completedCheckpointIds.has(cp.id) &&
+            cp.timestampSeconds <= cur
+        )
+        .sort((left, right) => left.timestampSeconds - right.timestampSeconds)[0];
       if (pendingCheckpoint) {
         videoRef.current.pause();
         setIsPlaying(false);
