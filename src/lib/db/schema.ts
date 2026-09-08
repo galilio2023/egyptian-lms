@@ -570,6 +570,8 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'unauthorized_portal_access',
   'live_session_attended',
   'user_banned',
+  'video_encoding_ready',
+  'video_encoding_failed',
 ]);
 
 export const securityAuditLog = pgTable('security_audit_log', {

@@ -1,7 +1,10 @@
 // Elite Academy LMS - Progressive Web App Service Worker
-const CACHE_NAME = 'elite-academy-v2';
+const CACHE_NAME = 'elite-academy-v2.1';
 const STATIC_ASSETS = [
   '/',
+  '/courses',
+  '/quizzes',
+  '/honor-board',
   '/offline',
   '/manifest.json',
   '/favicon.ico',

@@ -13,7 +13,9 @@ export type AuditEventType =
   | "rate_limit_triggered"
   | "unauthorized_portal_access"
   | "live_session_attended"
-  | "user_banned";
+  | "user_banned"
+  | "video_encoding_ready"
+  | "video_encoding_failed";
 
 export type AuditSeverity = "low" | "medium" | "high" | "critical";
 
