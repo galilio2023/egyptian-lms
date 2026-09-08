@@ -76,7 +76,7 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
         </section>
 
         {/* Filters & Search Toolbar */}
-        <section className="py-8 border-b border-purple-100/70 bg-white/70 backdrop-blur-md sticky top-16 z-20 shadow-xs">
+        <section className="py-4 sm:py-5 border-b border-purple-100/80 bg-white/95 backdrop-blur-md sticky top-[70px] sm:top-[74px] z-30 shadow-xs">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               
@@ -93,10 +93,11 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
               </div>
 
               {/* Grades Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar w-full md:w-auto">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1.5 pt-0.5 px-1 max-w-full scroll-smooth overscroll-x-contain w-full md:w-auto">
                 <button
+                  type="button"
                   onClick={() => setActiveGradeFilter("all")}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     activeGradeFilter === "all"
                       ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                       : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -109,8 +110,9 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
                   return (
                     <button
                       key={g.id}
+                      type="button"
                       onClick={() => setActiveGradeFilter(g.slug)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                         activeGradeFilter === g.slug
                           ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                           : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"

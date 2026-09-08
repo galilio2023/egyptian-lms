@@ -15,14 +15,15 @@ export const GradeSelectorTabs: React.FC<GradeSelectorTabsProps> = ({
   grades = INITIAL_GRADES,
 }) => {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2">
+    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-2">
       {grades.map((grade) => (
         <button
           key={grade.id}
+          type="button"
           onClick={() => onSelectGrade(grade.slug)}
-          className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 border-2 cursor-pointer ${
+          className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 border-2 cursor-pointer ${
             selectedGrade === grade.slug
-              ? "bg-gradient-vibrant text-white border-purple-500 shadow-md shadow-purple-500/20"
+              ? "bg-gradient-vibrant text-white border-purple-500 shadow-md shadow-purple-500/20 scale-[1.02]"
               : "bg-white text-slate-700 border-purple-100 hover:border-purple-300 hover:bg-purple-50"
           }`}
         >

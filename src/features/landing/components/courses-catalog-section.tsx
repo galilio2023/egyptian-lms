@@ -38,10 +38,11 @@ export const CoursesCatalogSection: React.FC<CoursesCatalogSectionProps> = ({
           </div>
 
           {/* Grades Filter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 sm:pb-1 px-1 scroll-smooth overscroll-x-contain w-full sm:w-auto">
             <button
+              type="button"
               onClick={() => onGradeFilterChange("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeGradeFilter === "all"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -52,8 +53,9 @@ export const CoursesCatalogSection: React.FC<CoursesCatalogSectionProps> = ({
             {INITIAL_GRADES.map((g) => (
               <button
                 key={g.id}
+                type="button"
                 onClick={() => onGradeFilterChange(g.slug)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   activeGradeFilter === g.slug
                     ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20"
                     : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"

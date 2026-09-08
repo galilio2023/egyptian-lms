@@ -446,11 +446,11 @@ export function MinistryIntakeModal({
             {validation && <ValidationAlert validation={validation} />}
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
               <button
                 type="button"
                 onClick={() => setActiveTab("unit")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === "unit"
                     ? "bg-purple-600 text-white shadow-xs"
                     : "text-slate-600 hover:bg-slate-100"
@@ -461,7 +461,7 @@ export function MinistryIntakeModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("lessons")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === "lessons"
                     ? "bg-purple-600 text-white shadow-xs"
                     : "text-slate-600 hover:bg-slate-100"
@@ -472,7 +472,7 @@ export function MinistryIntakeModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("vocabulary")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === "vocabulary"
                     ? "bg-purple-600 text-white shadow-xs"
                     : "text-slate-600 hover:bg-slate-100"
@@ -483,7 +483,7 @@ export function MinistryIntakeModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("quizzes")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === "quizzes"
                     ? "bg-purple-600 text-white shadow-xs"
                     : "text-slate-600 hover:bg-slate-100"

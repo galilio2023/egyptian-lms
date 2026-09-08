@@ -34,12 +34,13 @@ export const HonorBoardSection: React.FC = () => {
         </div>
 
         {/* Interactive Grade Selector Tabs */}
-        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 mb-10 max-w-full no-scrollbar px-2">
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-8 max-w-full scroll-smooth overscroll-x-contain px-4">
           {INITIAL_GRADES.map((g) => (
             <button
               key={g.id}
+              type="button"
               onClick={() => setActiveHonorGrade(g.slug)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeHonorGrade === g.slug
                   ? "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-white shadow-md shadow-amber-500/25 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50 hover:text-purple-900 shadow-2xs"

@@ -78,11 +78,12 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
         </section>
 
         {/* Categories Bar */}
-        <section className="py-6 border-b border-purple-100 bg-white/70 backdrop-blur-md sticky top-16 z-20 shadow-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+        <section className="py-4 sm:py-5 border-b border-purple-100/80 bg-white/95 backdrop-blur-md sticky top-[70px] sm:top-[74px] z-30 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-1.5 pt-0.5 px-2 max-w-full scroll-smooth overscroll-x-contain">
             <button
+              type="button"
               onClick={() => setActiveCategory("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "all"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -91,8 +92,9 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
               جميع التحديات ({INITIAL_ADVENTURE_QUIZZES.length})
             </button>
             <button
+              type="button"
               onClick={() => setActiveCategory("phonics")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "phonics"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -101,8 +103,9 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
               حديقة الحيوان والصوتيات 🦁
             </button>
             <button
+              type="button"
               onClick={() => setActiveCategory("fruits")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "fruits"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -111,8 +114,9 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
               الألوان وسلة الفواكه 🍎
             </button>
             <button
+              type="button"
               onClick={() => setActiveCategory("grammar")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "grammar"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -121,8 +125,9 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
               قواعد سبايدر مان 🕷️
             </button>
             <button
+              type="button"
               onClick={() => setActiveCategory("numbers")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "numbers"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                   : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"

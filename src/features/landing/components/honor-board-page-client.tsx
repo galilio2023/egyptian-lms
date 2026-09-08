@@ -88,13 +88,14 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
         </section>
 
         {/* Grade Selector Tabs */}
-        <section className="py-6 border-b border-purple-100 bg-white/70 backdrop-blur-md sticky top-16 z-20 shadow-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+        <section className="py-4 sm:py-5 border-b border-amber-200/60 bg-white/95 backdrop-blur-md sticky top-[70px] sm:top-[74px] z-30 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-1.5 pt-0.5 px-2 max-w-full scroll-smooth overscroll-x-contain">
             {INITIAL_GRADES.map((g) => (
               <button
                 key={g.id}
+                type="button"
                 onClick={() => setActiveGrade(g.slug)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   activeGrade === g.slug
                     ? "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-white shadow-md shadow-amber-500/25 scale-105"
                     : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50 hover:text-purple-900 shadow-2xs"

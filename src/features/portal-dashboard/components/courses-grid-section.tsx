@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { type MockUnit } from "@/lib/db/mock-data";
+import { INITIAL_GRADES, type MockUnit } from "@/lib/db/mock-data";
 import { ChampionCupSvg } from "@/components/ui/illustrated-icons";
 import { UnitCard } from "@/entities/unit";
 import { StudentDashboardProfile } from "../types";
@@ -23,6 +23,8 @@ export const CoursesGridSection: React.FC<CoursesGridSectionProps> = ({
   onToggleViewAllGrades,
   onSelectLockedUnit,
 }) => {
+  const [activeGradeFilter, setActiveGradeFilter] = useState<string>("all");
+
   const gradeUnits = units.filter(
     (u) =>
       u.gradeSlug === student.gradeSlug ||
@@ -31,11 +33,15 @@ export const CoursesGridSection: React.FC<CoursesGridSectionProps> = ({
       enrolledUnitIds.includes(u.slug)
   );
 
-  const displayedUnits = viewAllGrades
+  const baseUnits = viewAllGrades
     ? units
     : gradeUnits.length > 0
     ? gradeUnits
     : units;
+
+  const displayedUnits = viewAllGrades && activeGradeFilter !== "all"
+    ? baseUnits.filter((u) => u.gradeSlug === activeGradeFilter)
+    : baseUnits;
 
   return (
     <div className="space-y-4">
@@ -70,14 +76,48 @@ export const CoursesGridSection: React.FC<CoursesGridSectionProps> = ({
           </button>
 
           <Link
-            href="/#courses_section"
+            href="/courses"
             className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1 shrink-0"
           >
-            <span>تفعيل وحدات</span>
+            <span>كتالوج الدورات</span>
             <ArrowLeft className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
+
+      {/* Grade Selector Tabs when viewing all grades */}
+      {viewAllGrades && (
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-purple-50/80 border border-purple-200 text-xs font-bold max-w-full overflow-x-auto no-scrollbar scroll-smooth">
+          <button
+            type="button"
+            onClick={() => setActiveGradeFilter("all")}
+            className={`px-3.5 py-1.5 rounded-xl transition-all shrink-0 cursor-pointer ${
+              activeGradeFilter === "all"
+                ? "bg-purple-600 text-white shadow-xs font-black"
+                : "text-purple-800 hover:bg-purple-100"
+            }`}
+          >
+            الكل ({units.length})
+          </button>
+          {INITIAL_GRADES.map((g) => {
+            const countInGrade = units.filter((u) => u.gradeSlug === g.slug).length;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => setActiveGradeFilter(g.slug)}
+                className={`px-3.5 py-1.5 rounded-xl transition-all shrink-0 cursor-pointer ${
+                  activeGradeFilter === g.slug
+                    ? "bg-purple-600 text-white shadow-xs font-black"
+                    : "text-purple-800 hover:bg-purple-100"
+                }`}
+              >
+                {g.titleEnglish} {countInGrade > 0 ? `(${countInGrade})` : ""}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {displayedUnits.map((unit) => {

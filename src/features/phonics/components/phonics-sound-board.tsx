@@ -104,6 +104,14 @@ const PHONICS_DATA: PhonicsItem[] = [
   { id: "d", sound: "D", label: "د", exampleWord: "Dino", translation: "ديناصور", emoji: "🦕", category: "alphabet" },
   { id: "e", sound: "E", label: "إِ (Short E)", exampleWord: "Egg", translation: "بيضة", emoji: "🥚", category: "vowels" },
   { id: "f", sound: "F", label: "فـ", exampleWord: "Fish", translation: "سمكة", emoji: "🐟", category: "alphabet" },
+  { id: "g", sound: "G", label: "جـ / كـ", exampleWord: "Guitar", translation: "جيتار", emoji: "🎸", category: "alphabet" },
+  { id: "h", sound: "H", label: "هـ", exampleWord: "Hat", translation: "قبعة", emoji: "🎩", category: "alphabet" },
+  { id: "i", sound: "I", label: "إِ (Short I)", exampleWord: "Igloo", translation: "كوخ جليدي", emoji: "🧊", category: "vowels" },
+  { id: "m", sound: "M", label: "مـ", exampleWord: "Monkey", translation: "قرد", emoji: "🐵", category: "alphabet" },
+  { id: "o", sound: "O", label: "أُ (Short O)", exampleWord: "Orange", translation: "برتقالة", emoji: "🍊", category: "vowels" },
+  { id: "s", sound: "S", label: "سـ", exampleWord: "Sun", translation: "شمس", emoji: "☀️", category: "alphabet" },
+  { id: "u", sound: "U", label: "آ (Short U)", exampleWord: "Umbrella", translation: "مظلة", emoji: "☂️", category: "vowels" },
+  { id: "z", sound: "Z", label: "ز", exampleWord: "Zebra", translation: "حمار وحشي", emoji: "🦓", category: "alphabet" },
   { id: "sh", sound: "Sh", label: "شـ (S+H)", exampleWord: "Ship", translation: "سفينة", emoji: "🚢", category: "digraphs" },
   { id: "ch", sound: "Ch", label: "تـش (C+H)", exampleWord: "Chair", translation: "كرسي", emoji: "🪑", category: "digraphs" },
   { id: "th-soft", sound: "Th", label: "ثـ (Soft Th)", exampleWord: "Three", translation: "رقم 3", emoji: "3️⃣", category: "digraphs" },
@@ -114,7 +122,7 @@ const PHONICS_DATA: PhonicsItem[] = [
 ];
 
 export function PhonicsSoundBoard() {
-  const [activeTab, setActiveTab] = useState<"all" | "digraphs" | "vowels">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "digraphs" | "vowels" | "alphabet">("all");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [practiceItemId, setPracticeItemId] = useState<string | null>(null);
@@ -234,7 +242,7 @@ export function PhonicsSoundBoard() {
 
   const filteredItems = activeTab === "all" 
     ? PHONICS_DATA 
-    : PHONICS_DATA.filter((i) => i.category === activeTab || (activeTab === "vowels" && i.category === "alphabet"));
+    : PHONICS_DATA.filter((i) => i.category === activeTab);
 
   return (
     <div className="modern-card p-6 bg-white/95 backdrop-blur-md border-2 border-purple-200 shadow-xl space-y-6">
@@ -258,30 +266,42 @@ export function PhonicsSoundBoard() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-purple-50 border border-purple-200 shrink-0 text-xs font-bold">
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-purple-50 border border-purple-200 text-xs font-bold max-w-full overflow-x-auto no-scrollbar scroll-smooth">
           <button
+            type="button"
             onClick={() => setActiveTab("all")}
-            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
               activeTab === "all" ? "bg-purple-600 text-white shadow-sm" : "text-purple-800 hover:bg-purple-100"
             }`}
           >
-            الكل
+            الكل ({PHONICS_DATA.length})
           </button>
           <button
-            onClick={() => setActiveTab("digraphs")}
-            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-              activeTab === "digraphs" ? "bg-purple-600 text-white shadow-sm" : "text-purple-800 hover:bg-purple-100"
-            }`}
-          >
-            الحروف المركبة (Sh, Ch...)
-          </button>
-          <button
+            type="button"
             onClick={() => setActiveTab("vowels")}
-            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
               activeTab === "vowels" ? "bg-purple-600 text-white shadow-sm" : "text-purple-800 hover:bg-purple-100"
             }`}
           >
             الحروف المتحركة (Vowels)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("digraphs")}
+            className={`px-3 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
+              activeTab === "digraphs" ? "bg-purple-600 text-white shadow-sm" : "text-purple-800 hover:bg-purple-100"
+            }`}
+          >
+            الحروف المركبة (Digraphs)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("alphabet")}
+            className={`px-3 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
+              activeTab === "alphabet" ? "bg-purple-600 text-white shadow-sm" : "text-purple-800 hover:bg-purple-100"
+            }`}
+          >
+            باقي حروف الهجاء (Alphabet)
           </button>
         </div>
       </div>
