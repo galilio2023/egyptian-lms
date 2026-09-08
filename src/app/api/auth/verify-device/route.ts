@@ -80,6 +80,22 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      // Staff (admin, teacher, assistant) are exempt from single-device student lock
+      const userRole = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined;
+      if (userRole && userRole !== "student") {
+        return NextResponse.json({ success: true, verified: true, isStaff: true });
+      }
+
+      const [userRecord] = await db
+        .select({ id: schema.user.id, role: schema.user.role })
+        .from(schema.user)
+        .where(eq(schema.user.id, targetUserId))
+        .limit(1);
+
+      if (userRecord && userRecord.role !== "student") {
+        return NextResponse.json({ success: true, verified: true, isStaff: true });
+      }
+
       // 1. Check if student profile is banned
       const [profile] = await db
         .select()

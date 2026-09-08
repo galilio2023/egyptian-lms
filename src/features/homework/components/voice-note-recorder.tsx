@@ -9,16 +9,25 @@ export interface VoiceNoteRecorderProps {
   audioUrl?: string | null;
   onAudioChange: (dataUrl: string | null) => void;
   disabled?: boolean;
+  targetWord?: string;
 }
 
 export function VoiceNoteRecorder({
   audioUrl,
   onAudioChange,
   disabled = false,
+  targetWord = "Connect Phonics Practice",
 }: VoiceNoteRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isCheckingAi, setIsCheckingAi] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<{
+    accuracyScore: number;
+    pedagogicalAdviceArabic: string;
+    praiseArabic: string;
+    xpAwarded: number;
+  } | null>(null);
 
   const isMountedRef = useRef(true);
   const pendingStreamRef = useRef<MediaStream | null>(null);
@@ -156,8 +165,42 @@ export function VoiceNoteRecorder({
     }
     setIsPlaying(false);
     onAudioChange(null);
+    setAiFeedback(null);
     setRecordingSeconds(0);
     toast.info("تم حذف التسجيل الصوتي.");
+  };
+
+  const handleAiCheck = async () => {
+    if (!audioUrl) return;
+    setIsCheckingAi(true);
+    toast.info("جاري فحص نطق الطالب بواسطة مساعد الفونكس الذكي 🎙️...");
+    try {
+      const res = await fetch("/api/ai/phonics/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          audioDataUrl: audioUrl,
+          targetText: targetWord,
+          gradeLevel: 1,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || "تعذر فحص النطق حالياً.");
+        return;
+      }
+      setAiFeedback({
+        accuracyScore: data.accuracyScore,
+        pedagogicalAdviceArabic: data.pedagogicalAdviceArabic,
+        praiseArabic: data.praiseArabic,
+        xpAwarded: data.xpAwarded,
+      });
+      toast.success("✨ تم تقييم النطق بنجاح بواسطة الذكاء الاصطناعي!");
+    } catch {
+      toast.error("حدث خطأ في الاتصال أثناء تقييم النطق.");
+    } finally {
+      setIsCheckingAi(false);
+    }
   };
 
   const formatTime = (secs: number) => {
@@ -213,30 +256,75 @@ export function VoiceNoteRecorder({
       )}
 
       {audioUrl && (
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-purple-200">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={togglePlayback}
-              className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors shadow-sm"
-              aria-label={isPlaying ? "إيقاف مؤقت" : "استماع"}
-            >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ms-0.5" />}
-            </button>
-            <span className="text-xs font-bold text-slate-800">
-              {isPlaying ? "جاري تشغيل صوت الطالب 🔊" : "تم حفظ التسجيل الصوتي بنجاح ✓"}
-            </span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-purple-200">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={togglePlayback}
+                className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors shadow-sm"
+                aria-label={isPlaying ? "إيقاف مؤقت" : "استماع"}
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ms-0.5" />}
+              </button>
+              <span className="text-xs font-bold text-slate-800">
+                {isPlaying ? "جاري تشغيل صوت الطالب 🔊" : "تم حفظ التسجيل الصوتي بنجاح ✓"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleAiCheck}
+                disabled={isCheckingAi || disabled}
+                className="px-2.5 py-1 text-[11px] font-black rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm flex items-center gap-1 transition-all disabled:opacity-50 cursor-pointer"
+                title="فحص النطق بمساعد الذكاء الاصطناعي"
+              >
+                {isCheckingAi ? (
+                  <span>جاري الفحص... ⏳</span>
+                ) : (
+                  <>
+                    <span>✨ فحص النطق الذكي</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={disabled}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                title="حذف التسجيل وإعادة التسجيل"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={disabled}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-            title="حذف التسجيل وإعادة التسجيل"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {/* AI Phonics Coach Feedback Card */}
+          {aiFeedback && (
+            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50/70 border border-amber-200/80 text-xs space-y-2 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-amber-900 flex items-center gap-1.5">
+                  <span>🐝 تقرير المعلم الذكي للنطق:</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-black text-[11px] shadow-sm">
+                  درجة النطق: {aiFeedback.accuracyScore}%
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-950 font-bold leading-relaxed">
+                {aiFeedback.pedagogicalAdviceArabic}
+              </p>
+              <div className="flex items-center justify-between pt-1 border-t border-amber-200/60 text-[10px]">
+                <span className="text-emerald-700 font-bold">
+                  {aiFeedback.praiseArabic}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold">
+                  +{aiFeedback.xpAwarded} XP 🌟
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

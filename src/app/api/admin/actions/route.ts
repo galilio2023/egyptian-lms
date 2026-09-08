@@ -507,9 +507,34 @@ export async function POST(request: NextRequest) {
             }
           });
 
+          // Automated WhatsApp confirmation to parent
+          let targetParentPhone = parentPhone;
+          if (!targetParentPhone && targetUserId) {
+            const [profile] = await db
+              .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+              .from(schema.studentProfile)
+              .where(eq(schema.studentProfile.userId, targetUserId))
+              .limit(1);
+            if (profile?.parentPhoneNumber) targetParentPhone = profile.parentPhoneNumber;
+          }
+
+          if (targetParentPhone) {
+            const cleanPhone = targetParentPhone.replace(/\D/g, "");
+            if (cleanPhone.length >= 10) {
+              sendAutomatedWhatsAppNotification({
+                to: cleanPhone,
+                message: `🎉 *أكاديمية تعليمية - تأكيد الاشتراك*\n` +
+                  `ولي أمر البطل / ${studentName || "المشترك"} 🌟\n` +
+                  `تم بنجاح تأكيد سداد الرسوم وتفعيل اشتراك الوحدة الدراسية في حساب الطالب.\n` +
+                  `يمكن للطالب الآن الدخول للمنصة والبدء في مشاهدة الحصص وحل التمارين فوراً!\n` +
+                  `نتمنى له دوام التوفيق والنجاح.`,
+              }).catch((e) => console.warn("Approve order WhatsApp dispatch note:", e));
+            }
+          }
+
           return NextResponse.json({
             success: true,
-            message: `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل.`,
+            message: `تم تفعيل اشتراك الطالب (${studentName || "المشترك"}) بنجاح في قاعدة البيانات وتحديث حالة الطلب إلى مكتمل وإشعار ولي الأمر.`,
           });
         } catch (err) {
           console.error("DB operation error for approve_order:", err);
@@ -540,9 +565,40 @@ export async function POST(request: NextRequest) {
             })
             .where(eq(schema.order.id, orderId));
 
+          // Automated WhatsApp rejection notice to parent
+          let targetParentPhone = parentPhone;
+          if (!targetParentPhone) {
+            const [orderRecord] = await db
+              .select({ userId: schema.order.userId })
+              .from(schema.order)
+              .where(eq(schema.order.id, orderId))
+              .limit(1);
+            if (orderRecord?.userId) {
+              const [profile] = await db
+                .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+                .from(schema.studentProfile)
+                .where(eq(schema.studentProfile.userId, orderRecord.userId))
+                .limit(1);
+              if (profile?.parentPhoneNumber) targetParentPhone = profile.parentPhoneNumber;
+            }
+          }
+
+          if (targetParentPhone) {
+            const cleanPhone = targetParentPhone.replace(/\D/g, "");
+            if (cleanPhone.length >= 10) {
+              sendAutomatedWhatsAppNotification({
+                to: cleanPhone,
+                message: `⚠️ *تنبيه بخصوص طلب الاشتراك*\n` +
+                  `نحيطكم علماً بأنه تعذر قبول إيصال التحويل للسبب التالي:\n` +
+                  `"${reason || "إيصال غير واضح أو المبلغ غير مطابق"}"\n` +
+                  `يرجى التأكد من بيانات التحويل وإعادة إرسال الإيصال الصحيح عبر المنصة.`,
+              }).catch((e) => console.warn("Reject order WhatsApp dispatch note:", e));
+            }
+          }
+
           return NextResponse.json({
             success: true,
-            message: `تم رفض الطلب بنجاح وتحديث الحالة.`,
+            message: `تم رفض الطلب بنجاح وتحديث الحالة وإرسال التنبيه لولي الأمر.`,
           });
         } catch (err) {
           console.error("DB operation error for reject_order:", err);

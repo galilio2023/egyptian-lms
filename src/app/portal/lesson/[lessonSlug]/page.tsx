@@ -11,7 +11,7 @@ import { useSession } from "@/lib/auth/auth-client";
 import { ChampionCupSvg } from "@/components/ui/illustrated-icons";
 import { EgyptianCheckoutModal } from "@/features/checkout";
 import { PortalTopBar } from "@/components/shared/portal-top-bar";
-import { LockedLessonCard, LessonWorksheetsCard } from "@/features/portal-lesson";
+import { LockedLessonCard, LessonWorksheetsCard, BusyBeeAiTutor } from "@/features/portal-lesson";
 
 export default function LessonPlayerPage({
   params,
@@ -260,6 +260,13 @@ export default function LessonPlayerPage({
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
           onSuccess={handleEnrollSuccess}
+        />
+
+        {/* Socratic Busy Bee AI Co-Pilot */}
+        <BusyBeeAiTutor
+          lessonTitle={lesson.title}
+          unitTitle={unit.title}
+          studentName={studentName}
         />
       </main>
     </div>

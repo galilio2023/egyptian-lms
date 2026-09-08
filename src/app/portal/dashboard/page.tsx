@@ -41,7 +41,8 @@ import {
   WeeklyMissionsCard,
   CenterVoucherCard,
   NextLessonBanner,
-  CoursesGridSection
+  CoursesGridSection,
+  SmartSrsVocabCard,
 } from "@/features/portal-dashboard";
 
 const MASCOTS: MascotItem[] = [
@@ -236,6 +237,16 @@ export default function StudentDashboardPage() {
           student={currentStudent} 
           activeMascot={selectedMascot} 
           showToys={settings.enableHeroToys !== false}
+        />
+
+        {/* Daily Smart Spaced-Repetition Vocab Challenge (SM-2 Algorithm) */}
+        <SmartSrsVocabCard
+          onEarnXp={(earnedXp) => {
+            setStudentProfile((prev) => ({
+              ...prev,
+              xpPoints: prev.xpPoints + earnedXp,
+            }));
+          }}
         />
 
         {/* Live Session & Homework Interactive Section */}
