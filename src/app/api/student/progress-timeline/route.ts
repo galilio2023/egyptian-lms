@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, count } from "drizzle-orm";
 import type { TimelineEvent } from "@/lib/types/timeline";
 
 export type { TimelineEvent };
@@ -14,14 +14,20 @@ export async function GET() {
     const session = await auth.api.getSession({ headers: headerList });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
 
     // Fetch all progress sources in parallel
-    const [lessonProgressRows, quizAttemptRows, homeworkSubmissionRows, enrollmentRows] =
-      await Promise.all([
+    const [
+      lessonProgressRows,
+      quizAttemptRows,
+      homeworkSubmissionRows,
+      enrollmentRows,
+      [lessonProgressCount],
+      [passedQuizCount],
+    ] = await Promise.all([
         // Completed lessons with lesson title
         db
           .select({
@@ -36,8 +42,7 @@ export async function GET() {
           .leftJoin(schema.lesson, eq(schema.lessonProgress.lessonId, schema.lesson.id))
           .leftJoin(schema.courseUnit, eq(schema.lesson.unitId, schema.courseUnit.id))
           .where(eq(schema.lessonProgress.userId, userId))
-          .orderBy(desc(schema.lessonProgress.completedAt))
-          .limit(20),
+          .orderBy(desc(schema.lessonProgress.completedAt)),
 
         // Quiz attempts
         db
@@ -53,8 +58,7 @@ export async function GET() {
           .from(schema.quizAttempt)
           .leftJoin(schema.quiz, eq(schema.quizAttempt.quizId, schema.quiz.id))
           .where(eq(schema.quizAttempt.userId, userId))
-          .orderBy(desc(schema.quizAttempt.createdAt))
-          .limit(20),
+          .orderBy(desc(schema.quizAttempt.createdAt)),
 
         // Graded homework submissions
         db
@@ -84,8 +88,7 @@ export async function GET() {
               eq(schema.homeworkSubmission.status, "graded")
             )
           )
-          .orderBy(desc(schema.homeworkSubmission.gradedAt))
-          .limit(10),
+          .orderBy(desc(schema.homeworkSubmission.gradedAt)),
 
         // Enrollments
         db
@@ -97,8 +100,22 @@ export async function GET() {
           .from(schema.enrollment)
           .leftJoin(schema.courseUnit, eq(schema.enrollment.unitId, schema.courseUnit.id))
           .where(eq(schema.enrollment.userId, userId))
-          .orderBy(desc(schema.enrollment.enrolledAt))
-          .limit(10),
+          .orderBy(desc(schema.enrollment.enrolledAt)),
+
+        db
+          .select({ value: count() })
+          .from(schema.lessonProgress)
+          .where(eq(schema.lessonProgress.userId, userId)),
+
+        db
+          .select({ value: count() })
+          .from(schema.quizAttempt)
+          .where(
+            and(
+              eq(schema.quizAttempt.userId, userId),
+              eq(schema.quizAttempt.passed, true)
+            )
+          ),
       ]);
 
     // Merge all into a unified timeline
@@ -153,16 +170,14 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       events: events.slice(0, 30), // Cap at 30 most recent
-      totalCompleted: lessonProgressRows.length,
-      totalQuizzesPassed: quizAttemptRows.filter((q) => q.passed).length,
+      totalCompleted: lessonProgressCount.value,
+      totalQuizzesPassed: passedQuizCount.value,
     });
   } catch (error) {
     console.error("[progress-timeline] Error:", error);
-    return NextResponse.json({
-      success: true,
-      events: [],
-      totalCompleted: 0,
-      totalQuizzesPassed: 0,
-    });
+    return NextResponse.json(
+      { success: false, error: "Failed to load progress timeline" },
+      { status: 500 }
+    );
   }
 }

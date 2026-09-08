@@ -27,6 +27,7 @@ export interface StudentDashboardServerData {
   } | null;
   currentAssignment: MockHomeworkAssignment | null;
   studentSubmission: MockHomeworkSubmission | undefined;
+  isBanned: boolean;
   isDeviceLocked: boolean;
 }
 
@@ -52,14 +53,15 @@ export async function getStudentDashboardData(
     nextLesson: null,
     currentAssignment: null,
     studentSubmission: undefined,
+    isBanned: false,
     isDeviceLocked: false,
   };
 
   try {
     const now = new Date();
 
-    // Fetch profile, enrollments, completed lessons, and homework in parallel
-    const [profile, dbEnrollments, completedLessons, dbHomework] = await Promise.all([
+    // Fetch profile, enrollments, and completed lessons in parallel
+    const [profile, dbEnrollments, completedLessons] = await Promise.all([
       db
         .select()
         .from(schema.studentProfile)
@@ -87,33 +89,37 @@ export async function getStudentDashboardData(
         .select({ lessonId: schema.lessonProgress.lessonId })
         .from(schema.lessonProgress)
         .where(eq(schema.lessonProgress.userId, userId)),
-
-      db
-        .select({
-          id: schema.homeworkAssignment.id,
-          unitId: schema.homeworkAssignment.unitId,
-          unitTitle: schema.courseUnit.title,
-          lessonId: schema.homeworkAssignment.lessonId,
-          title: schema.homeworkAssignment.title,
-          instructions: schema.homeworkAssignment.instructions,
-          pageNumber: schema.homeworkAssignment.pageNumber,
-          maxScore: schema.homeworkAssignment.maxScore,
-          dueDate: schema.homeworkAssignment.dueDate,
-        })
-        .from(schema.homeworkAssignment)
-        .leftJoin(schema.courseUnit, eq(schema.homeworkAssignment.unitId, schema.courseUnit.id))
-        .orderBy(desc(schema.homeworkAssignment.createdAt))
-        .limit(5),
     ]);
 
     if (profile?.isBanned) {
-      return { ...empty, profile: null, isDeviceLocked: false };
+      return { ...empty, profile: null, isBanned: true, isDeviceLocked: false };
     }
 
     const enrolledUnitIds = dbEnrollments
       .map((e) => e.unitId)
       .filter((id): id is string => Boolean(id));
     const completedLessonIds = completedLessons.map((p) => p.lessonId);
+
+    const dbHomework =
+      enrolledUnitIds.length > 0
+        ? await db
+            .select({
+              id: schema.homeworkAssignment.id,
+              unitId: schema.homeworkAssignment.unitId,
+              unitTitle: schema.courseUnit.title,
+              lessonId: schema.homeworkAssignment.lessonId,
+              title: schema.homeworkAssignment.title,
+              instructions: schema.homeworkAssignment.instructions,
+              pageNumber: schema.homeworkAssignment.pageNumber,
+              maxScore: schema.homeworkAssignment.maxScore,
+              dueDate: schema.homeworkAssignment.dueDate,
+            })
+            .from(schema.homeworkAssignment)
+            .leftJoin(schema.courseUnit, eq(schema.homeworkAssignment.unitId, schema.courseUnit.id))
+            .where(inArray(schema.homeworkAssignment.unitId, enrolledUnitIds))
+            .orderBy(desc(schema.homeworkAssignment.createdAt))
+            .limit(5)
+        : [];
 
     // Find next incomplete lesson
     let nextLesson: StudentDashboardServerData["nextLesson"] = null;
@@ -152,9 +158,7 @@ export async function getStudentDashboardData(
     let currentAssignment: MockHomeworkAssignment | null = null;
     let studentSubmission: MockHomeworkSubmission | undefined = undefined;
 
-    const relevantHw = dbHomework.filter(
-      (hw) => enrolledUnitIds.length === 0 || enrolledUnitIds.includes(hw.unitId || "")
-    );
+    const relevantHw = dbHomework;
 
     if (relevantHw.length > 0) {
       const firstHw = relevantHw[0];
@@ -237,10 +241,11 @@ export async function getStudentDashboardData(
       nextLesson,
       currentAssignment,
       studentSubmission,
+      isBanned: false,
       isDeviceLocked: false,
     };
   } catch (err) {
     console.warn("[data-dashboard] Failed to fetch student dashboard data:", err);
-    return empty;
+    throw err;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, Clock } from "lucide-react";
 import type { TimelineEvent } from "@/lib/types/timeline";
 
@@ -19,6 +19,25 @@ const EVENT_DOT_COLORS: Record<TimelineEvent["type"], string> = {
   homework_graded: "bg-amber-500",
   enrollment: "bg-purple-500",
 };
+
+interface ProgressTimelineResponse {
+  success: true;
+  events: TimelineEvent[];
+  totalCompleted?: number;
+  totalQuizzesPassed?: number;
+}
+
+async function fetchProgressTimeline(): Promise<ProgressTimelineResponse> {
+  const response = await fetch("/api/student/progress-timeline");
+  if (!response.ok) throw new Error("Failed to load progress timeline");
+
+  const data = (await response.json()) as ProgressTimelineResponse;
+  if (data.success !== true || !Array.isArray(data.events)) {
+    throw new Error("Invalid progress timeline response");
+  }
+
+  return data;
+}
 
 function formatRelativeTime(isoString: string): string {
   const diff = Date.now() - new Date(isoString).getTime();
@@ -41,19 +60,44 @@ export function StudentProgressTimeline() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [totalQuizzesPassed, setTotalQuizzesPassed] = useState(0);
+  const [requestFailed, setRequestFailed] = useState(false);
+
+  const loadTimeline = useCallback(async () => {
+    setIsLoading(true);
+    setRequestFailed(false);
+
+    try {
+      const data = await fetchProgressTimeline();
+      setEvents(data.events);
+      setTotalCompleted(data.totalCompleted ?? 0);
+      setTotalQuizzesPassed(data.totalQuizzesPassed ?? 0);
+    } catch {
+      setRequestFailed(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/student/progress-timeline")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { events?: TimelineEvent[]; totalCompleted?: number; totalQuizzesPassed?: number } | null) => {
-        if (data?.events) {
-          setEvents(data.events);
-          setTotalCompleted(data.totalCompleted ?? 0);
-          setTotalQuizzesPassed(data.totalQuizzesPassed ?? 0);
-        }
+    let isActive = true;
+
+    void fetchProgressTimeline()
+      .then((data) => {
+        if (!isActive) return;
+        setEvents(data.events);
+        setTotalCompleted(data.totalCompleted ?? 0);
+        setTotalQuizzesPassed(data.totalQuizzesPassed ?? 0);
       })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .catch(() => {
+        if (isActive) setRequestFailed(true);
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const visibleEvents = isExpanded ? events : events.slice(0, 4);
@@ -110,6 +154,18 @@ export function StudentProgressTimeline() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : requestFailed ? (
+          <div className="py-8 text-center">
+            <div className="text-4xl mb-2">⚠️</div>
+            <p className="text-sm font-bold text-slate-700">تعذر تحميل رحلتك التعليمية</p>
+            <button
+              type="button"
+              onClick={() => void loadTimeline()}
+              className="mt-3 rounded-full bg-purple-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-purple-700"
+            >
+              إعادة المحاولة
+            </button>
           </div>
         ) : events.length === 0 ? (
           // Empty state

@@ -32,6 +32,10 @@ export default async function StudentDashboardPage() {
   ]);
 
   // If student is banned / device locked, redirect to login
+  if (dashboardData.isBanned) {
+    redirect("/student-login?reason=banned");
+  }
+
   if (dashboardData.isDeviceLocked) {
     redirect("/student-login?reason=device_locked");
   }
