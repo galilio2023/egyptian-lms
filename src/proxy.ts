@@ -9,6 +9,14 @@ export function proxy(request: NextRequest) {
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("__Secure-better-auth.session_token")?.value;
 
+  // Dev-Mode authentication bypass for local development and rapid UI testing
+  const isDevMode = process.env.NODE_ENV === "development";
+  const hasDevBypass =
+    isDevMode &&
+    (request.cookies.get("dev_bypass")?.value === "true" ||
+      request.nextUrl.searchParams.get("dev") === "true" ||
+      process.env.DEV_BYPASS_AUTH === "true");
+
   // Allow public adventure quizzes (/portal/quiz/*) so landing page quizzes are immediately playable
   if (pathname.startsWith("/portal/quiz")) {
     const response = NextResponse.next();
@@ -18,7 +26,7 @@ export function proxy(request: NextRequest) {
 
   // Student Portal Route Protection (/portal/*)
   if (pathname.startsWith("/portal")) {
-    if (!sessionToken) {
+    if (!sessionToken && !hasDevBypass) {
       const loginUrl = new URL("/student-login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
@@ -27,7 +35,7 @@ export function proxy(request: NextRequest) {
 
   // Teacher & Assistant CMS Route (/admin/*)
   if (pathname.startsWith("/admin")) {
-    if (!sessionToken) {
+    if (!sessionToken && !hasDevBypass) {
       const loginUrl = new URL("/student-login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
@@ -53,6 +61,14 @@ export function proxy(request: NextRequest) {
   // Default passthrough for public landing and course preview pages
   const response = NextResponse.next();
   response.headers.set("X-Content-Type-Options", "nosniff");
+
+  if (isDevMode && request.nextUrl.searchParams.get("dev") === "true") {
+    response.cookies.set("dev_bypass", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+    });
+  }
 
   return response;
 }

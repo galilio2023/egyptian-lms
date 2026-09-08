@@ -70,20 +70,32 @@ export function Header({
               الرئيسية
             </Link>
             <Link 
-              href="/#courses_section" 
-              className="px-3.5 py-1.5 rounded-xl hover:text-purple-800 hover:bg-white/80 transition-all"
+              href="/courses" 
+              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                pathname.startsWith("/courses")
+                  ? "text-slate-900 bg-white shadow-xs font-black"
+                  : "hover:text-purple-800 hover:bg-white/80 font-bold"
+              }`}
             >
               المراحل الدراسية
             </Link>
             <Link 
-              href="/#adventure_quizzes" 
-              className="px-3.5 py-1.5 rounded-xl hover:text-purple-800 hover:bg-white/80 transition-all"
+              href="/quizzes" 
+              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                pathname.startsWith("/quizzes")
+                  ? "text-slate-900 bg-white shadow-xs font-black"
+                  : "hover:text-purple-800 hover:bg-white/80 font-bold"
+              }`}
             >
               الاختبارات الذكية
             </Link>
             <Link 
-              href="/#honor_board" 
-              className="px-3.5 py-1.5 rounded-xl hover:text-purple-800 hover:bg-white/80 transition-all"
+              href="/honor-board" 
+              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                pathname.startsWith("/honor-board")
+                  ? "text-slate-900 bg-white shadow-xs font-black"
+                  : "hover:text-purple-800 hover:bg-white/80 font-bold"
+              }`}
             >
               لوحة الشرف
             </Link>
@@ -152,7 +164,7 @@ export function Header({
             <EliteLogoBadge className="w-6 h-6" />
           </Link>
           <Link
-            href="/#courses_section"
+            href="/courses"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center justify-between text-sm font-bold text-slate-700 py-2 border-b border-purple-50"
           >
@@ -160,7 +172,7 @@ export function Header({
             <CurriculumBookSvg className="w-6 h-6" />
           </Link>
           <Link
-            href="/#adventure_quizzes"
+            href="/quizzes"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center justify-between text-sm font-black text-amber-700 py-2 border-b border-purple-50"
           >
@@ -168,7 +180,7 @@ export function Header({
             <ExamQuizSheetSvg className="w-6 h-6" />
           </Link>
           <Link
-            href="/#honor_board"
+            href="/honor-board"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center justify-between text-sm font-bold text-purple-800 py-2 border-b border-purple-50"
           >

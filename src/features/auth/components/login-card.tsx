@@ -173,6 +173,35 @@ export const LoginCard: React.FC = () => {
         </form>
       )}
 
+      {/* Dev Mode Quick Access */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 text-xs space-y-2">
+          <div className="flex items-center justify-between font-black text-[11px] text-amber-900">
+            <span>⚡ أدوات التطوير السريعة (Dev Mode)</span>
+            <a
+              href="/api/dev/session?action=clear"
+              className="text-[10px] text-amber-700 hover:text-amber-900 underline"
+            >
+              مسح الجلسة
+            </a>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href="/api/dev/session?role=student"
+              className="px-2.5 py-2 text-center rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] transition-all shadow-xs"
+            >
+              دخول كطالب 🎓
+            </a>
+            <a
+              href="/api/dev/session?role=admin"
+              className="px-2.5 py-2 text-center rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px] transition-all shadow-xs"
+            >
+              دخول كمسؤول 🛡️
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Links Footer */}
       <div className="pt-4 border-t border-purple-100 flex flex-col gap-2 text-center text-xs font-medium">
         <Link

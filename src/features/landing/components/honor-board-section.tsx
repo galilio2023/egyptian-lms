@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Trophy, Crown } from "lucide-react";
+import Link from "next/link";
+import { Trophy, Crown, ArrowLeft } from "lucide-react";
 import { 
   INITIAL_GRADES, 
   INITIAL_GRADE_CHAMPIONS 
@@ -116,10 +117,20 @@ export const HonorBoardSection: React.FC = () => {
           )}
         </div>
 
-        <div className="text-center mt-10">
+        <div className="text-center mt-10 space-y-4">
           <span className="text-xs font-bold text-purple-800 bg-purple-100/80 px-4 py-2 rounded-full border border-purple-200 inline-block shadow-2xs">
             🌟 يتم تحديث لوحة الشرف أسبوعياً بناءً على نتائج الاختبارات التفاعلية ومجموع نقاط الـ XP
           </span>
+
+          <div>
+            <Link
+              href="/honor-board"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+            >
+              <span>عرض لوحة الشرف الكاملة لجميع المحافظات والمراكز 🏆</span>
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

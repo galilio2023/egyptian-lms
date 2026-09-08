@@ -68,21 +68,27 @@ export function Footer({
             <h4 className="text-slate-900 font-black text-base">المراحل الدراسية</h4>
             <ul className="space-y-2.5 text-xs font-bold">
               <li>
-                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الأول الابتدائي (Grade 1)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الثاني الابتدائي (Grade 2)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/#courses_section" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   <span>الصف الثالث الابتدائي (Grade 3)</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span>جميع المناهج والمراحل</span>
                 </Link>
               </li>
               <li>

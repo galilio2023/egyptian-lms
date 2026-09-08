@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { INITIAL_GRADES, type MockUnit } from "@/lib/db/mock-data";
 import { UnitCard } from "@/entities/unit";
 
@@ -74,6 +76,17 @@ export const CoursesCatalogSection: React.FC<CoursesCatalogSectionProps> = ({
               ctaText={`اشتراك فوري (${unit.priceEgp} ج.م)`}
             />
           ))}
+        </div>
+
+        {/* View All Dedicated Page CTA */}
+        <div className="mt-12 text-center">
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white border-2 border-purple-300 hover:border-purple-600 text-purple-900 font-black text-xs sm:text-sm transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+          >
+            <span>استعرض جميع المناهج والصفوف الدراسية بالكامل (الصف 1 - 6)</span>
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </section>

@@ -121,6 +121,17 @@ export function AdventureQuizzesSection() {
             🎯 كل مغامرة تنجح فيها تضيف إلى رصيدك نقاط XP ترفع ترتيبك مباشرة داخل <strong className="text-purple-800 font-black">لوحة الشرف الأسبوعية</strong>!
           </p>
         </div>
+
+        {/* View All Quizzes CTA */}
+        <div className="mt-8 text-center">
+          <Link
+            href="/quizzes"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+          >
+            <span>استكشف صالة التحديات والاختبارات التفاعلية بالكامل 🎮</span>
+            <ChevronLeft className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
