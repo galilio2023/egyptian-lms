@@ -267,6 +267,13 @@ export function useCanvasDrawing({
     }));
   };
 
+  const setStrokesForPage = (pageIndex: number, newStrokes: Stroke[]) => {
+    setPageStrokes((prev) => ({
+      ...prev,
+      [pageIndex]: newStrokes,
+    }));
+  };
+
   return {
     canvasRef,
     handleMouseDown,
@@ -276,5 +283,6 @@ export function useCanvasDrawing({
     handleTouchMove,
     handleUndo,
     handleClearPage,
+    setStrokesForPage,
   };
 }

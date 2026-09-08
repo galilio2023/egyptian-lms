@@ -9,6 +9,8 @@ import { VideoTopBar } from "./video-top-bar";
 import { VideoBottomControls } from "./video-bottom-controls";
 import { ResumePlaybackToast } from "./resume-playback-toast";
 import { WindowBlurShield } from "./window-blur-shield";
+import { VideoCheckpointModal } from "./video-checkpoint-modal";
+import type { VideoCheckpoint } from "@/lib/db/mock-data";
 
 export interface ProtectedVideoPlayerProps {
   src: string;
@@ -16,6 +18,8 @@ export interface ProtectedVideoPlayerProps {
   studentPhone?: string;
   title?: string;
   initialSeekSeconds?: number;
+  checkpoints?: VideoCheckpoint[];
+  onCheckpointComplete?: (checkpointId: string, rewardXp: number) => number | false | Promise<number | false>;
 }
 
 export function ProtectedVideoPlayer({
@@ -24,6 +28,8 @@ export function ProtectedVideoPlayer({
   studentPhone = "01000000000",
   title = "المحاضرة التفاعلية",
   initialSeekSeconds,
+  checkpoints = [],
+  onCheckpointComplete,
 }: ProtectedVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,6 +39,8 @@ export function ProtectedVideoPlayer({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [completedCheckpointIds, setCompletedCheckpointIds] = useState<Set<string>>(new Set());
+  const [activeCheckpoint, setActiveCheckpoint] = useState<VideoCheckpoint | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -188,11 +196,67 @@ export function ProtectedVideoPlayer({
     }
   };
 
+  const handleCheckpointSuccess = async (rewardXp: number) => {
+    if (!activeCheckpoint) return;
+    let awardedXp: number | undefined;
+    if (onCheckpointComplete) {
+      try {
+        const persistedXp = await onCheckpointComplete(activeCheckpoint.id, rewardXp);
+        if (persistedXp === false) return;
+        awardedXp = persistedXp;
+      } catch {
+        toast.error("تعذر حفظ مكافأة نقطة التحقق. حاول مرة أخرى.");
+        return;
+      }
+    }
+    setCompletedCheckpointIds((prev) => {
+      const next = new Set(prev);
+      next.add(activeCheckpoint.id);
+      return next;
+    });
+    if (onCheckpointComplete) {
+      toast.success(
+        awardedXp && awardedXp > 0
+          ? `🎉 أحسنت! حصلت على +${awardedXp} XP`
+          : "🎉 أحسنت! تم تسجيل نقطة التحقق مسبقاً"
+      );
+    } else {
+      toast.success("🎉 أحسنت! إجابة صحيحة");
+    }
+  };
+
+  const handleResumeFromCheckpoint = () => {
+    setActiveCheckpoint(null);
+    if (videoRef.current) {
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
+    }
+  };
+
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
     const cur = videoRef.current.currentTime;
     setCurrentTime(cur);
     setProgress((cur / (videoRef.current.duration || 1)) * 100);
+
+    // In-Video Checkpoint Inspection
+    if (checkpoints && checkpoints.length > 0 && !activeCheckpoint) {
+      const pendingCheckpoint = checkpoints
+        .filter(
+          (cp) =>
+            !completedCheckpointIds.has(cp.id) &&
+            cp.timestampSeconds <= cur
+        )
+        .sort((left, right) => left.timestampSeconds - right.timestampSeconds)[0];
+      if (pendingCheckpoint) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+        setActiveCheckpoint(pendingCheckpoint);
+        return;
+      }
+    }
 
     if (typeof window !== "undefined" && Math.floor(cur) % 5 === 0 && cur > 5) {
       localStorage.setItem(storageKey, cur.toString());
@@ -315,6 +379,15 @@ export function ProtectedVideoPlayer({
           }
         }}
       />
+
+      {/* Interactive In-Video Micro-Checkpoint Modal */}
+      {activeCheckpoint && (
+        <VideoCheckpointModal
+          checkpoint={activeCheckpoint}
+          onAnswerCorrect={handleCheckpointSuccess}
+          onContinue={handleResumeFromCheckpoint}
+        />
+      )}
 
       {/* Underlying Video */}
       <video
