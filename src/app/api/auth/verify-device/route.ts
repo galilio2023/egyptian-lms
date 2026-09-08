@@ -7,6 +7,8 @@ import { eq, and, ne } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 
 function maskPhone(phone?: string | null): string {
   if (!phone) return "";
@@ -184,6 +186,26 @@ export async function POST(request: NextRequest) {
               description: "تم التحقق من ولي الأمر ونقل الحساب بنجاح إلى هذا الجهاز.",
               details: { newDeviceId: deviceId, previousDeviceId: otherDeviceSession.deviceId },
             });
+
+            // Automated Security Alert to Parent
+            try {
+              const cleanParentPhone = validateEgyptianPhone(profile.parentPhoneNumber);
+              if (cleanParentPhone) {
+                const settings = await getPlatformSettings();
+                const studentName = session?.user?.name || "الطالب";
+                await sendAutomatedWhatsAppNotification({
+                  to: cleanParentPhone,
+                  message: `🛡️ *${settings.academyNameArabic} — تنبيه أمان الحساب*\n` +
+                    `ولي أمر البطل / ${studentName} ⚠️\n` +
+                    `نحيطكم علماً بأنه تم للتو نقل وتفعيل حساب الطالب على جهاز جديد بنجاح، وإلغاء تسجيل الدخول من الجهاز السابق.\n` +
+                    `التاريخ والوقت: ${new Date().toLocaleString("ar-EG")}\n` +
+                    `عنوان IP: ${clientIp}\n` +
+                    `إذا لم تكن أنت من قام بنقل الحساب، يرجى إبلاغ إدارة المنصة فوراً لمنع مشاركة الحساب.`,
+                });
+              }
+            } catch (waErr) {
+              console.warn("Device transfer WhatsApp alert note:", waErr);
+            }
 
             return NextResponse.json({
               success: true,

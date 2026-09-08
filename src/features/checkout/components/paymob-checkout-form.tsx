@@ -10,9 +10,10 @@ import type { MockUnit } from "@/lib/db/mock-data";
 interface PaymobCheckoutFormProps {
   unit: MockUnit;
   onSuccess: (message: string) => void;
+  couponCode?: string;
 }
 
-export function PaymobCheckoutForm({ unit, onSuccess }: PaymobCheckoutFormProps) {
+export function PaymobCheckoutForm({ unit, onSuccess, couponCode }: PaymobCheckoutFormProps) {
   const [selectedMethod, setSelectedMethod] = useState<"paymob_wallet" | "paymob_card">("paymob_wallet");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,6 +28,7 @@ export function PaymobCheckoutForm({ unit, onSuccess }: PaymobCheckoutFormProps)
           unitTitle: unit.title,
           amountEgp: unit.priceEgp,
           paymentMethod: selectedMethod,
+          couponCode: couponCode || undefined,
         }),
       });
       const data = await res.json();

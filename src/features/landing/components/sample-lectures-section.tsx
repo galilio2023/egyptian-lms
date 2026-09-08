@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Play, Sparkles, X, ExternalLink } from "lucide-react";
 import { type MockPlatformSettings } from "@/lib/db/mock-data";
 
@@ -52,9 +53,11 @@ export const SampleLecturesSection: React.FC<SampleLecturesSectionProps> = ({
               className="group modern-card overflow-hidden bg-white border-2 border-purple-100 hover:border-purple-300 shadow-md hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer text-right"
             >
               <div className="relative h-44 w-full overflow-hidden bg-slate-900">
-                <img
+                <Image
                   src={lecture.thumbnailUrl}
                   alt={lecture.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                 />
                 <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">

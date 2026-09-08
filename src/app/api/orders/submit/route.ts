@@ -13,6 +13,8 @@ import {
   normalizeReceiptReference,
   verifyEgyptianPaymentReceipt,
 } from "@/lib/ai/receipt-verifier";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
       receiptImageUrl,
       studentPhone,
       idempotencyKey: clientProvidedKey,
+      couponCode,
     } = body;
 
     if (!unitId || !paymentMethod) {
@@ -122,6 +125,27 @@ export async function POST(request: NextRequest) {
       if (mockU) {
         verifiedPrice = mockU.priceEgp || 250;
         verifiedTitle = mockU.title;
+      }
+    }
+
+    // Server-Side Promo Coupon Verification & Discount Calculation
+    if (couponCode && typeof couponCode === "string") {
+      const cleanCoupon = couponCode.trim().toUpperCase();
+      const PROMO_DISCOUNTS: Record<string, { percent?: number; fixedEgp?: number }> = {
+        WELCOME20: { percent: 20 },
+        SUPER50: { fixedEgp: 50 },
+        ELITE100: { fixedEgp: 100 },
+        OCTOBER26: { percent: 25 },
+      };
+
+      const promo = PROMO_DISCOUNTS[cleanCoupon];
+      if (promo) {
+        if (promo.percent) {
+          const discount = Math.round((verifiedPrice * promo.percent) / 100);
+          verifiedPrice = Math.max(0, verifiedPrice - discount);
+        } else if (promo.fixedEgp) {
+          verifiedPrice = Math.max(0, verifiedPrice - promo.fixedEgp);
+        }
       }
     }
 
@@ -366,6 +390,34 @@ export async function POST(request: NextRequest) {
         }
       } catch (paymobErr) {
         console.warn("Paymob initiation note:", paymobErr);
+      }
+    }
+
+    // Automated WhatsApp confirmation to parent upon AI Auto-Approval
+    if (isAutoApproved && userId) {
+      try {
+        const [profile] = await db
+          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, userId))
+          .limit(1);
+
+        const cleanParentPhone = profile?.parentPhoneNumber ? validateEgyptianPhone(profile.parentPhoneNumber) : null;
+        if (cleanParentPhone) {
+          const settings = await getPlatformSettings();
+          const studentName = session?.user?.name || "البطل";
+          await sendAutomatedWhatsAppNotification({
+            to: cleanParentPhone,
+            message: `🎉 *${settings.academyNameArabic} - تم قبول إيصال التحويل بالذكاء الاصطناعي*\n` +
+              `ولي أمر البطل / ${studentName} 🌟\n` +
+              `تم بنجاح التحقق الذكي من إيصال التحويل (${persistedReference || "إيصال التحويل"}) وتفعيل اشتراك (${verifiedTitle}) في حساب الطالب فوراً!\n` +
+              `يمكن للطالب الآن الدخول للمنصة ومتابعة الحصص فوراً دون انتظار.\n` +
+              `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+              `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+          });
+        }
+      } catch (waErr) {
+        console.warn("Auto-approval WhatsApp dispatch note:", waErr);
       }
     }
 

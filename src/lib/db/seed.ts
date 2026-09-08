@@ -7,6 +7,7 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 import { INITIAL_GRADES, INITIAL_UNITS, INITIAL_LESSONS, INITIAL_QUIZ, INITIAL_PLATFORM_SETTINGS } from './mock-data';
 import { eq } from 'drizzle-orm';
+import { hashPassword } from 'better-auth/crypto';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -23,6 +24,9 @@ async function seed() {
   // 1. Seed Teacher / Admin User
   console.log("Creating/verifying admin and teacher users...");
   const adminPhone = "01000000000";
+  const adminEmail = `${adminPhone}@elite-academy.edu.eg`;
+  const adminDefaultPassword = process.env.ADMIN_SEED_PASSWORD || "Admin123456!";
+
   const [existingAdmin] = await db
     .select()
     .from(schema.user)
@@ -36,13 +40,39 @@ async function seed() {
       id: adminId,
       name: "المشرف الأكاديمي",
       phoneNumber: adminPhone,
-      email: `admin@elite-academy.edu.eg`,
+      email: adminEmail,
       emailVerified: true,
       role: "admin",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
     adminUserId = adminId;
+  } else if (existingAdmin.email !== adminEmail) {
+    await db
+      .update(schema.user)
+      .set({ email: adminEmail, updatedAt: new Date() })
+      .where(eq(schema.user.id, adminUserId));
+  }
+
+  // Ensure Better Auth credential account exists for admin
+  const [existingAccount] = await db
+    .select()
+    .from(schema.account)
+    .where(eq(schema.account.userId, adminUserId))
+    .limit(1);
+
+  if (!existingAccount) {
+    const hashedPassword = await hashPassword(adminDefaultPassword);
+    await db.insert(schema.account).values({
+      id: `acc-${adminUserId}`,
+      userId: adminUserId,
+      accountId: adminUserId,
+      providerId: "credential",
+      password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(`✅ Admin account created with login: ${adminPhone} / ${adminDefaultPassword}`);
   }
 
   // 2. Seed Grades

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Sparkles } from "lucide-react";
 import type { MockUnit } from "@/lib/db/mock-data";
 import { CurriculumBookSvg } from "@/components/ui/illustrated-icons";
@@ -16,6 +17,7 @@ import {
 } from "@/features/admin-curriculum";
 
 export default function AdminCurriculumPage() {
+  const router = useRouter();
   const {
     filteredUnits,
     selectedGrade,
@@ -23,6 +25,7 @@ export default function AdminCurriculumPage() {
     createUnit,
     deleteUnit,
     incrementLessonsCount,
+    refetch,
   } = useCurriculumManagement();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -108,7 +111,8 @@ export default function AdminCurriculumPage() {
         isOpen={showIntakeModal}
         onClose={() => setShowIntakeModal(false)}
         onSuccess={() => {
-          window.location.reload();
+          refetch();
+          router.refresh();
         }}
       />
 

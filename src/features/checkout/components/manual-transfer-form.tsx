@@ -13,6 +13,7 @@ interface ManualTransferFormProps {
   onSuccess: (message: string) => void;
   vodafoneCashNumber?: string;
   instapayAddress?: string;
+  couponCode?: string;
 }
 
 export function ManualTransferForm({
@@ -20,6 +21,7 @@ export function ManualTransferForm({
   onSuccess,
   vodafoneCashNumber = "01000000000",
   instapayAddress = "academy@instapay",
+  couponCode,
 }: ManualTransferFormProps) {
   const [referenceNumber, setReferenceNumber] = useState("");
   const [receiptUploaded, setReceiptUploaded] = useState(false);
@@ -75,6 +77,7 @@ export function ManualTransferForm({
           paymentMethod: "instapay_manual",
           referenceNumber: referenceNumber.trim(),
           receiptImageUrl: receiptImageBase64 || null,
+          couponCode: couponCode || undefined,
         }),
       });
       const data = await res.json();

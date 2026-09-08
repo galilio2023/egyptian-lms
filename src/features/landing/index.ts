@@ -7,3 +7,4 @@ export { HonorBoardSection } from "./components/honor-board-section";
 export { CoursesCatalogSection } from "./components/courses-catalog-section";
 export { AdventureQuizzesSection } from "./components/adventure-quizzes-section";
 export { MascotChampionCard } from "./components/mascot-champion-card";
+export { HomePageClient } from "./components/home-page-client";

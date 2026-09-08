@@ -13,6 +13,7 @@ import { DeviceTransferForm } from "./device-transfer-form";
 import { useLoginForm } from "../hooks/use-login-form";
 
 export const LoginCard: React.FC = () => {
+  const [loginRole, setLoginRole] = React.useState<"student" | "staff">("student");
   const {
     phoneNumber,
     setPhoneNumber,
@@ -33,16 +34,47 @@ export const LoginCard: React.FC = () => {
 
   return (
     <div className="modern-card bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">
+      {/* Role Toggle Tabs */}
+      <div className="flex p-1 rounded-2xl bg-purple-100/70 border border-purple-200 text-xs font-black">
+        <button
+          type="button"
+          onClick={() => setLoginRole("student")}
+          className={`flex-1 py-2 rounded-xl transition-all ${
+            loginRole === "student"
+              ? "bg-white text-purple-950 shadow-xs"
+              : "text-purple-700 hover:text-purple-950"
+          }`}
+        >
+          👦 دخول الطالب
+        </button>
+        <button
+          type="button"
+          onClick={() => setLoginRole("staff")}
+          className={`flex-1 py-2 rounded-xl transition-all ${
+            loginRole === "staff"
+              ? "bg-white text-purple-950 shadow-xs"
+              : "text-purple-700 hover:text-purple-950"
+          }`}
+        >
+          👨‍🏫 دخول المعلم والإدارة
+        </button>
+      </div>
+
       {/* Header */}
       <div className="text-center space-y-1.5">
         <div className="flex items-center justify-center">
           <StudentLoginKeySvg className="w-14 h-14 drop-shadow-sm" />
         </div>
         <h1 className="text-2xl font-black text-slate-900">
-          تسجيل <span className="text-gradient-purple">دخول الطالب</span>
+          تسجيل{" "}
+          <span className="text-gradient-purple">
+            {loginRole === "student" ? "دخول الطالب" : "دخول المعلم والإدارة"}
+          </span>
         </h1>
         <p className="text-xs text-purple-700 font-bold">
-          أدخل رقم موبايل الطالب المسجل وكلمة المرور للمتابعة
+          {loginRole === "student"
+            ? "أدخل رقم موبايل الطالب المسجل وكلمة المرور للمتابعة"
+            : "أدخل رقم الموبايل وكلمة المرور للوصول إلى لوحة التحكم الإدارية"}
         </p>
       </div>
 
@@ -69,7 +101,7 @@ export const LoginCard: React.FC = () => {
           {/* Phone Number Field */}
           <div className="space-y-1.5 text-right">
             <label htmlFor="login-phone" className="text-xs font-bold text-slate-700 flex items-center justify-between">
-              <span>رقم موبايل الطالب (اسم المستخدم)</span>
+              <span>{loginRole === "student" ? "رقم موبايل الطالب (اسم المستخدم)" : "رقم موبايل المعلم / المشرف"}</span>
               <EgyptianPhoneSvg className="w-5 h-5" />
             </label>
             <div className="relative">
@@ -130,7 +162,13 @@ export const LoginCard: React.FC = () => {
             className="w-full"
           >
             <StudentLoginKeySvg className="w-5 h-5" />
-            <span>{isLoading ? "جاري تسجيل الدخول..." : "دخول إلى لوحة الطالب"}</span>
+            <span>
+              {isLoading
+                ? "جاري تسجيل الدخول..."
+                : loginRole === "student"
+                ? "دخول إلى لوحة الطالب"
+                : "دخول إلى لوحة الإدارة"}
+            </span>
           </Button>
         </form>
       )}

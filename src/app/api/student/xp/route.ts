@@ -15,13 +15,13 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // Rate Limiting: 30 XP awards per 5 minutes per student
+    // Strict Rate Limiting: max 4 practice XP awards per 10 minutes per student
     const rateKey = `student-xp:${userId}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 30, windowMs: 5 * 60 * 1000 });
+    const rateCheck = checkRateLimit(rateKey, { maxRequests: 4, windowMs: 10 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,
-        "تم تسجيل عدد كبير من نقاط الخبرة خلال وقت وجيز. يرجى الانتظار قليلاً."
+        "أحسنت يا بطل! تم تسجيل نقاط التحدي لهذا اليوم. استمر في المذاكرة لحصد المزيد 🌟"
       );
     }
 
@@ -30,15 +30,25 @@ export async function POST(request: NextRequest) {
       reason?: unknown;
     };
 
-    const xpAmount = typeof body.xpAmount === "number" ? Math.round(body.xpAmount) : 0;
-    if (xpAmount <= 0 || xpAmount > 100) {
+    // Valid practice activities from frontend
+    const ALLOWED_REASONS: Record<string, number> = {
+      srs_daily_challenge: 20, // Max 20 XP for daily vocabulary review
+      phonics_practice: 15,    // Max 15 XP for speech practice
+      practice_challenge: 10,  // Max 10 XP for quick practice
+    };
+
+    const rawReason = typeof body.reason === "string" ? body.reason : "practice_challenge";
+    if (!Object.prototype.hasOwnProperty.call(ALLOWED_REASONS, rawReason)) {
       return NextResponse.json(
-        { error: "مقدار نقاط الخبرة غير صالح (يجب أن يكون بين 1 و 100 نقطة)." },
+        { error: "نوع النشاط غير معتمد لتسجيل النقاط." },
         { status: 400 }
       );
     }
 
-    const reason = typeof body.reason === "string" ? body.reason.slice(0, 100) : "practice_challenge";
+    const maxAllowedForReason = ALLOWED_REASONS[rawReason] || 15;
+    const requestedXp = typeof body.xpAmount === "number" ? Math.round(body.xpAmount) : 10;
+    const xpAmount = Math.max(1, Math.min(requestedXp, maxAllowedForReason));
+    const reason = rawReason;
 
     // Atomically increment student XP points in DB
     const [updatedProfile] = await db

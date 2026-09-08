@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   EliteLogoBadge, 
@@ -22,6 +23,7 @@ export function Header({
   academyName = "أكاديمية إيليت",
   teacherName = "Lead Instructor",
 }: HeaderProps = {}) {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -59,7 +61,11 @@ export function Header({
           <nav className="hidden lg:flex items-center gap-1 text-[13px] font-bold text-slate-600 bg-slate-50/80 p-1.5 rounded-2xl border border-slate-200/60 shadow-xs">
             <Link 
               href="/" 
-              className="px-3.5 py-1.5 rounded-xl text-slate-900 bg-white shadow-xs transition-all font-black"
+              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                pathname === "/"
+                  ? "text-slate-900 bg-white shadow-xs font-black"
+                  : "hover:text-purple-800 hover:bg-white/80 font-bold"
+              }`}
             >
               الرئيسية
             </Link>

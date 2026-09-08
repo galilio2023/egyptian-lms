@@ -3,9 +3,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, desc, count, sql } from "drizzle-orm";
+import { eq, and, desc, count, sql, inArray } from "drizzle-orm";
 import { INITIAL_PLATFORM_SETTINGS, type MockPlatformSettings } from "@/lib/db/mock-data";
-import { invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
+import { getPlatformSettings, invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
 import { getRecentSecurityLogs, logSecurityEvent, SecurityAuditRecord } from "@/lib/security/audit-logger";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
@@ -117,6 +117,37 @@ export async function GET(request: NextRequest) {
           .orderBy(desc(schema.user.createdAt))
           .limit(200);
 
+        const studentIds = dbStudents.map((s) => s.id);
+        const enrollmentsMap = new Map<string, string[]>();
+
+        if (studentIds.length > 0) {
+          try {
+            const activeEnrollments = await db
+              .select({
+                userId: schema.enrollment.userId,
+                unitTitle: schema.courseUnit.title,
+              })
+              .from(schema.enrollment)
+              .innerJoin(schema.courseUnit, eq(schema.enrollment.unitId, schema.courseUnit.id))
+              .where(
+                and(
+                  inArray(schema.enrollment.userId, studentIds),
+                  eq(schema.enrollment.isActive, true)
+                )
+              );
+
+            for (const enr of activeEnrollments) {
+              const list = enrollmentsMap.get(enr.userId) || [];
+              if (enr.unitTitle && !list.includes(enr.unitTitle)) {
+                list.push(enr.unitTitle);
+              }
+              enrollmentsMap.set(enr.userId, list);
+            }
+          } catch (enrErr) {
+            console.warn("Enrollments aggregation note:", enrErr);
+          }
+        }
+
         studentsData = dbStudents.map((s) => ({
           id: s.id,
           name: s.name,
@@ -128,7 +159,7 @@ export async function GET(request: NextRequest) {
           gradeTitle: `Grade ${s.gradeLevel || 1}`,
           schoolName: s.schoolName || "مدرسة لغات",
           xpPoints: s.xpPoints || 0,
-          enrolledUnits: [],
+          enrolledUnits: enrollmentsMap.get(s.id) || [],
           lastActive: "نشط مؤخراً",
           deviceLocked: Boolean(s.isBanned),
           isBanned: Boolean(s.isBanned),
@@ -484,6 +515,26 @@ export async function POST(request: NextRequest) {
             if (userRecord) targetUserId = userRecord.id;
           }
 
+          if (!targetUserId || !effectiveUnitId) {
+            return NextResponse.json(
+              { error: "تعذر تحديد حساب الطالب أو الوحدة الدراسية المرتبطة بهذا الطلب." },
+              { status: 400 }
+            );
+          }
+
+          // Fetch unit title for customized parent notification
+          let resolvedUnitTitle = "الوحدة الدراسية";
+          try {
+            const [unitRec] = await db
+              .select({ title: schema.courseUnit.title })
+              .from(schema.courseUnit)
+              .where(eq(schema.courseUnit.id, effectiveUnitId))
+              .limit(1);
+            if (unitRec?.title) resolvedUnitTitle = unitRec.title;
+          } catch {
+            // Fallback
+          }
+
           // Atomic transaction: mark order completed and activate enrollment
           await db.transaction(async (tx) => {
             if (orderId && typeof orderId === "string") {
@@ -493,22 +544,20 @@ export async function POST(request: NextRequest) {
                 .where(eq(schema.order.id, orderId));
             }
 
-            if (targetUserId && effectiveUnitId) {
-              await tx
-                .insert(schema.enrollment)
-                .values({
-                  userId: targetUserId,
-                  unitId: effectiveUnitId,
-                  isActive: true,
-                })
-                .onConflictDoUpdate({
-                  target: [schema.enrollment.userId, schema.enrollment.unitId],
-                  set: { isActive: true, enrolledAt: new Date() },
-                });
-            }
+            await tx
+              .insert(schema.enrollment)
+              .values({
+                userId: targetUserId,
+                unitId: effectiveUnitId,
+                isActive: true,
+              })
+              .onConflictDoUpdate({
+                target: [schema.enrollment.userId, schema.enrollment.unitId],
+                set: { isActive: true, enrolledAt: new Date() },
+              });
           });
 
-          // Automated WhatsApp confirmation to parent
+          // Automated WhatsApp confirmation to parent using dynamic white-label settings
           let targetParentPhone = parentPhone;
           if (!targetParentPhone && targetUserId) {
             const [profile] = await db
@@ -523,13 +572,15 @@ export async function POST(request: NextRequest) {
           const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
           if (cleanPhone) {
             try {
+              const settings = await getPlatformSettings();
               const waRes = await sendAutomatedWhatsAppNotification({
                 to: cleanPhone,
-                message: `🎉 *أكاديمية تعليمية - تأكيد الاشتراك*\n` +
+                message: `🎉 *${settings.academyNameArabic} - تأكيد تفعيل الاشتراك*\n` +
                   `ولي أمر البطل / ${studentName || "المشترك"} 🌟\n` +
-                  `تم بنجاح تأكيد سداد الرسوم وتفعيل اشتراك الوحدة الدراسية في حساب الطالب.\n` +
+                  `تم بنجاح تأكيد سداد الرسوم وتفعيل اشتراك (${resolvedUnitTitle}) في حساب الطالب.\n` +
                   `يمكن للطالب الآن الدخول للمنصة والبدء في مشاهدة الحصص وحل التمارين فوراً!\n` +
-                  `نتمنى له دوام التوفيق والنجاح.`,
+                  `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+                  `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
               });
               parentNotified = Boolean(waRes.success);
             } catch (e) {
@@ -573,7 +624,7 @@ export async function POST(request: NextRequest) {
             })
             .where(eq(schema.order.id, orderId));
 
-          // Automated WhatsApp rejection notice to parent
+          // Automated WhatsApp rejection notice to parent using dynamic white-label settings
           let targetParentPhone = parentPhone;
           if (!targetParentPhone) {
             const [orderRecord] = await db
@@ -595,12 +646,13 @@ export async function POST(request: NextRequest) {
           const cleanPhone = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
           if (cleanPhone) {
             try {
+              const settings = await getPlatformSettings();
               const waRes = await sendAutomatedWhatsAppNotification({
                 to: cleanPhone,
-                message: `⚠️ *تنبيه بخصوص طلب الاشتراك*\n` +
+                message: `⚠️ *${settings.academyNameArabic} - تنبيه بخصوص طلب الاشتراك*\n` +
                   `نحيطكم علماً بأنه تعذر قبول إيصال التحويل للسبب التالي:\n` +
                   `"${reason || "إيصال غير واضح أو المبلغ غير مطابق"}"\n` +
-                  `يرجى التأكد من بيانات التحويل وإعادة إرسال الإيصال الصحيح عبر المنصة.`,
+                  `يرجى التأكد من بيانات التحويل وإعادة إرسال الإيصال الصحيح عبر المنصة أو التواصل مع الدعم الفني.`,
               });
               parentNotified = Boolean(waRes.success);
             } catch (e) {
@@ -619,6 +671,113 @@ export async function POST(request: NextRequest) {
           console.error("DB operation error for reject_order:", err);
           return NextResponse.json(
             { error: "تعذر تحديث حالة رفض الطلب في قاعدة البيانات." },
+            { status: 500 }
+          );
+        }
+      }
+
+      case "manual_enroll_student": {
+        const { studentId, unitId, notifyParent } = payload as {
+          studentId?: string;
+          unitId?: string;
+          notifyParent?: boolean;
+        };
+
+        if (!studentId || !unitId) {
+          return NextResponse.json(
+            { error: "يجب تحديد الطالب والوحدة الدراسية المراد تفعيلها." },
+            { status: 400 }
+          );
+        }
+
+        try {
+          // 1. Verify student exists
+          const [studentRecord] = await db
+            .select({
+              id: schema.user.id,
+              name: schema.user.name,
+              phone: schema.user.phoneNumber,
+            })
+            .from(schema.user)
+            .where(eq(schema.user.id, studentId))
+            .limit(1);
+
+          if (!studentRecord) {
+            return NextResponse.json(
+              { error: "لم يتم العثور على حساب الطالب المحدد." },
+              { status: 404 }
+            );
+          }
+
+          // 2. Verify unit exists
+          const [unitRecord] = await db
+            .select({
+              id: schema.courseUnit.id,
+              title: schema.courseUnit.title,
+              price: schema.courseUnit.price,
+            })
+            .from(schema.courseUnit)
+            .where(eq(schema.courseUnit.id, unitId))
+            .limit(1);
+
+          if (!unitRecord) {
+            return NextResponse.json(
+              { error: "لم يتم العثور على الوحدة الدراسية المحددة." },
+              { status: 404 }
+            );
+          }
+
+          // 3. Upsert active enrollment
+          await db
+            .insert(schema.enrollment)
+            .values({
+              userId: studentId,
+              unitId: unitId,
+              isActive: true,
+              enrolledAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [schema.enrollment.userId, schema.enrollment.unitId],
+              set: { isActive: true, enrolledAt: new Date() },
+            });
+
+          // 4. Optionally dispatch WhatsApp confirmation to parent
+          let parentNotified = false;
+          if (notifyParent !== false) {
+            const [profile] = await db
+              .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+              .from(schema.studentProfile)
+              .where(eq(schema.studentProfile.userId, studentId))
+              .limit(1);
+
+            const cleanParent = profile?.parentPhoneNumber ? validateEgyptianPhone(profile.parentPhoneNumber) : null;
+            if (cleanParent) {
+              try {
+                const settings = await getPlatformSettings();
+                await sendAutomatedWhatsAppNotification({
+                  to: cleanParent,
+                  message: `🎉 *${settings.academyNameArabic} — تأكيد الاشتراك المباشر بالسنتر*\n` +
+                    `ولي أمر البطل / ${studentRecord.name} 🌟\n` +
+                    `تم بنجاح تفعيل اشتراك (${unitRecord.title}) في حساب الطالب عبر إدارة السنتر.\n` +
+                    `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+                    `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+                });
+                parentNotified = true;
+              } catch (waErr) {
+                console.warn("Manual enroll WhatsApp note:", waErr);
+              }
+            }
+          }
+
+          return NextResponse.json({
+            success: true,
+            message: `تم تفعيل اشتراك الطالب (${studentRecord.name}) في (${unitRecord.title}) بنجاح!`,
+            parentNotified,
+          });
+        } catch (err) {
+          console.error("Manual enroll error:", err);
+          return NextResponse.json(
+            { error: "حدث خطأ أثناء تفعيل اشتراك الطالب في قاعدة البيانات." },
             { status: 500 }
           );
         }
@@ -1042,52 +1201,56 @@ export async function POST(request: NextRequest) {
       }
 
       case "save_vouchers": {
-        const { vouchers, batchName, gradeNumber } = payload as {
+        const { vouchers, batchName, gradeNumber, unitId } = payload as {
           vouchers: Array<{ code: string; serialNumber: string; priceEgp: number }>;
           batchName?: string;
           gradeNumber?: number;
+          unitId?: string;
         };
 
+        let insertedCount = 0;
         try {
-          const gradeSlug = `grade-${gradeNumber || 1}`;
-          const [foundGrade] = await db
-            .select()
-            .from(schema.grade)
-            .where(eq(schema.grade.slug, gradeSlug))
-            .limit(1);
-
-          let unitIdToBind: string | null = null;
-          if (foundGrade) {
-            const [foundUnit] = await db
-              .select()
-              .from(schema.courseUnit)
-              .where(eq(schema.courseUnit.gradeId, foundGrade.id))
-              .limit(1);
-            if (foundUnit) unitIdToBind = foundUnit.id;
-          }
+          let unitIdToBind: string | null = (unitId && typeof unitId === "string" && unitId.trim()) ? unitId.trim() : null;
 
           if (!unitIdToBind) {
-            const [anyUnit] = await db.select().from(schema.courseUnit).limit(1);
-            if (anyUnit) unitIdToBind = anyUnit.id;
+            const gradeSlug = `grade-${gradeNumber || 1}`;
+            const [foundGrade] = await db
+              .select({ id: schema.grade.id })
+              .from(schema.grade)
+              .where(eq(schema.grade.slug, gradeSlug))
+              .limit(1);
+
+            if (foundGrade) {
+              const [foundUnit] = await db
+                .select({ id: schema.courseUnit.id })
+                .from(schema.courseUnit)
+                .where(eq(schema.courseUnit.gradeId, foundGrade.id))
+                .orderBy(schema.courseUnit.orderIndex)
+                .limit(1);
+              if (foundUnit) unitIdToBind = foundUnit.id;
+            }
+
+            if (!unitIdToBind) {
+              const [anyUnit] = await db.select({ id: schema.courseUnit.id }).from(schema.courseUnit).limit(1);
+              if (anyUnit) unitIdToBind = anyUnit.id;
+            }
           }
 
           if (unitIdToBind && vouchers && vouchers.length > 0) {
-            for (const v of vouchers) {
-              const [existing] = await db
-                .select()
-                .from(schema.voucherCode)
-                .where(eq(schema.voucherCode.code, v.code))
-                .limit(1);
+            const recordsToInsert = vouchers.map((v) => ({
+              code: v.code.trim().toUpperCase(),
+              unitId: unitIdToBind!,
+              isRedeemed: false,
+              batchName: batchName || "دفعة سناتر ومكتبات 2026",
+            }));
 
-              if (!existing) {
-                await db.insert(schema.voucherCode).values({
-                  code: v.code,
-                  unitId: unitIdToBind,
-                  isRedeemed: false,
-                  batchName: batchName || "دفعة سناتر ومكتبات 2026",
-                });
-              }
-            }
+            const inserted = await db
+              .insert(schema.voucherCode)
+              .values(recordsToInsert)
+              .onConflictDoNothing()
+              .returning({ id: schema.voucherCode.id });
+
+            insertedCount = inserted.length;
           }
         } catch (dbErr) {
           console.warn("Voucher batch DB insert note:", dbErr);
@@ -1095,8 +1258,8 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          count: vouchers?.length || 0,
-          message: `تم حفظ ${vouchers?.length || 0} كارت شحن بنجاح في قاعدة البيانات وتفعيلها للاستخدام الفوري.`,
+          count: insertedCount || vouchers?.length || 0,
+          message: `تم حفظ ${insertedCount || vouchers?.length || 0} كارت شحن بنجاح في قاعدة البيانات وتفعيلها للاستخدام الفوري.`,
         });
       }
 
@@ -1242,15 +1405,16 @@ export async function POST(request: NextRequest) {
       }
 
       case "generate_secure_vouchers": {
-        const { gradeNumber, quantity, priceEgp, batchName } = payload as {
+        const { gradeNumber, quantity, priceEgp, batchName, unitId } = payload as {
           gradeNumber: number;
           quantity: number;
           priceEgp: number;
           batchName?: string;
+          unitId?: string;
         };
 
         const safeGrade = Math.max(1, Math.min(6, gradeNumber || 1));
-        const safeQty = Math.max(1, Math.min(200, quantity || 10));
+        const safeQty = Math.max(1, Math.min(500, quantity || 10));
         const safePrice = Math.max(10, priceEgp || 150);
 
         // Generate cryptographically secure vouchers
@@ -1261,46 +1425,49 @@ export async function POST(request: NextRequest) {
         });
 
         // Persist to database linked to the appropriate unit
+        let insertedCount = 0;
         try {
-          const gradeSlug = `grade-${safeGrade}`;
-          const [foundGrade] = await db
-            .select()
-            .from(schema.grade)
-            .where(eq(schema.grade.slug, gradeSlug))
-            .limit(1);
-
-          let unitIdToBind: string | null = null;
-          if (foundGrade) {
-            const [foundUnit] = await db
-              .select()
-              .from(schema.courseUnit)
-              .where(eq(schema.courseUnit.gradeId, foundGrade.id))
-              .limit(1);
-            if (foundUnit) unitIdToBind = foundUnit.id;
-          }
+          let unitIdToBind: string | null = (unitId && typeof unitId === "string" && unitId.trim()) ? unitId.trim() : null;
 
           if (!unitIdToBind) {
-            const [anyUnit] = await db.select().from(schema.courseUnit).limit(1);
-            if (anyUnit) unitIdToBind = anyUnit.id;
+            const gradeSlug = `grade-${safeGrade}`;
+            const [foundGrade] = await db
+              .select({ id: schema.grade.id })
+              .from(schema.grade)
+              .where(eq(schema.grade.slug, gradeSlug))
+              .limit(1);
+
+            if (foundGrade) {
+              const [foundUnit] = await db
+                .select({ id: schema.courseUnit.id })
+                .from(schema.courseUnit)
+                .where(eq(schema.courseUnit.gradeId, foundGrade.id))
+                .orderBy(schema.courseUnit.orderIndex)
+                .limit(1);
+              if (foundUnit) unitIdToBind = foundUnit.id;
+            }
+
+            if (!unitIdToBind) {
+              const [anyUnit] = await db.select({ id: schema.courseUnit.id }).from(schema.courseUnit).limit(1);
+              if (anyUnit) unitIdToBind = anyUnit.id;
+            }
           }
 
-          if (unitIdToBind) {
-            for (const v of generatedList) {
-              const [existing] = await db
-                .select()
-                .from(schema.voucherCode)
-                .where(eq(schema.voucherCode.code, v.code))
-                .limit(1);
+          if (unitIdToBind && generatedList.length > 0) {
+            const recordsToInsert = generatedList.map((v) => ({
+              code: v.code.trim().toUpperCase(),
+              unitId: unitIdToBind!,
+              isRedeemed: false,
+              batchName: batchName || `دفعة كروت سناتر الصف ${safeGrade} - مشفرة عالي الأمان`,
+            }));
 
-              if (!existing) {
-                await db.insert(schema.voucherCode).values({
-                  code: v.code,
-                  unitId: unitIdToBind,
-                  isRedeemed: false,
-                  batchName: batchName || `دفعة كروت سناتر الصف ${safeGrade} - مشفرة عالي الأمان`,
-                });
-              }
-            }
+            const inserted = await db
+              .insert(schema.voucherCode)
+              .values(recordsToInsert)
+              .onConflictDoNothing()
+              .returning({ id: schema.voucherCode.id });
+
+            insertedCount = inserted.length;
           }
         } catch (dbErr) {
           console.warn("Secure voucher DB batch persistence note:", dbErr);
@@ -1309,7 +1476,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           vouchers: generatedList,
-          count: generatedList.length,
+          count: insertedCount || generatedList.length,
           message: `تم توليد ${generatedList.length} كارت شحن عالي التشفير وحفظها بنجاح في قاعدة البيانات.`,
         });
       }

@@ -6,6 +6,9 @@ import * as schema from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { validateEgyptianPhone } from "@/lib/utils";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 
 export async function POST(request: NextRequest) {
   try {
@@ -147,6 +150,42 @@ export async function POST(request: NextRequest) {
         description: `تم شحن كارت الشحن بنجاح وتفعيل الوحدة الدراسية: ${cleanCode}`,
         details: { unitId: txResult.voucher.unitId, batchName: txResult.voucher.batchName },
       });
+
+      // Automated WhatsApp notification to parent
+      try {
+        const [profile] = await db
+          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+          .from(schema.studentProfile)
+          .where(eq(schema.studentProfile.userId, currentUserId))
+          .limit(1);
+
+        const targetParentPhone = profile?.parentPhoneNumber || null;
+        const cleanParent = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+
+        if (cleanParent) {
+          const [unitRecord] = await db
+            .select({ title: schema.courseUnit.title })
+            .from(schema.courseUnit)
+            .where(eq(schema.courseUnit.id, txResult.voucher.unitId))
+            .limit(1);
+
+          const unitTitle = unitRecord?.title || "الوحدة الدراسية";
+          const settings = await getPlatformSettings();
+          const studentName = session.user.name || "بطل الأكاديمية";
+
+          await sendAutomatedWhatsAppNotification({
+            to: cleanParent,
+            message: `🎉 *${settings.academyNameArabic} - تأكيد شحن كارت السنتر*\n` +
+              `ولي أمر البطل / ${studentName} 🌟\n` +
+              `تم بنجاح شحن كارت السنتر (${txResult.voucher.batchName || "كارت الشحن"}) وتفعيل اشتراك (${unitTitle}) في حساب الطالب.\n` +
+              `يمكن للطالب الآن الدخول للمنصة وحضور كافة الدروس وحل التمارين فوراً!\n` +
+              `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+              `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+          });
+        }
+      } catch (waErr) {
+        console.warn("Voucher redeem WhatsApp dispatch note:", waErr);
+      }
 
       return NextResponse.json({
         success: true,
