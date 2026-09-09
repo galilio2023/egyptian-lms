@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AlertTriangle } from "lucide-react";
 import { 
   UsersGraduationSvg, 
   EgyptianWalletSvg, 
@@ -15,12 +16,13 @@ interface OverviewKpiCardsProps {
     totalUnits: number;
     pendingOrders: number;
     totalRevenueEgp: number;
+    atRiskStudents?: number;
   };
 }
 
 export function OverviewKpiCards({ stats }: OverviewKpiCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <StatCard
         title="إجمالي الطلاب المسجلين"
         value={stats.totalStudents.toLocaleString()}
@@ -51,6 +53,14 @@ export function OverviewKpiCards({ stats }: OverviewKpiCardsProps) {
         icon={<CurriculumBookSvg className="w-7 h-7" />}
         variant="indigo"
         description="متاحة للدراسة والاختبارات"
+      />
+
+      <StatCard
+        title="مؤشر المتابعة الذكية (At-Risk)"
+        value={stats.atRiskStudents === undefined ? "—" : `${stats.atRiskStudents} طالب`}
+        icon={<AlertTriangle className="w-7 h-7" />}
+        variant="rose"
+        description="طلاب بحاجة لدعم استذكاري وتواصل"
       />
     </div>
   );

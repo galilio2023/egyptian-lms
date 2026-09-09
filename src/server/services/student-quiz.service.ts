@@ -5,6 +5,7 @@ import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { findMatchingVocabulary } from "@/lib/ai/curriculum-intake-parser";
 import { UnauthorizedError, ForbiddenError } from "@/server/errors";
 
 // Deterministic seeded shuffle per student session
@@ -176,6 +177,15 @@ export interface GradeQuizParams {
   clientIp?: string;
 }
 
+export interface MissedConceptDto {
+  id: string;
+  word: string;
+  phonics: string;
+  arabicMeaning: string;
+  exampleSentence: string;
+  category: string;
+}
+
 export type GradeQuizResult =
   | {
       success: false;
@@ -195,6 +205,7 @@ export type GradeQuizResult =
       remainingAttempts: number;
       maxAttempts: number;
       results: Record<string, { correct: boolean; correctAnswerId: string; explanation: string }>;
+      missedConcepts: MissedConceptDto[];
       whatsappAutoDelivery: { success: boolean; simulated?: boolean };
       parentNotification: { parentPhone: string; whatsappUrl: string; messageText: string } | null;
     };
@@ -214,7 +225,20 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
   } = params;
 
   let quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
-  let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = quiz.questions;
+  let questionsList: Array<{
+    id: string;
+    text: string;
+    options: Array<{
+      id: string;
+      text: string;
+      isCorrect: boolean;
+      phonics?: string;
+      arabicMeaning?: string;
+      exampleSentence?: string;
+    }>;
+    explanation: string;
+    audioUrl?: string | null;
+  }> = quiz.questions;
   let maxAttempts = 3;
   let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
   let dbQuizRecord: typeof schema.quiz.$inferSelect | null = null;
@@ -312,7 +336,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
             id: q.id,
             text: q.questionText,
             audioUrl: q.questionAudioUrl || undefined,
-            options: q.options as Array<{ id: string; text: string; isCorrect: boolean }>,
+            options: q.options,
             explanation: q.explanation || "إجابة صحيحة وفقاً للمنهج.",
           })),
         };
@@ -323,13 +347,27 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
 
   let correctCount = 0;
   const results: Record<string, { correct: boolean; correctAnswerId: string; explanation: string }> = {};
+  const missedConcepts: MissedConceptDto[] = [];
 
   questionsList.forEach((q) => {
     const selectedId = answers[q.id];
     const correctOption = q.options.find((opt) => opt.isCorrect);
     const isCorrect = correctOption ? selectedId === correctOption.id : false;
 
-    if (isCorrect) correctCount++;
+    if (isCorrect) {
+      correctCount++;
+    } else if (correctOption) {
+      const targetWord = correctOption.text;
+      const vocabulary = findMatchingVocabulary(targetWord);
+      missedConcepts.push({
+        id: `remedial-${q.id}`,
+        word: targetWord,
+        phonics: correctOption?.phonics || vocabulary?.phonicsFocus || "",
+        arabicMeaning: correctOption?.arabicMeaning || vocabulary?.arabicMeaning || "",
+        exampleSentence: correctOption?.exampleSentence || vocabulary?.exampleSentence || "",
+        category: `مراجعة كويز: ${quiz.title}`,
+      });
+    }
 
     results[q.id] = {
       correct: isCorrect,
@@ -441,6 +479,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
     remainingAttempts,
     maxAttempts,
     results,
+    missedConcepts,
     whatsappAutoDelivery,
     parentNotification,
   };

@@ -108,46 +108,53 @@ export async function redeemVoucherCode(params: RedeemVoucherParams) {
     details: { unitId: txResult.voucher.unitId, batchName: txResult.voucher.batchName },
   });
 
-  // Automated WhatsApp notification to parent
-  try {
-    const [profile] = await db
-      .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
-      .from(schema.studentProfile)
-      .where(eq(schema.studentProfile.userId, currentUserId))
-      .limit(1);
-
-    const targetParentPhone = profile?.parentPhoneNumber || null;
-    const cleanParent = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
-
-    if (cleanParent) {
+  let unitTitle = "الوحدة الدراسية";
+    try {
       const [unitRecord] = await db
         .select({ title: schema.courseUnit.title })
         .from(schema.courseUnit)
         .where(eq(schema.courseUnit.id, txResult.voucher.unitId))
         .limit(1);
-
-      const unitTitle = unitRecord?.title || "الوحدة الدراسية";
-      const settings = await getPlatformSettings();
-      const resolvedStudentName = studentName || "بطل الأكاديمية";
-
-      await sendAutomatedWhatsAppNotification({
-        to: cleanParent,
-        message: `🎉 *${settings.academyNameArabic} - تأكيد شحن كارت السنتر*\n` +
-          `ولي أمر البطل / ${resolvedStudentName} 🌟\n` +
-          `تم بنجاح شحن كارت السنتر (${txResult.voucher.batchName || "كارت الشحن"}) وتفعيل اشتراك (${unitTitle}) في حساب الطالب.\n` +
-          `يمكن للطالب الآن الدخول للمنصة وحضور كافة الدروس وحل التمارين فوراً!\n` +
-          `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
-          `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
-      });
+      if (unitRecord?.title) {
+        unitTitle = unitRecord.title;
+      }
+    } catch (err) {
+      console.warn("Could not resolve unitTitle for redeemed voucher:", err);
     }
-  } catch (waErr) {
-    console.warn("Voucher redeem WhatsApp dispatch note:", waErr);
-  }
 
-  return {
-    success: true,
-    message: "🎉 تم شحن الكود وتفعيل الوحدة الدراسية بنجاح!",
-    unitId: txResult.voucher.unitId,
-    batchName: txResult.voucher.batchName,
-  };
+    try {
+      const [profile] = await db
+        .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
+        .from(schema.studentProfile)
+        .where(eq(schema.studentProfile.userId, currentUserId))
+        .limit(1);
+
+      const targetParentPhone = profile?.parentPhoneNumber || null;
+      const cleanParent = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
+
+      if (cleanParent) {
+        const settings = await getPlatformSettings();
+        const resolvedStudentName = studentName || "بطل الأكاديمية";
+
+        await sendAutomatedWhatsAppNotification({
+          to: cleanParent,
+          message: `🎉 *${settings.academyNameArabic} - تأكيد شحن كارت السنتر*\n` +
+            `ولي أمر البطل / ${resolvedStudentName} 🌟\n` +
+            `تم بنجاح شحن كارت السنتر (${txResult.voucher.batchName || "كارت الشحن"}) وتفعيل اشتراك (${unitTitle}) في حساب الطالب.\n` +
+            `يمكن للطالب الآن الدخول للمنصة وحضور كافة الدروس وحل التمارين فوراً!\n` +
+            `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
+            `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
+        });
+      }
+    } catch (waErr) {
+      console.warn("Voucher redeem WhatsApp dispatch note:", waErr);
+    }
+
+    return {
+      success: true,
+      message: "🎉 تم شحن الكود وتفعيل الوحدة الدراسية بنجاح!",
+      unitId: txResult.voucher.unitId,
+      unitTitle,
+      batchName: txResult.voucher.batchName,
+    };
 }

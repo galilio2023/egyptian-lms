@@ -123,8 +123,13 @@ export function generateBunnyPlaybackUrl({
   clientIp?: string;
   expiresInSeconds?: number;
 }): string {
-  // If no videoId is provided, fallback to standard test HLS stream
-  if (!videoId || videoId.trim() === "") {
+  // If no videoId is provided or is a placeholder/mock ID, fallback to standard test HLS stream
+  if (
+    !videoId ||
+    videoId.trim() === "" ||
+    videoId.includes("placeholder") ||
+    (!isBunnyConfigured() && videoId.startsWith("mock-"))
+  ) {
     return "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
   }
 

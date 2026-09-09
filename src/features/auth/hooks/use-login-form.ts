@@ -13,10 +13,12 @@ export interface DeviceLockedInfo {
   parentPhoneMasked?: string;
 }
 
-export function useLoginForm() {
+export function useLoginForm(options?: { loginRole?: "student" | "staff" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/portal/dashboard";
+  const rawCallback = searchParams.get("callbackUrl");
+  const defaultCallback = options?.loginRole === "staff" ? "/admin" : "/portal/dashboard";
+  const callbackUrl = rawCallback || defaultCallback;
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -55,7 +57,7 @@ export function useLoginForm() {
 
       if (result.error) {
         if (process.env.NODE_ENV === "development" && (cleanPhone === "01012345678" || cleanPhone === "01000000000")) {
-          const role = cleanPhone === "01000000000" ? "admin" : "student";
+          const role = cleanPhone === "01000000000" || options?.loginRole === "staff" ? "admin" : "student";
           toast.success("تم الدخول بنجاح عبر حساب التطوير التجريبي! 🚀");
           router.push(`/api/dev/session?role=${role}`);
           return;
@@ -105,7 +107,7 @@ export function useLoginForm() {
       router.push(callbackUrl);
     } catch {
       if (process.env.NODE_ENV === "development" && (cleanPhone === "01012345678" || cleanPhone === "01000000000")) {
-        const role = cleanPhone === "01000000000" ? "admin" : "student";
+        const role = cleanPhone === "01000000000" || options?.loginRole === "staff" ? "admin" : "student";
         toast.success("تم الدخول بنجاح عبر حساب التطوير التجريبي! 🚀");
         router.push(`/api/dev/session?role=${role}`);
         return;

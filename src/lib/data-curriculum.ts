@@ -44,10 +44,9 @@ function sanitizeLessonForCache(lesson: MockLesson): CachedLesson {
  * Direct DB query for unit and its lessons.
  */
 async function fetchUnitFromDb(unitSlug: string): Promise<CachedUnitData | null> {
-  try {
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unitSlug);
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unitSlug);
 
-    const [dbUnit] = await db
+  const [dbUnit] = await db
       .select({
         id: schema.courseUnit.id,
         gradeId: schema.courseUnit.gradeId,
@@ -66,7 +65,7 @@ async function fetchUnitFromDb(unitSlug: string): Promise<CachedUnitData | null>
       .where(or(eq(schema.courseUnit.slug, unitSlug), ...(isUUID ? [eq(schema.courseUnit.id, unitSlug)] : [])))
       .limit(1);
 
-    if (dbUnit) {
+  if (dbUnit) {
       const [dbLessons, [dbQuiz]] = await Promise.all([
         db
           .select()
@@ -114,18 +113,17 @@ async function fetchUnitFromDb(unitSlug: string): Promise<CachedUnitData | null>
         checkpoints: l.checkpoints || [],
       }));
 
-      return {
-        unit: formattedUnit,
-        lessons: formattedLessons,
-        quizId: dbQuiz?.id || INITIAL_QUIZ.id,
-      };
-    }
-  } catch (err) {
-    console.warn("DB fetchUnitFromDb note:", err);
-    throw err;
+    return {
+      unit: formattedUnit,
+      lessons: formattedLessons,
+      quizId: dbQuiz?.id || INITIAL_QUIZ.id,
+    };
   }
 
-  // Fallback to mock data if not in DB
+  return null;
+}
+
+function getUnitFallback(unitSlug: string): CachedUnitData | null {
   const mockUnit = INITIAL_UNITS.find((u) => u.slug === unitSlug || u.id === unitSlug);
   if (mockUnit) {
     const mockLessons = INITIAL_LESSONS.filter((l) => l.unitId === mockUnit.id);
@@ -143,16 +141,15 @@ async function fetchUnitFromDb(unitSlug: string): Promise<CachedUnitData | null>
  * Direct DB query for lesson, parent unit, playlist, and quiz.
  */
 async function fetchLessonFromDb(lessonSlug: string): Promise<CachedLessonData | null> {
-  try {
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lessonSlug);
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lessonSlug);
 
-    const [dbLesson] = await db
+  const [dbLesson] = await db
       .select()
       .from(schema.lesson)
       .where(or(eq(schema.lesson.slug, lessonSlug), ...(isUUID ? [eq(schema.lesson.id, lessonSlug)] : [])))
       .limit(1);
 
-    if (dbLesson) {
+  if (dbLesson) {
       const [[dbUnit], dbPlaylist, [dbQuiz]] = await Promise.all([
         db
           .select({
@@ -238,20 +235,21 @@ async function fetchLessonFromDb(lessonSlug: string): Promise<CachedLessonData |
         prerequisiteType: "none",
       }));
 
-      return {
-        lesson: formattedLesson,
-        unit: formattedUnit,
-        playlist: formattedPlaylist,
-        quizId: dbQuiz?.id || INITIAL_QUIZ.id,
-      };
-    }
-  } catch (err) {
-    console.warn("DB fetchLessonFromDb note:", err);
-    throw err;
+    return {
+      lesson: formattedLesson,
+      unit: formattedUnit,
+      playlist: formattedPlaylist,
+      quizId: dbQuiz?.id || INITIAL_QUIZ.id,
+    };
   }
 
-  // Fallback to mock data
-  const mockLesson = INITIAL_LESSONS.find((l) => l.slug === lessonSlug || l.id === lessonSlug);
+  return null;
+}
+
+function getLessonFallback(lessonSlug: string): CachedLessonData | null {
+  const mockLesson = INITIAL_LESSONS.find(
+    (l) => l.slug === lessonSlug || l.id === lessonSlug || (lessonSlug === "lesson-1-greetings" && l.id === "les-1")
+  );
   if (mockLesson) {
     const mockUnit = INITIAL_UNITS.find((u) => u.id === mockLesson.unitId) || INITIAL_UNITS[0];
     const mockPlaylist = INITIAL_LESSONS.filter((l) => l.unitId === mockUnit.id);
@@ -350,7 +348,12 @@ export const getCachedCurriculumUnit = cache(async (unitSlug: string): Promise<C
       tags: ["curriculum", `unit-${unitSlug}`],
     }
   );
-  return getCached();
+  try {
+    return (await getCached()) ?? getUnitFallback(unitSlug);
+  } catch (err) {
+    console.warn("DB fetchUnitFromDb note, falling back to mock data:", err);
+    return getUnitFallback(unitSlug);
+  }
 });
 
 /**
@@ -365,7 +368,12 @@ export const getCachedLesson = cache(async (lessonSlug: string): Promise<CachedL
       tags: ["curriculum", `lesson-${lessonSlug}`],
     }
   );
-  return getCached();
+  try {
+    return (await getCached()) ?? getLessonFallback(lessonSlug);
+  } catch (err) {
+    console.warn("DB fetchLessonFromDb note, falling back to mock data:", err);
+    return getLessonFallback(lessonSlug);
+  }
 });
 
 /**

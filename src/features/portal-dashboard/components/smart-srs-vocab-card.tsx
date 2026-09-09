@@ -1,78 +1,20 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Sparkles, Volume2, RotateCcw, Flame } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import {
+  buildDefaultSrsDeck,
+  getSrsDeckStorageKey,
+  LEGACY_SRS_DECK_STORAGE_KEY,
+  mergeSrsDeckWithDefaults,
+  type SrsVocabCardData,
+} from "@/lib/srs-storage";
 
-interface VocabCard {
-  id: string;
-  word: string;
-  phonics: string;
-  arabicMeaning: string;
-  exampleSentence: string;
-  category: string;
-  intervalDays: number;
-  repetitions: number;
-  easeFactor: number;
-  dueDate: string; // ISO date
-}
+type VocabCard = SrsVocabCardData;
 
-const DEFAULT_CONNECT_VOCAB: Omit<VocabCard, "intervalDays" | "repetitions" | "easeFactor" | "dueDate">[] = [
-  {
-    id: "vocab-1",
-    word: "Busy Bee",
-    phonics: "/b/ sound & double /ee/",
-    arabicMeaning: "النحلة النشيطة (شخصية المنهج المحبوبة)",
-    exampleSentence: "Look at the Busy Bee flying to the flower!",
-    category: "Connect Characters 🐝",
-  },
-  {
-    id: "vocab-2",
-    word: "Book",
-    phonics: "Short /oo/ sound",
-    arabicMeaning: "كتاب مدرسي",
-    exampleSentence: "Open your book to page 10, please.",
-    category: "School Objects 📚",
-  },
-  {
-    id: "vocab-3",
-    word: "Bag",
-    phonics: "Short /æ/ sound",
-    arabicMeaning: "حقيبة مدرسية",
-    exampleSentence: "Put your pencil inside your blue bag.",
-    category: "School Objects 🎒",
-  },
-  {
-    id: "vocab-4",
-    word: "Hello",
-    phonics: "/h/ sound",
-    arabicMeaning: "مرحباً / أهلاً",
-    exampleSentence: "Hello! My name is Hany.",
-    category: "Greetings 👋",
-  },
-  {
-    id: "vocab-5",
-    word: "Shake hands",
-    phonics: "/sh/ sound & silent e",
-    arabicMeaning: "يتصافح بالأيدي (آداب السلوك)",
-    exampleSentence: "When you meet a new friend, shake hands.",
-    category: "Good Manners 🤝",
-  },
-];
-
-const STORAGE_KEY = "egyptian_lms_srs_vocab_deck";
 const STREAK_KEY = "egyptian_lms_srs_streak";
-
-function buildDefaultDeck(): VocabCard[] {
-  return DEFAULT_CONNECT_VOCAB.map((v) => ({
-    ...v,
-    intervalDays: 1,
-    repetitions: 0,
-    easeFactor: 2.5,
-    dueDate: new Date().toISOString(),
-  }));
-}
 
 function calculateNextInterval(
   card: VocabCard,
@@ -132,17 +74,15 @@ function formatIntervalArabic(days: number): string {
   return `بعد ${days} يوماً`;
 }
 
-export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => void }) {
-  const [deck, setDeck] = useState<VocabCard[]>(() => {
-    if (typeof window === "undefined") return buildDefaultDeck();
-    try {
-      const savedDeck = localStorage.getItem(STORAGE_KEY);
-      if (savedDeck) return JSON.parse(savedDeck);
-    } catch {
-      // Ignore
-    }
-    return buildDefaultDeck();
-  });
+export function SmartSrsVocabCard({
+  userId,
+  onEarnXp,
+}: {
+  userId: string;
+  onEarnXp?: (xp: number) => void;
+}) {
+  const storageKey = getSrsDeckStorageKey(userId);
+  const [deck, setDeck] = useState<VocabCard[]>(buildDefaultSrsDeck);
 
   const [streak, setStreak] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
@@ -159,6 +99,26 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
   const [isFlipped, setIsFlipped] = useState(false);
   const [isCompletedToday, setIsCompletedToday] = useState(false);
   const [reviewAhead, setReviewAhead] = useState(false);
+
+  useEffect(() => {
+    if (!storageKey) return;
+
+    const timer = window.setTimeout(() => {
+      try {
+        // The shared legacy deck has no trustworthy owner, so do not assign it to this user.
+        localStorage.removeItem(LEGACY_SRS_DECK_STORAGE_KEY);
+        const savedDeck = localStorage.getItem(storageKey);
+        if (savedDeck) {
+          const parsedDeck = JSON.parse(savedDeck);
+          if (Array.isArray(parsedDeck)) setDeck(mergeSrsDeckWithDefaults(parsedDeck));
+        }
+      } catch {
+        // Keep the built-in deck when storage is unavailable or malformed.
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [storageKey]);
 
   // Filter cards due today (or unreviewed cards)
   const dueCards = useMemo(() => {
@@ -209,7 +169,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
 
     setDeck(updatedDeck);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDeck));
+      if (storageKey) localStorage.setItem(storageKey, JSON.stringify(updatedDeck));
     } catch {}
 
     setIsFlipped(false);
@@ -284,7 +244,13 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
             <span>
               بطاقة {currentIndex + 1} من {activeDeck.length}
             </span>
-            <span className="text-amber-300">{currentCard.category}</span>
+            {currentCard.category?.includes("كويز") ? (
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-500/30 border border-rose-400/60 text-rose-200 text-[10px] font-black animate-pulse flex items-center gap-1">
+                <span>🎯 كارت علاجي ذكي من الكويز</span>
+              </span>
+            ) : (
+              <span className="text-amber-300">{currentCard.category}</span>
+            )}
           </div>
 
           {/* Flashcard Box */}

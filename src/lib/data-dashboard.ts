@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, gt, isNull, or, inArray, notInArray, desc } from "drizzle-orm";
+import { eq, and, gt, gte, isNull, or, inArray, notInArray, asc, desc } from "drizzle-orm";
 import {
   INITIAL_HOMEWORK_ASSIGNMENTS,
   INITIAL_HOMEWORK_SUBMISSIONS,
+  INITIAL_LIVE_SESSIONS,
   type MockHomeworkAssignment,
   type MockHomeworkSubmission,
+  type MockLiveSession,
 } from "@/lib/db/mock-data";
 
 export interface StudentDashboardServerData {
@@ -27,6 +29,9 @@ export interface StudentDashboardServerData {
   } | null;
   currentAssignment: MockHomeworkAssignment | null;
   studentSubmission: MockHomeworkSubmission | undefined;
+  liveSession?: MockLiveSession | null;
+  streakDays?: number;
+  activeQuizzesCount?: number;
   isBanned: boolean;
   isDeviceLocked: boolean;
 }
@@ -53,6 +58,9 @@ export async function getStudentDashboardData(
     nextLesson: null,
     currentAssignment: null,
     studentSubmission: undefined,
+    liveSession: null,
+    streakDays: 1,
+    activeQuizzesCount: 0,
     isBanned: false,
     isDeviceLocked: false,
   };
@@ -223,7 +231,145 @@ export async function getStudentDashboardData(
     }
 
     const studentGrade = profile?.gradeLevel ?? 1;
+    const gradeSlug = `grade-${studentGrade}`;
     const gradeTitle = `Grade ${studentGrade} (${GRADE_NAMES[studentGrade] ?? "الصف الأول الابتدائي"})`;
+
+    // 1. Fetch upcoming / latest Live Session for student's grade
+    let liveSessionData: MockLiveSession | null = null;
+    try {
+      const liveSessionSelection = {
+        id: schema.liveSession.id,
+        gradeId: schema.liveSession.gradeId,
+        gradeTitleArabic: schema.grade.titleArabic,
+        gradeSlug: schema.grade.slug,
+        title: schema.liveSession.title,
+        description: schema.liveSession.description,
+        scheduledAt: schema.liveSession.scheduledAt,
+        durationMinutes: schema.liveSession.durationMinutes,
+        provider: schema.liveSession.provider,
+        meetingUrl: schema.liveSession.meetingUrl,
+        meetingPassword: schema.liveSession.meetingPassword,
+        isLiveNow: schema.liveSession.isLiveNow,
+        recordingUrl: schema.liveSession.recordingUrl,
+      };
+
+      const [activeLive] = await db
+        .select(liveSessionSelection)
+        .from(schema.liveSession)
+        .innerJoin(schema.grade, eq(schema.liveSession.gradeId, schema.grade.id))
+        .where(
+          and(
+            eq(schema.grade.gradeNumber, studentGrade),
+            eq(schema.liveSession.isLiveNow, true)
+          )
+        )
+        .orderBy(desc(schema.liveSession.scheduledAt))
+        .limit(1);
+
+      let dbLive = activeLive;
+      if (!dbLive) {
+        [dbLive] = await db
+          .select(liveSessionSelection)
+          .from(schema.liveSession)
+          .innerJoin(schema.grade, eq(schema.liveSession.gradeId, schema.grade.id))
+          .where(
+            and(
+              eq(schema.grade.gradeNumber, studentGrade),
+              gte(schema.liveSession.scheduledAt, now)
+            )
+          )
+          .orderBy(asc(schema.liveSession.scheduledAt))
+          .limit(1);
+      }
+
+      if (dbLive) {
+        liveSessionData = {
+          id: dbLive.id,
+          gradeId: dbLive.gradeId,
+          gradeTitle: dbLive.gradeTitleArabic,
+          gradeSlug: dbLive.gradeSlug,
+          title: dbLive.title,
+          description: dbLive.description ?? "",
+          scheduledAt: dbLive.scheduledAt ? dbLive.scheduledAt.toISOString() : new Date().toISOString(),
+          durationMinutes: dbLive.durationMinutes,
+          provider: (dbLive.provider as "zoom" | "livekit" | "youtube_live") || "zoom",
+          meetingUrl: dbLive.meetingUrl,
+          meetingPassword: dbLive.meetingPassword ?? undefined,
+          isLiveNow: dbLive.isLiveNow,
+          recordingUrl: dbLive.recordingUrl ?? undefined,
+          instructorName: "مستر أحمد الطبلاوي",
+        };
+      } else {
+        liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? null;
+      }
+    } catch {
+      liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? null;
+    }
+
+    // 2. Dynamic streak calculation from lesson progress dates
+    let streakDays = 1;
+    if (completedLessonIds.length > 0) {
+      try {
+        const progressDates = await db
+          .select({ completedAt: schema.lessonProgress.completedAt })
+          .from(schema.lessonProgress)
+          .where(eq(schema.lessonProgress.userId, userId))
+          .orderBy(desc(schema.lessonProgress.completedAt));
+
+        const uniqueDays = new Set(
+          progressDates
+            .map((p) => (p.completedAt ? new Date(p.completedAt).toISOString().split("T")[0] : ""))
+            .filter(Boolean)
+        );
+
+        if (uniqueDays.size > 0) {
+          const dayMs = 24 * 60 * 60 * 1000;
+          let currentDay = new Date();
+          let count = 0;
+          let currentDayStr = currentDay.toISOString().split("T")[0];
+
+          if (!uniqueDays.has(currentDayStr)) {
+            currentDay = new Date(currentDay.getTime() - dayMs);
+            currentDayStr = currentDay.toISOString().split("T")[0];
+          }
+
+          while (uniqueDays.has(currentDayStr)) {
+            count++;
+            currentDay = new Date(currentDay.getTime() - dayMs);
+            currentDayStr = currentDay.toISOString().split("T")[0];
+          }
+          streakDays = Math.max(1, count);
+        }
+      } catch {
+        streakDays = 4;
+      }
+    }
+
+    // 3. Dynamic active quizzes in enrolled units
+    let activeQuizzesCount = 0;
+    if (enrolledUnitIds.length > 0) {
+      try {
+        const [totalQuizzes, passedAttempts] = await Promise.all([
+          db
+            .select({ id: schema.quiz.id })
+            .from(schema.quiz)
+            .where(inArray(schema.quiz.unitId, enrolledUnitIds)),
+          db
+            .select({ quizId: schema.quizAttempt.quizId })
+            .from(schema.quizAttempt)
+            .where(
+              and(
+                eq(schema.quizAttempt.userId, userId),
+                eq(schema.quizAttempt.passed, true)
+              )
+            ),
+        ]);
+        const passedSet = new Set(passedAttempts.map((a) => a.quizId));
+        activeQuizzesCount = totalQuizzes.filter((q) => !passedSet.has(q.id)).length;
+      } catch {
+        activeQuizzesCount = 2;
+      }
+    }
 
     return {
       profile: profile
@@ -241,6 +387,9 @@ export async function getStudentDashboardData(
       nextLesson,
       currentAssignment,
       studentSubmission,
+      liveSession: liveSessionData,
+      streakDays,
+      activeQuizzesCount,
       isBanned: false,
       isDeviceLocked: false,
     };

@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/auth-client";
+import {
+  getSrsDeckStorageKey,
+  mergeSrsDeckWithDefaults,
+} from "@/lib/srs-storage";
 import { useQuizAudio } from "../hooks/use-quiz-audio";
 import { useAntiCheat } from "../hooks/use-anti-cheat";
 import { QuizActiveHeader } from "./quiz-active-header";
@@ -25,6 +29,7 @@ export function InteractiveQuizEngine({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [gradeResult, setGradeResult] = useState<ServerGradeResult | null>(null);
+  const [srsSyncStatus, setSrsSyncStatus] = useState<"synced" | "failed" | null>(null);
 
   const startTimeRef = useRef<number | null>(null);
   const selectedAnswersRef = useRef<Record<string, string>>({});
@@ -34,6 +39,7 @@ export function InteractiveQuizEngine({
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const draftStorageKey = userId ? `elite_quiz_draft_${quiz.id}_${userId}` : null;
+  const srsDeckStorageKey = getSrsDeckStorageKey(userId);
 
   const handleSubmitQuiz = useCallback(
     async (forcedAnswers?: Record<string, string>) => {
@@ -89,6 +95,51 @@ export function InteractiveQuizEngine({
             toast.error("لم تجتز درجة النجاح المطلوبة، يمكنك مراجعة الشرح وإعادة المحاولة.");
           }
 
+          // Intelligent Loop: Auto-route missed concepts to Spaced Repetition (SRS) Deck
+          if (srsDeckStorageKey && data.missedConcepts && data.missedConcepts.length > 0) {
+            try {
+              const rawDeck = localStorage.getItem(srsDeckStorageKey);
+              const existingDeck = mergeSrsDeckWithDefaults(
+                rawDeck ? JSON.parse(rawDeck) : []
+              );
+              const nowIso = new Date().toISOString();
+              let addedCount = 0;
+
+              data.missedConcepts.forEach((concept) => {
+                const alreadyExists = Array.isArray(existingDeck) && existingDeck.some(
+                  (c: { id?: string; word?: string }) =>
+                    c.id === concept.id || c.word?.toLowerCase() === concept.word?.toLowerCase()
+                );
+                if (!alreadyExists) {
+                  existingDeck.unshift({
+                    id: concept.id,
+                    word: concept.word,
+                    phonics: concept.phonics,
+                    arabicMeaning: concept.arabicMeaning,
+                    exampleSentence: concept.exampleSentence,
+                    category: concept.category,
+                    intervalDays: 1,
+                    repetitions: 0,
+                    easeFactor: 2.3,
+                    dueDate: nowIso,
+                  });
+                  addedCount++;
+                }
+              });
+
+              if (addedCount > 0) {
+                localStorage.setItem(srsDeckStorageKey, JSON.stringify(existingDeck));
+                toast.info(`🧠 تمت إضافة ${addedCount} مفاهيم تحتاج لمراجعة تلقائياً لكروت الاستذكار الذكي (SRS)!`);
+              }
+              setSrsSyncStatus("synced");
+            } catch (storageErr) {
+              console.warn("Could not sync missed quiz concepts to SRS storage:", storageErr);
+              setSrsSyncStatus("failed");
+            }
+          } else if (data.missedConcepts && data.missedConcepts.length > 0) {
+            setSrsSyncStatus("failed");
+          }
+
           onComplete?.(data.score, data.passed);
         }
       } catch (err) {
@@ -98,7 +149,7 @@ export function InteractiveQuizEngine({
         setIsSubmitting(false);
       }
     },
-    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound, draftStorageKey]
+    [quiz.id, studentName, parentPhone, studentPhone, isSubmitting, isSubmitted, onComplete, playChimeSound, draftStorageKey, srsDeckStorageKey]
   );
 
   // Restore draft answers and subtract elapsed time on mount (Issue #17)
@@ -210,6 +261,7 @@ export function InteractiveQuizEngine({
     }
     setIsSubmitted(false);
     setGradeResult(null);
+    setSrsSyncStatus(null);
     setSelectedAnswers({});
     setCurrentIndex(0);
     setTimeLeft(quiz.timeLimitMinutes * 60);
@@ -224,6 +276,7 @@ export function InteractiveQuizEngine({
         quiz={quiz}
         studentName={studentName}
         gradeResult={gradeResult}
+        srsSyncStatus={srsSyncStatus}
         onRetake={handleRetake}
         onSpeakText={speakEnglishText}
       />

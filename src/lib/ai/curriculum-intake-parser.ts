@@ -513,6 +513,29 @@ const MINISTRY_CURRICULUM_PRESETS: Record<string, Omit<ParsedCurriculumUnit, "pd
   },
 };
 
+const MINISTRY_VOCABULARY = Object.values(MINISTRY_CURRICULUM_PRESETS).flatMap(
+  (unit) => unit.vocabulary
+);
+
+export function findMatchingVocabulary(
+  text: string,
+  vocabulary: ParsedVocabulary[] = MINISTRY_VOCABULARY
+): ParsedVocabulary | undefined {
+  const normalizedText = text.trim().toLocaleLowerCase("en");
+  if (!normalizedText) return undefined;
+
+  return [...vocabulary]
+    .sort((a, b) => b.word.length - a.word.length)
+    .find((item) => {
+      const normalizedWord = item.word.trim().toLocaleLowerCase("en");
+      const escapedWord = normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return (
+        normalizedText === normalizedWord ||
+        new RegExp(`(^|[^a-z0-9])${escapedWord}(?=$|[^a-z0-9])`).test(normalizedText)
+      );
+    });
+}
+
 /**
  * Main parser entry point: attempts live LLM parsing if an API key exists,
  * otherwise leverages the official Ministry preset engine based on the PDF content & metadata.

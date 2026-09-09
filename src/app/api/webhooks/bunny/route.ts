@@ -13,6 +13,42 @@ import { logSecurityEvent } from "@/lib/security/audit-logger";
  */
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization") || request.headers.get("x-bunny-signature");
+    const configuredSecret = process.env.BUNNY_WEBHOOK_SECRET || process.env.BUNNY_STREAM_API_KEY;
+    if (process.env.NODE_ENV === "production" && !configuredSecret) {
+      await logSecurityEvent({
+        eventType: "unauthorized_portal_access",
+        severity: "critical",
+        description: "Bunny.net Stream webhook rejected because no webhook credential is configured.",
+        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+      });
+
+      return NextResponse.json(
+        { error: "Webhook authentication is not configured." },
+        { status: 503 }
+      );
+    }
+
+    if (configuredSecret && process.env.NODE_ENV === "production") {
+      const isAuthorized =
+        authHeader === configuredSecret ||
+        authHeader === `Bearer ${configuredSecret}`;
+
+      if (!isAuthorized) {
+        logSecurityEvent({
+          eventType: "rate_limit_triggered",
+          severity: "high",
+          description: "🚨 Bunny.net Stream webhook unauthorized invocation attempt rejected.",
+          ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+        });
+
+        return NextResponse.json(
+          { error: "Unauthorized webhook caller: invalid secret or signature." },
+          { status: 401 }
+        );
+      }
+    }
+
     const payload = await request.json();
     const videoGuid = payload.VideoGuid || payload.videoGuid || payload.guid;
     const status = typeof payload.Status === "number" ? payload.Status : Number(payload.status);
