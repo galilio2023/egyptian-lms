@@ -40,7 +40,7 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
         placeholder="مثال: يوسف أحمد محمود"
         value={fullname}
         onChange={(e) => setFullname(e.target.value)}
-        icon={<User className="w-4 h-4" />}
+        icon={<User className="w-4 h-4" aria-hidden="true" />}
       />
 
       {/* Student Phone */}
@@ -57,10 +57,11 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
           placeholder="010xxxxxxxx"
           value={studentPhone}
           onChange={(e) => setStudentPhone(e.target.value.replace(/\D/g, ""))}
-          icon={<EgyptianPhoneSvg className="w-4 h-4" />}
-          className="font-mono font-bold text-left"
+          icon={<EgyptianPhoneSvg className="w-4 h-4" aria-hidden="true" />}
+          className="font-mono font-bold text-left text-base sm:text-xs min-h-[44px]"
+          aria-describedby="student-phone-hint"
         />
-        <p className="text-[10px] text-slate-400 font-medium mt-1">
+        <p id="student-phone-hint" className="text-[10px] text-slate-600 font-medium mt-1">
           سيتم استخدام رقم الموبايل لتسجيل الدخول إلى المنصة لاحقاً.
         </p>
       </div>
@@ -81,19 +82,21 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
 
       {/* Grade Selector */}
       <div className="space-y-2 text-right">
-        <label className="block text-xs font-black text-slate-700 flex items-center gap-1.5">
-          <CurriculumBookSvg className="w-4 h-4" />
+        <span className="block text-xs font-black text-slate-700 flex items-center gap-1.5">
+          <CurriculumBookSvg className="w-4 h-4" aria-hidden="true" />
           <span>اختر الصف الدراسي للبطل</span>
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        </span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="اختر الصف الدراسي">
           {INITIAL_GRADES.map((g) => {
             const isSelected = gradeLevel === String(g.gradeNumber);
             return (
               <button
                 type="button"
                 key={g.id}
+                role="radio"
+                aria-checked={isSelected}
                 onClick={() => setGradeLevel(String(g.gradeNumber))}
-                className={`p-2.5 rounded-xl border-2 text-right transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl border-2 text-right transition-all cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 ${
                   isSelected
                     ? "bg-gradient-to-r from-purple-50 to-pink-50 border-purple-600 shadow-md ring-2 ring-purple-200"
                     : "bg-white border-purple-100 hover:border-purple-300 hover:bg-purple-50/40"
@@ -101,7 +104,7 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-slate-900 block">{g.titleEnglish}</span>
-                  {isSelected && <span className="text-purple-600 font-black text-xs">✓</span>}
+                  {isSelected && <span className="text-purple-600 font-black text-xs" aria-hidden="true">✓</span>}
                 </div>
                 <span className="text-[10px] text-purple-700 font-bold block mt-0.5">{g.titleArabic}</span>
               </button>
@@ -117,10 +120,10 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
           variant="vibrant"
           size="md"
           onClick={onNext}
-          className="w-full"
+          className="w-full min-h-[44px]"
         >
           <span>المتابعة إلى بيانات الأمان وولي الأمر</span>
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         </Button>
       </div>
     </div>

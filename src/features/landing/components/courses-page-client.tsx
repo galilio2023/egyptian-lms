@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, BookOpen, CheckCircle2, ArrowRight } from "lucide-react";
+import { Search, BookOpen, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFloatingButton } from "@/components/layout/whatsapp-floating-btn";
@@ -45,7 +45,7 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
         <section className="relative overflow-hidden py-14 sm:py-18 bg-linear-to-b from-purple-100/60 via-purple-50/30 to-white border-b border-purple-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-purple-800 text-xs font-black shadow-2xs">
-              <CurriculumBookSvg className="w-4 h-4" />
+              <CurriculumBookSvg className="w-4 h-4" aria-hidden="true" />
               <span>دليل المناهج الدراسية الشامل — Connect & Connect Plus</span>
             </div>
 
@@ -82,14 +82,14 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
               
               {/* Search Box */}
               <div className="relative w-full md:w-80">
-                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600" />
+                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600" aria-hidden="true" />
                 <input
                   type="text"
                   aria-label="ابحث عن وحدة أو موضوع درس"
                   placeholder="ابحث عن وحدة أو موضوع درس..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full min-h-[42px] ps-10 pe-4 py-2.5 rounded-2xl bg-purple-50/60 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:bg-white transition-all shadow-2xs"
+                  className="w-full min-h-[44px] ps-10 pe-4 py-2.5 rounded-2xl bg-purple-50/60 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs font-bold focus:outline-none focus:border-purple-600 focus:outline-purple-600/20 focus:bg-white transition-all shadow-2xs"
                 />
               </div>
 
@@ -97,8 +97,9 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1.5 pt-0.5 px-1 max-w-full scroll-smooth overscroll-x-contain w-full md:w-auto">
                 <button
                   type="button"
+                  aria-pressed={activeGradeFilter === "all"}
                   onClick={() => setActiveGradeFilter("all")}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer min-h-[44px] ${
                     activeGradeFilter === "all"
                       ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                       : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -112,8 +113,9 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
                     <button
                       key={g.id}
                       type="button"
+                      aria-pressed={activeGradeFilter === g.slug}
                       onClick={() => setActiveGradeFilter(g.slug)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer min-h-[44px] ${
                         activeGradeFilter === g.slug
                           ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
                           : "bg-white text-slate-700 border border-purple-200 hover:bg-purple-50"
@@ -140,24 +142,25 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
               </span>
               <Link
                 href="/quizzes"
-                className="text-xs font-bold text-purple-700 hover:text-purple-900 transition-colors flex items-center gap-1"
+                className="text-xs font-bold text-purple-700 hover:text-purple-900 transition-colors flex items-center gap-1 min-h-[44px]"
               >
                 <span>جرب التحديات التفاعلية</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>
 
             {filteredUnits.length === 0 ? (
               <div className="p-12 text-center rounded-3xl bg-white border border-purple-200 shadow-sm space-y-3">
-                <BookOpen className="w-12 h-12 text-purple-400 mx-auto" />
+                <BookOpen className="w-12 h-12 text-purple-400 mx-auto" aria-hidden="true" />
                 <h3 className="text-lg font-bold text-slate-800">لا توجد وحدات تطابق بحثك</h3>
                 <p className="text-xs text-slate-500">جرب تغيير كلمة البحث أو اختيار صف دراسي آخر.</p>
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveGradeFilter("all");
                     setSearchQuery("");
                   }}
-                  className="mt-2 px-4 py-2 bg-purple-100 text-purple-800 font-bold rounded-xl text-xs hover:bg-purple-200 transition-colors"
+                  className="mt-2 px-4 py-2 bg-purple-100 text-purple-800 font-bold rounded-xl text-xs hover:bg-purple-200 transition-colors min-h-[44px]"
                 >
                   إعادة ضبط البحث
                 </button>
@@ -194,26 +197,26 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs font-bold">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
                     <span>فيديوهات كارتونية بصرية ممتعة</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
                     <span>معمل فونكس لنطق الكلمات بالذكاء الاصطناعي</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
                     <span>تصحيح واجبات كشكول الطالب بالقلم الرقمي</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
                     <span>شهادات تقدير معتمدة قابلة للطباعة</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 text-center space-y-4">
-                <XpGemSvg className="w-16 h-16 mx-auto" />
+                <XpGemSvg className="w-16 h-16 mx-auto" aria-hidden="true" />
                 <h3 className="text-xl font-black">جاهز لبدء رحلة التميز؟</h3>
                 <p className="text-xs text-purple-200 font-medium">
                   سجل حسابك الآن واحصل على اختبارات مجانية ونقاط تفوق فورية في لوحة الشرف.

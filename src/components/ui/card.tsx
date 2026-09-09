@@ -12,8 +12,8 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variantStyles = {
-    modern: "modern-card p-6 bg-white/95 backdrop-blur-md border-2 border-purple-100 rounded-3xl shadow-md",
-    glow: "glass-glow-card p-6 bg-white/90 backdrop-blur-md border border-white/80 rounded-3xl",
+    modern: "p-4 sm:p-6 bg-white/95 backdrop-blur-md border-2 border-purple-100 rounded-3xl shadow-md hover:shadow-lg transition-shadow",
+    glow: "p-4 sm:p-6 bg-white/90 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-[0_16px_40px_-8px_rgba(168,85,247,0.12)] hover:shadow-[0_24px_50px_-10px_rgba(168,85,247,0.22)] transition-shadow",
     subtle: "p-4 bg-purple-50/50 border border-purple-100 rounded-2xl",
   };
 

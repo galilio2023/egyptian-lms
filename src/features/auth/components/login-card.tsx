@@ -33,13 +33,15 @@ export const LoginCard: React.FC = () => {
   } = useLoginForm();
 
   return (
-    <div className="modern-card bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">
+    <div className="bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">
       {/* Role Toggle Tabs */}
-      <div className="flex p-1 rounded-2xl bg-purple-100/70 border border-purple-200 text-xs font-black">
+      <div className="flex p-1 rounded-2xl bg-purple-100/70 border border-purple-200 text-xs font-black" role="tablist" aria-label="نوع تسجيل الدخول">
         <button
           type="button"
+          role="tab"
+          aria-selected={loginRole === "student"}
           onClick={() => setLoginRole("student")}
-          className={`flex-1 py-2 rounded-xl transition-all ${
+          className={`flex-1 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 min-h-[44px] ${
             loginRole === "student"
               ? "bg-white text-purple-950 shadow-xs"
               : "text-purple-700 hover:text-purple-950"
@@ -49,8 +51,10 @@ export const LoginCard: React.FC = () => {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={loginRole === "staff"}
           onClick={() => setLoginRole("staff")}
-          className={`flex-1 py-2 rounded-xl transition-all ${
+          className={`flex-1 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 min-h-[44px] ${
             loginRole === "staff"
               ? "bg-white text-purple-950 shadow-xs"
               : "text-purple-700 hover:text-purple-950"
@@ -63,7 +67,7 @@ export const LoginCard: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-1.5">
         <div className="flex items-center justify-center">
-          <StudentLoginKeySvg className="w-14 h-14 drop-shadow-sm" />
+          <StudentLoginKeySvg className="w-14 h-14 drop-shadow-sm" aria-hidden="true" />
         </div>
         <h1 className="text-2xl font-black text-slate-900">
           تسجيل{" "}
@@ -80,7 +84,7 @@ export const LoginCard: React.FC = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold text-right flex items-center gap-2">
+        <div id="login-error" role="alert" aria-live="assertive" className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold text-right flex items-center gap-2">
           <span>⚠️</span>
           <span>{error}</span>
         </div>
@@ -97,17 +101,17 @@ export const LoginCard: React.FC = () => {
           isTransferring={isTransferring}
         />
       ) : (
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4" noValidate>
           {/* Phone Number Field */}
           <div className="space-y-1.5 text-right">
             <label htmlFor="login-phone" className="text-xs font-bold text-slate-700 flex items-center justify-between">
               <span>{loginRole === "student" ? "رقم موبايل الطالب (اسم المستخدم)" : "رقم موبايل المعلم / المشرف"}</span>
-              <EgyptianPhoneSvg className="w-5 h-5" />
+              <EgyptianPhoneSvg className="w-5 h-5" aria-hidden="true" />
             </label>
-            <div className="relative">
+            <div className="relative" dir="ltr">
               <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-purple-700 pointer-events-none select-none flex items-center gap-1">
                 <span>🇪🇬</span>
-                <span className="text-[11px] text-slate-400 font-normal">مصر</span>
+                <span className="text-xs text-slate-600 font-normal">مصر</span>
               </span>
               <input
                 id="login-phone"
@@ -119,7 +123,11 @@ export const LoginCard: React.FC = () => {
                 placeholder="010xxxxxxxx أو 011/012/015"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full ps-16 pe-4 py-3 rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold disabled:opacity-50"
+                autoComplete="username"
+                maxLength={11}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "login-error" : undefined}
+                className="w-full ps-16 pe-4 py-3 min-h-[44px] rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold disabled:opacity-50"
               />
             </div>
           </div>
@@ -128,9 +136,9 @@ export const LoginCard: React.FC = () => {
           <div className="space-y-1.5 text-right">
             <label htmlFor="login-password" className="text-xs font-bold text-slate-700 flex items-center justify-between">
               <span>كلمة المرور</span>
-              <SecurityLockSvg className="w-5 h-5" />
+              <SecurityLockSvg className="w-5 h-5" aria-hidden="true" />
             </label>
-            <div className="relative">
+            <div className="relative" dir="ltr">
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
@@ -140,15 +148,16 @@ export const LoginCard: React.FC = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full ps-4 pe-11 py-3 rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold disabled:opacity-50"
+                autoComplete="current-password"
+                className="w-full ps-4 pe-11 py-3 min-h-[44px] rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute end-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 p-1 rounded-lg transition-colors cursor-pointer"
+                className="absolute end-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 p-1 rounded-lg transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
                 aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-purple-600" />}
+                {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4 text-purple-600" aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -159,9 +168,9 @@ export const LoginCard: React.FC = () => {
             variant="vibrant"
             size="md"
             isLoading={isLoading}
-            className="w-full"
+            className="w-full min-h-[44px]"
           >
-            <StudentLoginKeySvg className="w-5 h-5" />
+            <StudentLoginKeySvg className="w-5 h-5" aria-hidden="true" />
             <span>
               {isLoading
                 ? "جاري تسجيل الدخول..."
@@ -185,18 +194,22 @@ export const LoginCard: React.FC = () => {
               مسح الجلسة
             </a>
           </div>
+          <div className="text-[11px] text-amber-900 bg-amber-100/70 p-2 rounded-xl border border-amber-200/60 space-y-0.5">
+            <p className="font-bold">حساب الطالب التجريبي المعتمد:</p>
+            <p className="font-mono text-[10px]">الموبايل: <strong className="text-purple-900">01012345678</strong> | كلمة السر: <strong className="text-purple-900">12345678</strong></p>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <a
               href="/api/dev/session?role=student"
               className="px-2.5 py-2 text-center rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] transition-all shadow-xs"
             >
-              دخول كطالب 🎓
+              دخول سريع كطالب 🎓
             </a>
             <a
               href="/api/dev/session?role=admin"
               className="px-2.5 py-2 text-center rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px] transition-all shadow-xs"
             >
-              دخول كمسؤول 🛡️
+              دخول سريع كمسؤول 🛡️
             </a>
           </div>
         </div>
@@ -209,7 +222,7 @@ export const LoginCard: React.FC = () => {
           className="font-bold text-purple-700 hover:text-purple-900 transition-colors flex items-center justify-center gap-1"
         >
           <span>ليس لديك حساب؟ سجّل حساب بطل جديد مجاناً</span>
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
 
         <Link

@@ -24,10 +24,10 @@ export function PortalTopBar({
       >
         <Link
           href={backHref}
-          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-purple-700 transition-colors min-w-0"
+          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-purple-700 transition-colors min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 rounded-lg"
         >
-          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" />
-          <span className="truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">{backLabel}</span>
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" aria-hidden="true" />
+          <span className="truncate max-w-[150px] sm:max-w-[220px] sm:max-w-none">{backLabel}</span>
         </Link>
 
         {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}

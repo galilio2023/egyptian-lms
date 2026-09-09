@@ -106,7 +106,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                     onClick={() => onInspectReceipt(ord)}
                     className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] flex items-center gap-1 border border-indigo-200 cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye aria-hidden="true" className="w-3.5 h-3.5" />
                     <span>فحص الإيصال</span>
                   </button>
                 ) : (
@@ -123,7 +123,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                     onClick={() => onApprove(ord)}
                     className="flex-1 text-xs justify-center"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 me-1" />
+                    <CheckCircle2 aria-hidden="true" className="w-3.5 h-3.5 me-1" />
                     <span>تفعيل الكورس</span>
                   </Button>
 
@@ -132,8 +132,9 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                     onClick={() => onReject(ord.id)}
                     className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 cursor-pointer text-xs font-bold flex items-center gap-1"
                     title="رفض الإيصال"
+                    aria-label="رفض الإيصال"
                   >
-                    <X className="w-4 h-4" />
+                    <X aria-hidden="true" className="w-4 h-4" />
                     <span>رفض</span>
                   </button>
                 </div>
@@ -208,10 +209,11 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
               <td className="p-4">
                 {ord.receiptImageUrl ? (
                   <button
+                    type="button"
                     onClick={() => onInspectReceipt(ord)}
                     className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-indigo-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye aria-hidden="true" className="w-3.5 h-3.5" />
                     <span>فحص الإيصال و الـ OCR</span>
                   </button>
                 ) : (
@@ -233,16 +235,18 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                       variant="success"
                       onClick={() => onApprove(ord)}
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <CheckCircle2 aria-hidden="true" className="w-3.5 h-3.5" />
                       <span>تفعيل الكورس</span>
                     </Button>
 
                     <button
+                      type="button"
                       onClick={() => onReject(ord.id)}
                       className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 cursor-pointer"
                       title="رفض الإيصال"
+                      aria-label="رفض الإيصال"
                     >
-                      <X className="w-4 h-4" />
+                      <X aria-hidden="true" className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (

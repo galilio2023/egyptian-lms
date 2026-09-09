@@ -18,38 +18,99 @@ export default async function StudentDashboardPage() {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
-  if (!session?.user?.id) {
+  const cookieHeader = headersList.get("cookie") || "";
+  const isDevBypass =
+    process.env.NODE_ENV === "development" &&
+    (cookieHeader.includes("dev_bypass=true") || process.env.DEV_BYPASS_AUTH === "true");
+
+  if (!session?.user?.id && !isDevBypass) {
     redirect("/student-login?callbackUrl=/portal/dashboard");
   }
 
-  const userId = session.user.id;
-  const cookieHeader = headersList.get("cookie");
+  const userId = session?.user?.id || "student-dev-primary";
 
-  // Parallel data fetch — no waterfall
-  const [{ units, settings }, dashboardData] = await Promise.all([
-    getLandingPageData(),
-    getStudentDashboardData(userId, cookieHeader),
-  ]);
+  // Parallel data fetch — gracefully handle local DB unavailability in dev mode
+  let landingData: Awaited<ReturnType<typeof getLandingPageData>> = { units: [], settings: {} as any };
+  let dashboardData: any = {
+    profile: null,
+    enrolledUnitIds: ["u-101"],
+    nextLesson: null,
+    currentAssignment: null,
+    studentSubmission: undefined,
+    isBanned: false,
+    isDeviceLocked: false,
+  };
 
-  // If student is banned / device locked, redirect to login
-  if (dashboardData.isBanned) {
+  try {
+    const [landing, dash] = await Promise.all([
+      getLandingPageData(),
+      getStudentDashboardData(userId, cookieHeader),
+    ]);
+    landingData = landing;
+    dashboardData = dash;
+  } catch (err) {
+    if (isDevBypass) {
+      console.warn("[portal/dashboard] Using fallback landing/dashboard data for dev bypass:", err);
+      try {
+        landingData = await getLandingPageData();
+      } catch {
+        // use defaults
+      }
+    } else {
+      throw err;
+    }
+  }
+
+  // Provide high-fidelity mock student profile in development bypass if DB record is empty
+  if (isDevBypass && !dashboardData.profile) {
+    dashboardData.profile = {
+      gradeLevel: 1,
+      gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
+      gradeSlug: "grade-1",
+      xpPoints: 850,
+      completedLessons: 3,
+      parentPhoneNumber: "01098765432",
+      isBanned: false,
+    };
+    if (dashboardData.enrolledUnitIds.length === 0) {
+      dashboardData.enrolledUnitIds = ["u-101"];
+    }
+    if (!dashboardData.nextLesson) {
+      dashboardData.nextLesson = {
+        title: "الدرس الأول: الترحيب والتعارف (Hello & Welcome)",
+        unitTitle: "Unit 1: Back to School",
+        durationMinutes: 20,
+        slug: "lesson-1-greetings",
+      };
+    }
+  }
+
+  // If student is banned / device locked, redirect to login (bypassed in dev)
+  if (!isDevBypass && dashboardData.isBanned) {
     redirect("/student-login?reason=banned");
   }
 
-  if (dashboardData.isDeviceLocked) {
+  if (!isDevBypass && dashboardData.isDeviceLocked) {
     redirect("/student-login?reason=device_locked");
   }
 
-  const studentUser = session.user as { id: string; name: string; email: string; phoneNumber?: string };
+  const studentUser = session?.user
+    ? (session.user as { id: string; name: string; email: string; phoneNumber?: string })
+    : {
+        id: "student-dev-primary",
+        name: "طالب تجريبي (وضع التطوير)",
+        email: "student.dev@elite-academy.edu.eg",
+        phoneNumber: "01012345678",
+      };
 
   return (
     <StudentDashboardClient
-      initialUnits={units}
-      initialSettings={settings}
+      initialUnits={landingData.units}
+      initialSettings={landingData.settings}
       initialDashboardData={dashboardData}
       studentId={studentUser.id}
       studentName={studentUser.name}
-      studentPhone={(studentUser.phoneNumber as string | undefined) ?? "01000000000"}
+      studentPhone={(studentUser.phoneNumber as string | undefined) ?? "01012345678"}
     />
   );
 }

@@ -56,6 +56,9 @@ export function VideoCheckpointModal({
     <div
       onClick={(event) => event.stopPropagation()}
       className="absolute inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="checkpoint-title"
     >
       <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-4 border-amber-400 relative overflow-hidden text-right" dir="rtl">
         {/* Glow Header */}
@@ -65,17 +68,17 @@ export function VideoCheckpointModal({
         {/* Badge & XP */}
         <div className="flex items-center justify-between mb-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
-            <Sparkles className="w-4 h-4 text-amber-600 animate-spin" />
+            <Sparkles className="w-4 h-4 text-amber-600 animate-spin" aria-hidden="true" />
             <span>تحدي الفهم السريع 🧠</span>
           </div>
           <div className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200">
-            <Trophy className="w-3.5 h-3.5 text-emerald-600" />
+            <Trophy className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>+{checkpoint.rewardXp || 10} XP</span>
           </div>
         </div>
 
         {/* Question Title */}
-        <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mb-2 leading-snug">
+        <h3 id="checkpoint-title" className="text-lg sm:text-xl font-extrabold text-slate-900 mb-2 leading-snug">
           {checkpoint.questionText}
         </h3>
         <p className="text-xs text-slate-500 mb-5">
@@ -113,9 +116,9 @@ export function VideoCheckpointModal({
                     isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 text-slate-500"
                   }`}>
                     {hasSubmitted && option.isCorrect ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                     ) : hasSubmitted && isSelected && !option.isCorrect ? (
-                      <XCircle className="w-4 h-4 text-rose-600" />
+                      <XCircle className="w-4 h-4 text-rose-600" aria-hidden="true" />
                     ) : (
                       "•"
                     )}
@@ -134,9 +137,9 @@ export function VideoCheckpointModal({
           }`}>
             <div className="flex items-start gap-2">
               {isCorrect ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
               ) : (
-                <HelpCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <HelpCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
               )}
               <div>
                 <p className="font-bold mb-1">
@@ -157,19 +160,19 @@ export function VideoCheckpointModal({
               type="button"
               onClick={handleCheckAnswer}
               disabled={!selectedOptionId}
-              className="w-full py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
             >
               <span>تحقق من الإجابة</span>
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowRight className="w-4 h-4 rotate-180" aria-hidden="true" />
             </button>
           ) : isCorrect ? (
             <button
               type="button"
               onClick={onContinue}
-              className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
             >
               <span>متابعة الشرح والدرس 🚀</span>
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <ArrowRight className="w-4 h-4 rotate-180" aria-hidden="true" />
             </button>
           ) : (
             <button

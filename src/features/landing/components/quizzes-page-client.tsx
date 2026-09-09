@@ -45,7 +45,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
         <section className="relative overflow-hidden py-14 sm:py-18 bg-linear-to-b from-amber-100/50 via-amber-50/20 to-white border-b border-amber-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 border border-amber-200 text-amber-900 text-xs font-black shadow-2xs">
-              <Sparkles className="w-4 h-4 text-amber-600" />
+              <Sparkles className="w-4 h-4 text-amber-600" aria-hidden="true" />
               <span>ألعاب وتحديات الأبطال — العب، تعلّم، واجمع نقاط الـ XP</span>
             </div>
 
@@ -60,15 +60,15 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             {/* Gamification Highlights */}
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-slate-700">
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-amber-200 shadow-2xs">
-                <XpGemSvg className="w-4 h-4 text-purple-600" />
+                <XpGemSvg className="w-4 h-4 text-purple-600" aria-hidden="true" />
                 <span>حتى +200 نقطة XP لكل اختبار</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-amber-200 shadow-2xs">
-                <Flame className="w-4 h-4 text-orange-500" />
+                <Flame className="w-4 h-4 text-orange-500" aria-hidden="true" />
                 <span>تعزيز التتابع اليومي (Daily Streaks)</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-amber-200 shadow-2xs">
-                <Trophy className="w-4 h-4 text-amber-500" />
+                <Trophy className="w-4 h-4 text-amber-500" aria-hidden="true" />
                 <span>تصعيد مباشر إلى لوحة الشرف</span>
               </div>
             </div>
@@ -81,6 +81,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             <button
               type="button"
               onClick={() => setActiveCategory("all")}
+              aria-pressed={activeCategory === "all"}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "all"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
@@ -92,6 +93,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             <button
               type="button"
               onClick={() => setActiveCategory("phonics")}
+              aria-pressed={activeCategory === "phonics"}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "phonics"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
@@ -103,6 +105,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             <button
               type="button"
               onClick={() => setActiveCategory("fruits")}
+              aria-pressed={activeCategory === "fruits"}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "fruits"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
@@ -114,6 +117,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             <button
               type="button"
               onClick={() => setActiveCategory("grammar")}
+              aria-pressed={activeCategory === "grammar"}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "grammar"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
@@ -125,6 +129,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
             <button
               type="button"
               onClick={() => setActiveCategory("numbers")}
+              aria-pressed={activeCategory === "numbers"}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === "numbers"
                   ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/20 scale-105"
@@ -139,7 +144,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
         {/* Quizzes Cards Grid */}
         <section className="py-12 sm:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
               {filteredQuizzes.map((quiz) => (
                 <div
                   key={quiz.id}
@@ -168,15 +173,15 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
                   {/* Quiz Meta Specs */}
                   <div className="flex items-center gap-4 py-3 px-4 rounded-2xl bg-white/80 border border-white/60 mb-6 text-xs font-bold text-slate-700">
                     <div className="flex items-center gap-1.5">
-                      <HelpCircle className="w-4 h-4 text-purple-600" />
+                      <HelpCircle className="w-4 h-4 text-purple-600" aria-hidden="true" />
                       <span>{quiz.questionsCount} أسئلة تفاعلية</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-amber-600" />
+                      <Clock className="w-4 h-4 text-amber-600" aria-hidden="true" />
                       <span>{quiz.durationMinutes} دقائق</span>
                     </div>
                     <div className="ms-auto flex items-center gap-1.5 text-amber-600 font-black">
-                      <XpGemSvg className="w-4 h-4" />
+                      <XpGemSvg className="w-4 h-4" aria-hidden="true" />
                       <span>+{quiz.xpReward} XP</span>
                     </div>
                   </div>
@@ -184,10 +189,10 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
                   {/* Action Link */}
                   <Link
                     href={`/portal/quiz/${quiz.slug}`}
-                    className={`w-full py-3.5 px-6 rounded-2xl ${quiz.buttonColor} text-white font-black text-xs sm:text-sm text-center shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-98`}
+                    className={`w-full py-3.5 px-6 rounded-2xl ${quiz.buttonColor} text-white font-black text-xs sm:text-sm text-center shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]`}
                   >
                     <span>ابدأ مغامرة التحدي الآن</span>
-                    <Zap className="w-4 h-4" />
+                    <Zap className="w-4 h-4" aria-hidden="true" />
                   </Link>
                 </div>
               ))}
@@ -199,7 +204,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
         <section className="py-14 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto shadow-md">
-              <ChampionCupSvg className="w-9 h-9" />
+              <ChampionCupSvg className="w-9 h-9" aria-hidden="true" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black">
               تريد رؤية اسمك وصورتك في المركز الأول؟
@@ -213,7 +218,7 @@ export function QuizzesPageClient({ settings }: QuizzesPageClientProps) {
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs transition-all shadow-lg hover:scale-105"
               >
                 <span>استعرض لوحة الشرف وأوائل الطلاب</span>
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MockUnit } from "@/lib/db/mock-data";
 import { CheckoutHeader } from "./checkout-header";
 import { PaymentTabs, type PaymentMethodType } from "./payment-tabs";
@@ -32,6 +32,14 @@ export function EgyptianCheckoutModal({
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountEgp: number } | null>(null);
   const [couponError, setCouponError] = useState("");
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -76,8 +84,13 @@ export function EgyptianCheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in-50 overflow-y-auto">
-      <div className="modern-card w-full max-w-lg rounded-3xl p-4 sm:p-8 space-y-4 sm:space-y-5 border-2 border-purple-200 shadow-2xl bg-white relative my-auto max-h-[92dvh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in-50">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="checkout-modal-title"
+        className="w-full max-w-lg rounded-3xl p-4 sm:p-8 space-y-4 sm:space-y-5 border-2 border-purple-200 shadow-2xl bg-white relative my-auto max-h-[92dvh] overflow-y-auto"
+      >
         <CheckoutHeader
           unit={unit}
           onClose={onClose}
@@ -94,15 +107,17 @@ export function EgyptianCheckoutModal({
           <>
             {/* Promo Coupon Bar */}
             <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-200 text-xs space-y-2">
-              <form onSubmit={handleApplyCoupon} className="flex items-center gap-2">
+              <form onSubmit={handleApplyCoupon} noValidate className="flex items-center gap-2">
+                <label htmlFor="promo-coupon-input" className="sr-only">كود الخصم</label>
                 <input
+                  id="promo-coupon-input"
                   type="text"
                   dir="ltr"
                   aria-label="كود الخصم الترويجي"
                   placeholder="كود الخصم (e.g. WELCOME20)"
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
-                  className="flex-1 min-h-[40px] px-3 py-2 rounded-xl bg-white border border-purple-200 text-slate-900 placeholder-slate-400 font-mono font-bold uppercase text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all"
+                  className="flex-1 min-h-[40px] px-3 py-2 rounded-xl bg-white border border-purple-200 text-slate-900 placeholder:text-slate-400 font-mono font-bold uppercase text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all"
                 />
                 <button
                   type="submit"
@@ -118,7 +133,7 @@ export function EgyptianCheckoutModal({
                 </p>
               )}
               {couponError && (
-                <p className="text-rose-600 font-bold text-xs">
+                <p className="text-rose-600 font-bold text-xs" role="alert">
                   {couponError}
                 </p>
               )}

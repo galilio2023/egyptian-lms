@@ -59,14 +59,14 @@ export function GraderSidebar({
   const hasSafeAudio = Boolean(submission.audioVoiceNoteUrl && isSafeAudioUrl(submission.audioVoiceNoteUrl));
 
   return (
-    <div className={`lg:col-span-4 xl:col-span-3 p-4 sm:p-5 bg-slate-850 flex flex-col justify-between space-y-6 overflow-y-auto ${className}`}>
+    <div className={`lg:col-span-4 xl:col-span-3 p-4 sm:p-5 bg-slate-900 flex flex-col justify-between space-y-6 overflow-y-auto ${className}`}>
       <div className="space-y-5">
         {/* Oral Voice Note Player (if student submitted speaking phonics) */}
         {hasSafeAudio && (
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border-2 border-purple-500/40 text-xs space-y-2">
             <div className="flex items-center justify-between text-purple-300 font-black">
               <span className="flex items-center gap-1.5">
-                <Volume2 className="w-4 h-4 text-purple-400 animate-pulse" />
+                <Volume2 className="w-4 h-4 text-purple-400 animate-pulse" aria-hidden="true" />
                 <span>تسجيل صوتي مرفق (قراءة شفهية)</span>
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-800/80 text-purple-200">
@@ -139,7 +139,7 @@ export function GraderSidebar({
 
             {score === submission.maxScore && (
               <div className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-400 text-xs font-black flex items-center gap-1 border border-amber-500/30">
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>درجة نهائية!</span>
               </div>
             )}
@@ -208,7 +208,7 @@ export function GraderSidebar({
             disabled={isSaving}
             className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
-            <FastForward className="w-4 h-4" />
+            <FastForward className="w-4 h-4" aria-hidden="true" />
             <span>حفظ والانتقال للتالي (Fast Next)</span>
           </button>
         )}
@@ -219,7 +219,7 @@ export function GraderSidebar({
           disabled={isSaving}
           className="w-full py-2.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs border border-slate-700 flex items-center justify-center gap-2 cursor-pointer transition-all"
         >
-          <Save className="w-4 h-4 text-purple-400" />
+          <Save className="w-4 h-4 text-purple-400" aria-hidden="true" />
           <span>حفظ التعديلات وإنهاء</span>
         </button>
       </div>

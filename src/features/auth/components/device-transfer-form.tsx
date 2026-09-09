@@ -21,10 +21,10 @@ export const DeviceTransferForm: React.FC<DeviceTransferFormProps> = ({
   isTransferring,
 }) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-4 text-right">
+    <form onSubmit={onSubmit} className="space-y-4 text-right" noValidate>
       <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-200 text-amber-950 space-y-2 text-xs">
         <div className="flex items-center gap-2 font-black text-amber-800">
-          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" aria-hidden="true" />
           <span>تنبيه أمان الأجهزة (Single Active Device)</span>
         </div>
         <p className="leading-relaxed font-medium">
@@ -35,20 +35,24 @@ export const DeviceTransferForm: React.FC<DeviceTransferFormProps> = ({
       <div className="space-y-1.5 text-right">
         <label htmlFor="parent-transfer-phone" className="text-xs font-bold text-slate-700 flex items-center justify-between">
           <span>رقم موبايل ولي الأمر للتحقق</span>
-          <EgyptianPhoneSvg className="w-5 h-5" />
+          <EgyptianPhoneSvg className="w-5 h-5" aria-hidden="true" />
         </label>
-        <input
-          id="parent-transfer-phone"
-          type="tel"
-          inputMode="tel"
-          dir="ltr"
-          required
-          disabled={isTransferring}
-          placeholder="010xxxxxxxx أو 011/012/015"
-          value={parentPhoneInput}
-          onChange={(e) => onParentPhoneChange(e.target.value)}
-          className="w-full px-4 py-3 rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold"
-        />
+        <div className="relative" dir="ltr">
+          <input
+            id="parent-transfer-phone"
+            type="tel"
+            inputMode="tel"
+            dir="ltr"
+            required
+            disabled={isTransferring}
+            placeholder="010xxxxxxxx أو 011/012/015"
+            value={parentPhoneInput}
+            onChange={(e) => onParentPhoneChange(e.target.value)}
+            autoComplete="tel"
+            maxLength={11}
+            className="w-full px-4 py-3 rounded-2xl bg-purple-50/50 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs focus:outline-none focus:border-purple-600 focus:bg-white transition-all text-left font-mono font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+          />
+        </div>
       </div>
 
       <Button
@@ -56,7 +60,7 @@ export const DeviceTransferForm: React.FC<DeviceTransferFormProps> = ({
         variant="success"
         size="md"
         isLoading={isTransferring}
-        className="w-full"
+        className="w-full min-h-[44px]"
       >
         <span>تأكيد النقل والدخول إلى الحساب</span>
       </Button>
@@ -67,7 +71,7 @@ export const DeviceTransferForm: React.FC<DeviceTransferFormProps> = ({
         size="sm"
         disabled={isTransferring}
         onClick={onCancel}
-        className="w-full"
+        className="w-full min-h-[44px] focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:outline-none"
       >
         إلغاء والعودة لتسجيل الدخول
       </Button>

@@ -27,9 +27,9 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
         className
       )}
     >
-      <div>
+      <div className="flex-1 min-w-0">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2.5">
-          {icon && <div className="shrink-0">{icon}</div>}
+          {icon && <span className="shrink-0" aria-hidden="true">{icon}</span>}
           <span>{title}</span>
         </h1>
         {displaySubtitle && (

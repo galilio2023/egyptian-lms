@@ -40,10 +40,19 @@ export default async function LessonPlayerPage({ params }: PageProps) {
     headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     headerList.get("x-real-ip") ||
     undefined;
+
+  const cookieHeader = headerList.get("cookie") || "";
+  const isDevBypass =
+    process.env.NODE_ENV === "development" &&
+    (cookieHeader.includes("dev_bypass=true") || process.env.DEV_BYPASS_AUTH === "true");
+
+  const effectiveUserId = session?.user?.id || (isDevBypass ? "student-dev-primary" : undefined);
+
   const viewerAccess = await getLessonViewerAccess(
     data.lesson.id,
-    session?.user?.id,
-    clientIp
+    effectiveUserId,
+    clientIp,
+    isDevBypass
   );
   const initialLesson = {
     ...data.lesson,

@@ -114,7 +114,7 @@ export function BroadcastComposerForm() {
         <div className="space-y-1.5 text-right">
           <label htmlFor="broadcast-target-grade" className="text-xs font-bold text-slate-700 flex items-center justify-between cursor-pointer">
             <span>اختر الفئة المستهدفة (الصف الدراسي)</span>
-            <UsersGraduationSvg className="w-4 h-4" />
+            <UsersGraduationSvg aria-hidden="true" className="w-4 h-4" />
           </label>
           <select
             id="broadcast-target-grade"
@@ -138,7 +138,7 @@ export function BroadcastComposerForm() {
               نص الرسالة المرسلة لولي الأمر
             </label>
             <div className="flex items-center gap-1 text-[10px] text-purple-700 font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin" />
+              <Sparkles aria-hidden="true" className={`w-3.5 h-3.5 text-amber-500 ${isGeneratingAi ? "animate-spin" : ""}`} />
               <span>الصياغة الذكية التلقائية:</span>
             </div>
           </div>
@@ -148,6 +148,7 @@ export function BroadcastComposerForm() {
             <button
               type="button"
               disabled={isGeneratingAi}
+              aria-busy={isGeneratingAi}
               onClick={() => handleGenerateAi("exam_reminder")}
               className="px-2.5 py-1 rounded-xl bg-purple-100/80 hover:bg-purple-200 text-purple-900 text-[11px] font-bold border border-purple-300/60 transition-colors disabled:opacity-50 cursor-pointer"
             >
@@ -156,6 +157,7 @@ export function BroadcastComposerForm() {
             <button
               type="button"
               disabled={isGeneratingAi}
+              aria-busy={isGeneratingAi}
               onClick={() => handleGenerateAi("homework_feedback")}
               className="px-2.5 py-1 rounded-xl bg-indigo-100/80 hover:bg-indigo-200 text-indigo-900 text-[11px] font-bold border border-indigo-300/60 transition-colors disabled:opacity-50 cursor-pointer"
             >
@@ -164,6 +166,7 @@ export function BroadcastComposerForm() {
             <button
               type="button"
               disabled={isGeneratingAi}
+              aria-busy={isGeneratingAi}
               onClick={() => handleGenerateAi("live_session")}
               className="px-2.5 py-1 rounded-xl bg-amber-100/80 hover:bg-amber-200 text-amber-900 text-[11px] font-bold border border-amber-300/60 transition-colors disabled:opacity-50 cursor-pointer"
             >
@@ -172,6 +175,7 @@ export function BroadcastComposerForm() {
             <button
               type="button"
               disabled={isGeneratingAi}
+              aria-busy={isGeneratingAi}
               onClick={() => handleGenerateAi("motivational_progress")}
               className="px-2.5 py-1 rounded-xl bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 text-[11px] font-bold border border-emerald-300/60 transition-colors disabled:opacity-50 cursor-pointer"
             >
@@ -198,14 +202,14 @@ export function BroadcastComposerForm() {
           isLoading={isSending}
           className="w-full shadow-lg shadow-purple-500/25"
         >
-          <BroadcastMegaphoneSvg className="w-5 h-5" />
+          <BroadcastMegaphoneSvg aria-hidden="true" className="w-5 h-5" />
           <span>إرسال الإشعار لجميع الأرقام المحددة</span>
         </Button>
       </form>
 
       {sentCount && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-xs text-emerald-950 text-center font-bold flex items-center justify-center gap-2 animate-in fade-in-50">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div role="status" aria-live="polite" className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-xs text-emerald-950 text-center font-bold flex items-center justify-center gap-2 animate-in fade-in-50">
+          <CheckCircle2 aria-hidden="true" className="w-5 h-5 text-emerald-600 shrink-0" />
           <span>تم إرسال الرسالة بنجاح إلى {sentCount} ولي أمر! نسبة التسليم 99.4%.</span>
         </div>
       )}

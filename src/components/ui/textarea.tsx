@@ -13,9 +13,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const errorId = `${textareaId}-error`;
 
     return (
-      <div className="w-full space-y-1.5 text-right">
+      <div className="w-full space-y-1.5 text-start" dir="ltr">
         {label && (
-          <label htmlFor={textareaId} className="block text-xs font-black text-slate-700 cursor-pointer">
+          <label htmlFor={textareaId} className="block text-xs font-black text-slate-700 cursor-pointer text-right">
             {label}
           </label>
         )}
@@ -26,14 +26,14 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full p-3 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all leading-relaxed",
+            "w-full p-3 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs font-medium focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all leading-relaxed resize-y disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100/50 text-right",
             error && "border-rose-400 bg-rose-50/20 focus:border-rose-600 focus:ring-rose-500/20",
             className
           )}
           {...props}
         />
         {error && (
-          <p id={errorId} role="alert" className="text-[11px] text-rose-600 font-bold">
+          <p id={errorId} role="alert" className="text-xs text-rose-600 font-bold text-right">
             {error}
           </p>
         )}

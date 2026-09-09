@@ -48,7 +48,16 @@ export function QuizQuestionCard({
           return (
             <div
               key={opt.id}
-              className={`w-full p-4 rounded-xl text-right font-medium text-sm transition-all flex items-center justify-between cursor-pointer ${
+              role="radio"
+              aria-checked={isSelected}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelectOption(opt.id);
+                }
+              }}
+              className={`w-full min-h-[44px] p-4 rounded-xl text-right font-medium text-sm transition-all flex items-center justify-between cursor-pointer ${
                 isSelected
                   ? "bg-indigo-600 border-2 border-indigo-600 text-white shadow-md shadow-indigo-600/20"
                   : "bg-white hover:bg-slate-100 border border-slate-200 text-slate-800"
@@ -62,14 +71,14 @@ export function QuizQuestionCard({
                     e.stopPropagation();
                     onSpeakText(opt.text);
                   }}
-                  className={`p-1 rounded-md transition-colors cursor-pointer ${
+                  className={`p-1 rounded-md transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center ${
                     isSelected
                       ? "bg-white/20 text-white hover:bg-white/30"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                   title="استمع للنطق"
                 >
-                  <Volume2 className="w-3.5 h-3.5" />
+                  <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
                 <span className="font-semibold">
                   <bdi dir="ltr">{opt.text}</bdi>

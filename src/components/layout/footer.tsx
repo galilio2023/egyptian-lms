@@ -37,8 +37,8 @@ export function Footer({
   return (
     <footer className="w-full bg-white/80 backdrop-blur-md border-t-2 border-purple-200/80 pt-16 pb-12 text-slate-600 relative overflow-hidden">
       {/* Background Soft Glows */}
-      <div className="absolute top-0 inset-s-1/4 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-0 inset-e-1/4 w-80 h-80 bg-pink-200/20 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 start-1/4 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl pointer-events-none -z-10" aria-hidden="true" />
+      <div className="absolute bottom-0 end-1/4 w-80 h-80 bg-pink-200/20 rounded-full blur-3xl pointer-events-none -z-10" aria-hidden="true" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-purple-100">
@@ -46,7 +46,7 @@ export function Footer({
           {/* Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <EliteLogoBadge className="w-12 h-12 hover:scale-105 transition-transform" />
+              <EliteLogoBadge className="w-12 h-12 hover:scale-105 transition-transform" aria-hidden="true" />
               <div>
                 <span className="text-xl font-black text-slate-900 block">
                   {academyName}
@@ -58,42 +58,42 @@ export function Footer({
               المنصة التعليمية الأولى لتبسيط مناهج اللغة الإنجليزية الحديثة (Connect &amp; Connect Plus) للمرحلة الابتدائية بنظام المكافآت التفاعلي والفيديوهات المحمية.
             </p>
             <div className="flex items-center gap-2 text-xs font-black text-purple-900 bg-purple-100/60 py-1.5 px-3 rounded-xl w-fit">
-              <OfficialShieldCheckSvg className="w-5 h-5 text-purple-700" />
+              <OfficialShieldCheckSvg className="w-5 h-5 text-purple-700" aria-hidden="true" />
               <span>معتمد رسمي للمناهج الوزارية المصرية</span>
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="text-slate-900 font-black text-base">المراحل الدراسية</h4>
+            <h3 className="text-slate-900 font-black text-base">المراحل الدراسية</h3>
             <ul className="space-y-2.5 text-xs font-bold">
               <li>
                 <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" aria-hidden="true" />
                   <span>الصف الأول الابتدائي (Grade 1)</span>
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" aria-hidden="true" />
                   <span>الصف الثاني الابتدائي (Grade 2)</span>
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" aria-hidden="true" />
                   <span>الصف الثالث الابتدائي (Grade 3)</span>
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" aria-hidden="true" />
                   <span>جميع المناهج والمراحل</span>
                 </Link>
               </li>
               <li>
                 <Link href="/student-login" className="hover:text-purple-700 transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" aria-hidden="true" />
                   <span>بوابة الطالب التفاعلية</span>
                 </Link>
               </li>
@@ -102,10 +102,10 @@ export function Footer({
 
           {/* Direct Support & Contact */}
           <div className="space-y-4">
-            <h4 className="text-slate-900 font-black text-base">التواصل وخدمة أولياء الأمور</h4>
+            <h3 className="text-slate-900 font-black text-base">التواصل وخدمة أولياء الأمور</h3>
             <ul className="space-y-3 text-xs font-bold">
               <li className="flex items-center gap-2.5">
-                <WhatsAppBubbleSvg className="w-6 h-6 shrink-0" />
+                <WhatsAppBubbleSvg className="w-6 h-6 shrink-0" aria-hidden="true" />
                 <div className="flex items-center gap-1.5">
                   <span>واتساب المتابعة:</span>
                   <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="text-emerald-700 font-black hover:underline" dir="ltr">
@@ -114,7 +114,7 @@ export function Footer({
                 </div>
               </li>
               <li className="flex items-center gap-2.5">
-                <HotlinePhoneSvg className="w-6 h-6 shrink-0" />
+                <HotlinePhoneSvg className="w-6 h-6 shrink-0" aria-hidden="true" />
                 <div className="flex items-center gap-1.5">
                   <span>الخط الساخن:</span>
                   <a href={`tel:${hotlineNumber}`} className="text-purple-900 font-black hover:underline" dir="ltr">
@@ -123,7 +123,7 @@ export function Footer({
                 </div>
               </li>
               <li className="flex items-center gap-2.5">
-                <EgyptianPhoneSvg className="w-6 h-6 shrink-0" />
+                <EgyptianPhoneSvg className="w-6 h-6 shrink-0" aria-hidden="true" />
                 <div className="flex items-center gap-1.5">
                   <span>استفسارات الحجز:</span>
                   <a href={`tel:${inquiriesNumber}`} className="text-slate-900 font-black hover:underline" dir="ltr">
@@ -136,7 +136,7 @@ export function Footer({
 
           {/* Social Channels */}
           <div className="space-y-4">
-            <h4 className="text-slate-900 font-black text-base">تابعنا على المنصات الرسمية</h4>
+            <h3 className="text-slate-900 font-black text-base">تابعنا على المنصات الرسمية</h3>
             <p className="text-xs text-slate-500 font-medium">شاهد الشروحات التأسيسية والمسابقات الأسبوعية:</p>
             <div className="flex items-center gap-3 pt-1">
               <a
@@ -147,7 +147,7 @@ export function Footer({
                 aria-label="YouTube"
                 title={`قناة ${academyName} على يوتيوب`}
               >
-                <YouTubePlaySvg className="w-9 h-9" />
+                <YouTubePlaySvg className="w-9 h-9" aria-hidden="true" />
               </a>
               <a
                 href={facebookUrl}
@@ -157,7 +157,7 @@ export function Footer({
                 aria-label="Facebook"
                 title="صفحة الأكاديمية على فيسبوك"
               >
-                <FacebookBadgeSvg className="w-9 h-9" />
+                <FacebookBadgeSvg className="w-9 h-9" aria-hidden="true" />
               </a>
               <a
                 href={`https://wa.me/${whatsappNumber}`}
@@ -167,7 +167,7 @@ export function Footer({
                 aria-label="WhatsApp"
                 title="جروب أولياء الأمور على واتساب"
               >
-                <WhatsAppBubbleSvg className="w-9 h-9" />
+                <WhatsAppBubbleSvg className="w-9 h-9" aria-hidden="true" />
               </a>
             </div>
           </div>

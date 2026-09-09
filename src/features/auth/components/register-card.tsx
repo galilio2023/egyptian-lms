@@ -37,11 +37,11 @@ export const RegisterCard: React.FC = () => {
   } = useRegisterForm();
 
   return (
-    <div className="modern-card bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">
+    <div className="bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">
       {/* Header */}
       <div className="text-center space-y-1.5">
         <div className="flex items-center justify-center">
-          <StudentRegisterPencilSvg className="w-14 h-14 drop-shadow-sm" />
+          <StudentRegisterPencilSvg className="w-14 h-14 drop-shadow-sm" aria-hidden="true" />
         </div>
         <h1 className="text-2xl font-black text-slate-900">
           إنشاء حساب <span className="text-gradient-purple">بطل جديد ✨</span>
@@ -52,11 +52,12 @@ export const RegisterCard: React.FC = () => {
       </div>
 
       {/* Stepper Tabs */}
-      <div className="bg-purple-50/70 border border-purple-100 p-2 sm:p-2.5 rounded-2xl flex items-center justify-between gap-2 text-xs font-bold">
+      <div className="bg-purple-50/70 border border-purple-100 p-2 sm:p-2.5 rounded-2xl flex items-center justify-between gap-2 text-xs font-bold" role="navigation" aria-label="خطوات التسجيل">
         <button
           type="button"
+          aria-current={step === 1 ? "step" : undefined}
           onClick={() => setStep(1)}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 ${
             step === 1 
               ? "bg-white text-purple-900 font-black shadow-sm border border-purple-200" 
               : "text-slate-500 hover:text-slate-800"
@@ -72,10 +73,11 @@ export const RegisterCard: React.FC = () => {
 
         <button
           type="button"
+          aria-current={step === 2 ? "step" : undefined}
           onClick={() => {
             if (fullname.trim() && studentPhone.trim()) setStep(2);
           }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 ${
             step === 2 
               ? "bg-white text-purple-900 font-black shadow-sm border border-purple-200" 
               : "text-slate-500 hover:text-slate-800"
@@ -92,14 +94,14 @@ export const RegisterCard: React.FC = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold text-right flex items-center gap-2 animate-shake">
+        <div role="alert" aria-live="assertive" className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold text-right flex items-center gap-2">
           <span>⚠️</span>
           <span>{error}</span>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleFormSubmit}>
+      <form onSubmit={handleFormSubmit} noValidate>
         {step === 1 ? (
           <RegisterStep1
             fullname={fullname}

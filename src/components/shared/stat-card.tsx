@@ -2,6 +2,7 @@
 
 import React from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type StatCardVariant =
   | "purple"
@@ -54,8 +55,8 @@ const VARIANT_STYLES: Record<
   amber: {
     border: "border-amber-100 hover:border-amber-200",
     bg: "bg-white/95",
-    valueColor: "text-amber-600",
-    iconColor: "text-amber-600",
+    valueColor: "text-amber-700",
+    iconColor: "text-amber-700",
     subtextColor: "text-amber-700",
   },
   rose: {
@@ -104,14 +105,26 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`p-5 rounded-3xl border-2 shadow-xs transition-all duration-200 ${styles.bg} ${styles.border} ${
-        isClickable ? "cursor-pointer hover:shadow-md hover:scale-[1.01]" : ""
-      } ${className}`}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={isClickable ? (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      } : undefined}
+      className={cn(
+        "p-5 rounded-3xl border-2 shadow-xs transition-all duration-200",
+        styles.bg,
+        styles.border,
+        isClickable && "cursor-pointer hover:shadow-md hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600",
+        className
+      )}
     >
       <div className="flex items-center justify-between text-slate-500 text-xs font-bold gap-2">
         <span className="truncate">{title}</span>
         {icon && (
-          <div className={`shrink-0 ${styles.iconColor}`}>
+          <div className={cn("shrink-0", styles.iconColor)} aria-hidden="true">
             {icon}
           </div>
         )}
@@ -131,9 +144,15 @@ export const StatCard: React.FC<StatCardProps> = ({
           }`}
         >
           {trend.positive !== false ? (
-            <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+            <>
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="sr-only">اتجاه صاعد</span>
+            </>
           ) : (
-            <TrendingDown className="w-3.5 h-3.5 shrink-0" />
+            <>
+              <TrendingDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="sr-only">اتجاه هابط</span>
+            </>
           )}
           <span>{trend.value}</span>
           {trend.label && <span className="text-slate-400 font-normal">({trend.label})</span>}
@@ -141,7 +160,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       )}
 
       {description && (
-        <div className={`text-[10px] sm:text-[11px] font-medium mt-1 leading-snug ${styles.subtextColor}`}>
+        <div className={`text-xs font-medium mt-1 leading-snug ${styles.subtextColor}`}>
           {description}
         </div>
       )}

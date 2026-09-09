@@ -39,9 +39,9 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
         <label htmlFor="register-parent-phone" className="block text-xs font-black text-slate-700 cursor-pointer">
           رقم موبايل ولي الأمر (واتساب للإشعارات)
         </label>
-        <div className="relative">
+        <div className="relative" dir="ltr">
           <div className="absolute start-3.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
-            <EgyptianPhoneSvg className="w-4 h-4" />
+            <EgyptianPhoneSvg className="w-4 h-4" aria-hidden="true" />
           </div>
           <input
             id="register-parent-phone"
@@ -54,10 +54,11 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             placeholder="010xxxxxxxx"
             value={parentPhone}
             onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, ""))}
-            className="w-full min-h-[42px] ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
+            aria-describedby="parent-phone-desc"
+            className="w-full min-h-[44px] ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
         </div>
-        <p className="text-[10px] text-emerald-700 font-bold">
+        <p id="parent-phone-desc" className="text-[10px] text-emerald-700 font-bold">
           📲 مهم جداً: ترسل عليه درجات الاختبارات الأسبوعية وتنبيهات الحصص عبر واتساب مباشرة.
         </p>
       </div>
@@ -67,9 +68,9 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
         <label htmlFor="register-password" className="block text-xs font-black text-slate-700 cursor-pointer">
           كلمة المرور (8 أحرف أو أرقام على الأقل)
         </label>
-        <div className="relative">
+        <div className="relative" dir="ltr">
           <div className="absolute start-3.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
-            <SecurityLockSvg className="w-4 h-4" />
+            <SecurityLockSvg className="w-4 h-4" aria-hidden="true" />
           </div>
           <input
             id="register-password"
@@ -77,18 +78,19 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             autoComplete="new-password"
             dir="ltr"
             required
+            minLength={8}
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full min-h-[42px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
+            className="w-full min-h-[44px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg"
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg min-h-[44px] flex items-center justify-center"
           >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-purple-600" />}
+            {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4 text-purple-600" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -98,9 +100,9 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
         <label htmlFor="register-confirm-password" className="block text-xs font-black text-slate-700 cursor-pointer">
           تأكيد كلمة المرور
         </label>
-        <div className="relative">
+        <div className="relative" dir="ltr">
           <div className="absolute start-3.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
-            <SecurityLockSvg className="w-4 h-4" />
+            <SecurityLockSvg className="w-4 h-4" aria-hidden="true" />
           </div>
           <input
             id="register-confirm-password"
@@ -108,18 +110,19 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             autoComplete="new-password"
             dir="ltr"
             required
+            minLength={8}
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full min-h-[42px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
+            className="w-full min-h-[44px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             aria-label={showConfirmPassword ? "إخفاء تأكيد كلمة المرور" : "إظهار تأكيد كلمة المرور"}
-            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg"
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg min-h-[44px] flex items-center justify-center"
           >
-            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-purple-600" />}
+            {showConfirmPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4 text-purple-600" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -133,15 +136,15 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
         <Button
           type="button"
           variant="secondary"
           size="md"
           onClick={onBack}
-          className="flex items-center gap-1.5"
+          className="flex items-center justify-center gap-1.5 min-h-[44px]"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
           <span>السابق</span>
         </Button>
 
@@ -150,9 +153,9 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
           variant="vibrant"
           size="md"
           isLoading={isLoading}
-          className="flex-1"
+          className="flex-1 min-h-[44px]"
         >
-          <XpGemSvg className="w-4 h-4" />
+          <XpGemSvg className="w-4 h-4" aria-hidden="true" />
           <span>تأكيد تسجيل حساب البطل الجديد</span>
         </Button>
       </div>

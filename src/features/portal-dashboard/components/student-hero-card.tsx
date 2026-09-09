@@ -25,7 +25,7 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
   const xpPercentage = Math.min(100, Math.round((student.xpPoints / student.nextLevelXp) * 100));
 
   return (
-    <div className="modern-card p-5 sm:p-8 bg-gradient-vibrant text-white border-0 shadow-xl shadow-purple-600/25 relative overflow-hidden rounded-3xl">
+    <div className="p-5 sm:p-8 bg-gradient-vibrant text-white border-0 shadow-xl shadow-purple-600/25 relative overflow-hidden rounded-3xl">
       {/* Glowing Aura Rings */}
       <div className="absolute -bottom-10 -end-10 w-72 h-72 bg-white/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-0 start-1/3 w-64 h-64 bg-pink-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -34,10 +34,10 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
       {showToys && (
         <>
           <div className="absolute -top-2 end-1/3 w-20 h-20 sm:w-28 sm:h-28 pointer-events-none opacity-15 sm:opacity-25 animate-float-slow">
-            <ToyDinoDinoSvg className="w-full h-full drop-shadow-md" />
+            <ToyDinoDinoSvg className="w-full h-full drop-shadow-md" aria-hidden="true" />
           </div>
           <div className="absolute -bottom-3 start-1/2 -translate-x-1/2 w-16 h-16 sm:w-24 sm:h-24 pointer-events-none opacity-15 sm:opacity-20 animate-float-reverse">
-            <ToyPrincessUnicornSvg className="w-full h-full drop-shadow-md" />
+            <ToyPrincessUnicornSvg className="w-full h-full drop-shadow-md" aria-hidden="true" />
           </div>
         </>
       )}
@@ -46,16 +46,16 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
         <div className="space-y-3.5 w-full md:w-auto">
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/30">
-              <ActiveMascotSvg className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ActiveMascotSvg className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               <span>المستوى {student.levelNumber}: {activeMascot.title}</span>
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
             </div>
 
             {onOpenIdCard && (
               <button
                 type="button"
                 onClick={onOpenIdCard}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black transition-all hover:scale-105 shadow-sm cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black transition-all hover:scale-105 shadow-sm cursor-pointer min-h-[44px]"
               >
                 <span>🪪 بطاقة السنتر (QR Pass)</span>
               </button>
@@ -79,7 +79,14 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
                 <span className="hidden sm:inline"> (باقي {student.nextLevelXp - student.xpPoints} للمستوى التالي)</span>
               </span>
             </div>
-            <div className="w-full h-3 bg-purple-950/40 rounded-full overflow-hidden p-0.5 border border-white/30 backdrop-blur-sm">
+            <div 
+              role="progressbar" 
+              aria-valuenow={student.xpPoints} 
+              aria-valuemin={0} 
+              aria-valuemax={student.nextLevelXp} 
+              aria-label="مستوى نقاط الخبرة XP"
+              className="w-full h-3 bg-purple-950/40 rounded-full overflow-hidden p-0.5 border border-white/30 backdrop-blur-sm"
+            >
               <div 
                 className="h-full bg-gradient-to-r from-amber-300 to-yellow-400 rounded-full transition-all duration-500 shadow-sm"
                 style={{ width: `${xpPercentage}%` }}
@@ -92,7 +99,7 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
         <div className="grid grid-cols-2 w-full md:w-auto md:flex items-center gap-3 sm:gap-4 shrink-0">
           <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 text-center shadow-lg flex-1 md:flex-initial md:min-w-[125px]">
             <div className="flex items-center justify-center gap-1.5 text-amber-300 mb-1 sm:mb-1.5">
-              <XpGemSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" />
+              <XpGemSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" aria-hidden="true" />
               <span className="text-xs sm:text-sm font-black">نقاط XP</span>
             </div>
             <div className="text-xl sm:text-3xl font-black text-white">{student.xpPoints}</div>
@@ -100,7 +107,7 @@ export const StudentHeroCard: React.FC<StudentHeroCardProps> = ({
 
           <div className="bg-white/15 backdrop-blur-md border border-white/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 text-center shadow-lg flex-1 md:flex-initial md:min-w-[125px]">
             <div className="flex items-center justify-center gap-1.5 text-orange-300 mb-1 sm:mb-1.5">
-              <StreakFlameSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" />
+              <StreakFlameSvg className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow" aria-hidden="true" />
               <span className="text-xs sm:text-sm font-black">حماس متتالي</span>
             </div>
             <div className="text-xl sm:text-3xl font-black text-white">{student.streakDays} أيام</div>

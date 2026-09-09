@@ -22,12 +22,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   className = "",
 }) => {
   return (
-    <aside className={`w-full md:w-72 bg-white/95 backdrop-blur-md border-b md:border-b-0 md:border-l border-purple-100 p-5 flex flex-col justify-between shrink-0 shadow-sm overflow-y-auto ${className}`}>
+    <aside aria-label="القائمة الجانبية للإدارة" className={`w-full md:w-72 bg-white/95 backdrop-blur-md border-b md:border-b-0 md:border-e border-purple-100 p-5 flex flex-col justify-between shrink-0 shadow-sm overflow-y-auto ${className}`}>
       <div className="space-y-5">
         {/* Brand Header */}
         <div className="flex items-center justify-between pb-4 border-b border-purple-100">
           <Link href="/" className="flex items-center gap-3" onClick={onClose}>
-            <EliteLogoBadge className="w-10 h-10" />
+            <EliteLogoBadge aria-hidden="true" className="w-10 h-10" />
             <div>
               <span className="font-black text-sm text-slate-900 block">
                 لوحة تحكم <span className="text-gradient-purple">المنصة</span>
@@ -38,11 +38,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
           {onClose && (
             <button
+              type="button"
               onClick={onClose}
               className="md:hidden p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-purple-50 transition-colors cursor-pointer"
               aria-label="إغلاق القائمة"
             >
-              <X className="w-5 h-5" />
+              <X aria-hidden="true" className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -61,14 +62,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-bold transition-colors border border-purple-200"
         >
           <span>عرض المنصة التعليمية</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
         </Link>
 
         <button
+          type="button"
           onClick={() => signOut()}
           className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut aria-hidden="true" className="w-3.5 h-3.5" />
           <span>تسجيل الخروج من الإدارة</span>
         </button>
       </div>

@@ -100,21 +100,22 @@ export function ManualTransferForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3.5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
       {/* Transfer Account Box */}
       <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-600 font-medium">عنوان إنستاباي (InstaPay):</span>
           <button
             type="button"
+            aria-label={`نسخ عنوان إنستاباي: ${instapayAddress}`}
             onClick={() => copyToClipboard(instapayAddress, "instapay")}
-            className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-mono font-bold cursor-pointer"
+            className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-mono font-bold cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:outline-none rounded-md"
           >
             <span>{instapayAddress}</span>
             {copied === "instapay" ? (
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             ) : (
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -122,14 +123,15 @@ export function ManualTransferForm({
           <span className="text-slate-600 font-medium">فودافون كاش والمحافظ:</span>
           <button
             type="button"
+            aria-label={`نسخ رقم فودافون كاش: ${vodafoneCashNumber}`}
             onClick={() => copyToClipboard(vodafoneCashNumber, "vodafone")}
-            className="text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-mono font-bold cursor-pointer"
+            className="text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-mono font-bold cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:outline-none rounded-md"
           >
             <bdi dir="ltr">{vodafoneCashNumber}</bdi>
             {copied === "vodafone" ? (
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             ) : (
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -153,13 +155,13 @@ export function ManualTransferForm({
           placeholder="010xxxxxxxx أو رقم العملية"
           value={referenceNumber}
           onChange={(e) => setReferenceNumber(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-indigo-600 focus:bg-white text-left"
+          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-indigo-600 focus:bg-white text-left disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
       {/* Screenshot Upload */}
       <label
-        className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all block relative ${
+        className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all block relative focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 ${
           receiptUploaded
             ? "border-emerald-500 bg-emerald-50/60"
             : "border-slate-300 hover:border-indigo-500 bg-slate-50"
@@ -176,13 +178,14 @@ export function ManualTransferForm({
           className={`w-5 h-5 mx-auto mb-1 ${
             receiptUploaded ? "text-emerald-600" : "text-slate-400"
           }`}
+          aria-hidden="true"
         />
         <span className="text-xs font-bold text-slate-800 block">
           {receiptUploaded
             ? "تم إرفاق صورة إيصال التحويل بنجاح ✓ (اضغط للتغيير)"
             : "اضغط هنا لاختيار صورة الإيصال أو السكرين شوت"}
         </span>
-        <span className="text-[10px] text-slate-400">PNG, JPG حتى 15 ميجابايت</span>
+        <span className="text-[10px] text-slate-600">PNG, JPG حتى 15 ميجابايت</span>
       </label>
 
       <Button
@@ -192,7 +195,7 @@ export function ManualTransferForm({
         isLoading={isLoading}
         className="w-full shadow-lg shadow-emerald-500/25"
       >
-        <EgyptianWalletSvg className="w-5 h-5" />
+        <EgyptianWalletSvg className="w-5 h-5" aria-hidden="true" />
         <span>{isLoading ? "جاري الإرسال..." : "تأكيد التحويل وإرسال للمراجعة"}</span>
       </Button>
     </form>

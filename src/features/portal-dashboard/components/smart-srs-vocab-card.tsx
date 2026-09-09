@@ -255,7 +255,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
       <div className="flex items-center justify-between gap-2 mb-4 relative z-10">
         <div className="flex items-center gap-2">
           <span className="p-2 rounded-2xl bg-white/10 backdrop-blur-md text-amber-400 border border-white/10">
-            <Sparkles className="w-5 h-5 animate-pulse" />
+            <Sparkles className="w-5 h-5 animate-pulse" aria-hidden="true" />
           </span>
           <div>
             <h3 className="font-black text-sm sm:text-base text-white flex items-center gap-2">
@@ -272,7 +272,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
 
         {/* Streak Counter */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 font-black text-xs">
-          <Flame className="w-4 h-4 text-orange-400 animate-bounce" />
+          <Flame className="w-4 h-4 text-orange-400 animate-bounce" aria-hidden="true" />
           <span>{streak} أيام حماس 🔥</span>
         </div>
       </div>
@@ -289,6 +289,15 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
 
           {/* Flashcard Box */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="قلب بطاقة الكلمة وكشف المعنى"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setIsFlipped(!isFlipped);
+              }
+            }}
             onClick={() => setIsFlipped(!isFlipped)}
             className="min-h-[190px] p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:border-purple-300/50 transition-all cursor-pointer flex flex-col justify-between shadow-lg select-none group"
           >
@@ -305,10 +314,11 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
                       e.stopPropagation();
                       speak(currentCard.word);
                     }}
-                    className="p-2 rounded-full bg-purple-600/80 hover:bg-purple-500 text-white transition-colors"
+                    className="p-2 rounded-full bg-purple-600/80 hover:bg-purple-500 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                     title="استمع للنطق الإنجليزي"
+                    aria-label="استمع للنطق الإنجليزي"
                   >
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-5 h-5" aria-hidden="true" />
                   </button>
                 </div>
                 <div className="inline-block px-3 py-1 rounded-full bg-purple-950/60 border border-purple-400/40 text-xs font-mono text-purple-200">
@@ -333,9 +343,9 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
                     e.stopPropagation();
                     speak(currentCard.exampleSentence);
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-white font-bold"
+                  className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-white font-bold p-1"
                 >
-                  <Volume2 className="w-4 h-4" />
+                  <Volume2 className="w-4 h-4" aria-hidden="true" />
                   <span>استمع للجملة كاملة</span>
                 </button>
               </div>
@@ -400,7 +410,7 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
               onClick={handleRestart}
               className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white border border-white/20 flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>مراجعة إضافية الآن</span>
             </button>
           </div>

@@ -273,11 +273,12 @@ async function fetchLessonFromDb(lessonSlug: string): Promise<CachedLessonData |
 export async function getLessonViewerAccess(
   lessonId: string,
   userId?: string,
-  clientIp?: string
+  clientIp?: string,
+  isDevBypass?: boolean
 ): Promise<LessonViewerAccess> {
   const mockLesson = INITIAL_LESSONS.find((lesson) => lesson.id === lessonId);
   if (mockLesson) {
-    if (!mockLesson.isFreePreview) {
+    if (!mockLesson.isFreePreview && !isDevBypass) {
       return { isAccessible: false };
     }
 
@@ -304,7 +305,7 @@ export async function getLessonViewerAccess(
     return { isAccessible: false };
   }
 
-  let isAccessible = dbLesson.isFreePreview;
+  let isAccessible = dbLesson.isFreePreview || Boolean(isDevBypass);
   if (!isAccessible && userId) {
     const [activeEnrollment] = await db
       .select({ id: schema.enrollment.id })

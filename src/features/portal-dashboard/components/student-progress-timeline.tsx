@@ -107,8 +107,8 @@ export function StudentProgressTimeline() {
       {/* Header */}
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-purple-500" />
-          <span className="text-sm font-black text-slate-900">رحلتك التعليمية</span>
+          <Clock className="w-4 h-4 text-purple-500" aria-hidden="true" />
+          <h3 className="text-sm font-black text-slate-900">رحلتك التعليمية</h3>
         </div>
         <div className="flex items-center gap-3">
           {/* Quick stats */}
@@ -128,11 +128,11 @@ export function StudentProgressTimeline() {
             >
               {isExpanded ? (
                 <>
-                  <ChevronUp className="w-3.5 h-3.5" /> أقل
+                  <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" /> أقل
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-3.5 h-3.5" /> المزيد ({events.length - 4})
+                  <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" /> المزيد ({events.length - 4})
                 </>
               )}
             </button>
@@ -194,7 +194,7 @@ export function StudentProgressTimeline() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-base flex-shrink-0">{event.icon}</span>
+                        <span className="text-base flex-shrink-0" aria-hidden="true">{event.icon}</span>
                         <span className="text-xs font-black truncate">{event.title}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -211,7 +211,7 @@ export function StudentProgressTimeline() {
                       </div>
                     </div>
                     {event.subtitle && (
-                      <p className="text-[11px] opacity-80 mt-0.5 leading-snug pr-6">
+                      <p className="text-[11px] opacity-80 mt-0.5 leading-snug ps-6">
                         {event.subtitle}
                       </p>
                     )}

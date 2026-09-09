@@ -46,8 +46,8 @@ export function VoucherRedemptionForm({ onSuccess }: VoucherRedemptionFormProps)
   };
 
   return (
-    <form onSubmit={handleVoucherSubmit} className="space-y-3.5">
-      <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
+    <form onSubmit={handleVoucherSubmit} noValidate className="space-y-3.5">
+      <div id="voucher-instructions" className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
         إذا قمت بشراء كارت الشحن من السنتر أو المكتبة، أدخل الكود المطبوع على الكارت للشحن الفوري.
       </div>
 
@@ -61,10 +61,15 @@ export function VoucherRedemptionForm({ onSuccess }: VoucherRedemptionFormProps)
           dir="ltr"
           required
           disabled={isLoading}
+          aria-describedby="voucher-instructions"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck="false"
+          autoComplete="off"
           placeholder="مثال: ELITE-GR1-9982 أو كود الكارت"
           value={voucherCode}
           onChange={(e) => setVoucherCode(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-indigo-600 focus:bg-white text-center uppercase"
+          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-indigo-600 focus:bg-white text-center uppercase disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -75,7 +80,7 @@ export function VoucherRedemptionForm({ onSuccess }: VoucherRedemptionFormProps)
         isLoading={isLoading}
         className="w-full shadow-lg shadow-purple-500/25"
       >
-        <CenterVoucherCardSvg className="w-5 h-5" />
+        <CenterVoucherCardSvg className="w-5 h-5" aria-hidden="true" />
         <span>{isLoading ? "جاري تفعيل الكود..." : "شحن الكود وتفعيل الوحدة"}</span>
       </Button>
     </form>

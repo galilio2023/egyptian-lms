@@ -31,13 +31,14 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
+  --color-ring: var(--ring);
+  --breakpoint-xs: 28rem;
   --font-arabic: var(--font-cairo), 'Cairo', sans-serif;
   --font-sans: 'Plus Jakarta Sans', var(--font-cairo), 'Cairo', sans-serif;
 }
 
 html, body {
-  overflow-x: hidden;
-  touch-action: manipulation;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -46,7 +47,9 @@ body {
   color: #0f172a;
   font-family: var(--font-cairo), 'Cairo', sans-serif;
   direction: rtl;
-  text-align: right;
+  text-align: start;
+  scrollbar-width: thin;
+  scrollbar-color: #c084fc #fdf4ff;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   min-height: 100dvh;
@@ -111,19 +114,25 @@ body {
 
 /* Text Gradient Highlights */
 .text-gradient-purple {
+  color: #a855f7;
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-gold {
+  color: #f59e0b;
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 70%, #b45309 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-emerald {
+  color: #10b981;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -207,6 +216,24 @@ body {
 .animate-pulse-soft {
   will-change: transform;
   animation: pulse-soft 3s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 
 /* Reduced Motion Support for Battery Saving & Accessibility */

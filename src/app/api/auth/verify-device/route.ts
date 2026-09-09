@@ -77,6 +77,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const cookieHeader = headerList.get("cookie") || "";
+    const isDevBypass =
+      process.env.NODE_ENV === "development" &&
+      (cookieHeader.includes("dev_bypass=true") || process.env.DEV_BYPASS_AUTH === "true");
+
+    if (isDevBypass) {
+      return NextResponse.json({ success: true, verified: true, isDevBypass: true });
+    }
+
     if (!targetUserId) {
       return NextResponse.json({ success: true, verified: true });
     }

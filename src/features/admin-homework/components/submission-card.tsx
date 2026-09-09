@@ -29,9 +29,9 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
             }`}
           >
             {isGraded ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <CheckCircle2 aria-hidden="true" className="w-3.5 h-3.5 text-emerald-600" />
             ) : (
-              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <Clock aria-hidden="true" className="w-3.5 h-3.5 text-amber-600" />
             )}
             <span>
               {isGraded
@@ -45,10 +45,13 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
           </span>
         </div>
 
-        {/* Notebook Thumbnail Preview */}
         {firstImg && (
           <div
+            role="button"
+            tabIndex={0}
+            aria-label={`فتح مصحح كراسة واجب ${submission.studentName}`}
             onClick={() => onOpenGrader(submission)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenGrader(submission); } }}
             className="relative aspect-video rounded-2xl overflow-hidden border border-purple-200 group-hover:border-purple-500 cursor-pointer transition-all shadow-inner bg-slate-100"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -59,7 +62,7 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end p-3 text-white">
               <span className="text-xs font-black flex items-center gap-1.5">
-                <PenTool className="w-4 h-4 text-amber-400" />
+                <PenTool aria-hidden="true" className="w-4 h-4 text-amber-400" />
                 <span>فتح أداة التصحيح بالقلم ({submission.studentImages.length} صفحات)</span>
               </span>
             </div>
@@ -91,6 +94,7 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
       {/* Action Buttons */}
       <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
         <button
+          type="button"
           onClick={() => onOpenGrader(submission)}
           className={`flex-1 py-2.5 px-3 rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
             isGraded
@@ -98,7 +102,7 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
               : "bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-600/25"
           }`}
         >
-          <PenTool className="w-3.5 h-3.5" />
+          <PenTool aria-hidden="true" className="w-3.5 h-3.5" />
           <span>{isGraded ? "مراجعة وتعديل التصحيح" : "ابدأ التصحيح بالقلم الأحمر"}</span>
         </button>
 
@@ -106,10 +110,11 @@ export const SubmissionCard: React.FC<SubmissionCardProps> = ({
           href={`https://wa.me/2${submission.parentPhone.replace(/\D/g, "")}`}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`مراسلة ولي أمر الطالب ${submission.studentName} عبر واتساب في نافذة جديدة`}
           className="p-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer"
           title="مراسلة ولي الأمر على واتساب"
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle aria-hidden="true" className="w-4 h-4" />
         </a>
       </div>
     </div>

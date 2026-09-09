@@ -58,9 +58,11 @@ export function AdminLayoutClient({
 
       {/* 2. Mobile Off-Canvas Drawer */}
       {mobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden animate-in fade-in-50">
-          <div
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+        <div className="fixed inset-0 z-50 md:hidden animate-in fade-in-50" role="dialog" aria-modal="true" aria-label="القائمة الجانبية للتنقل">
+          <button
+            type="button"
+            aria-label="إغلاق القائمة الجانبية"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity cursor-default w-full h-full border-none"
             onClick={() => setMobileDrawerOpen(false)}
           />
           <div className="relative z-10 w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-start duration-200">
@@ -85,18 +87,18 @@ export function AdminLayoutClient({
           <div className="h-full flex items-center justify-center py-16">
             <div className="bg-white p-8 rounded-3xl border border-red-200 text-center max-w-md shadow-lg shadow-red-500/5">
               <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 font-black text-2xl">
-                🚫
+                <span role="img" aria-label="غير مصرح">🚫</span>
               </div>
               <h2 className="text-lg font-black text-slate-900 mb-2">غير مصرح بالوصول</h2>
               <p className="text-xs text-slate-500 mb-6 font-medium leading-relaxed">
                 عذراً، يتطلب هذا القسم صلاحيات المعلم المشرف أو مدير النظام العام. لا يمتلك حساب المساعد صلاحية استعراض الإعدادات أو سجل الأمان.
               </p>
-              <a
+              <Link
                 href="/admin/curriculum"
                 className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition"
               >
                 العودة إلى إدارة المنهج
-              </a>
+              </Link>
             </div>
           </div>
         ) : (

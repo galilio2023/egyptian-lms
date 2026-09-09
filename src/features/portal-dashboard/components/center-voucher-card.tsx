@@ -17,11 +17,11 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
   redeemedUnitTitle,
 }) => {
   return (
-    <div id="center-voucher-box" className="modern-card p-4 sm:p-6 bg-white/95 backdrop-blur-md border-2 border-indigo-200 rounded-3xl shadow-lg space-y-4">
+    <div id="center-voucher-box" className="p-4 sm:p-6 bg-white/95 backdrop-blur-md border-2 border-indigo-200 rounded-3xl shadow-lg space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-start sm:items-center gap-3 sm:gap-3.5">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-            <CenterVoucherCardSvg className="w-7 h-7 sm:w-8 sm:h-8" />
+            <CenterVoucherCardSvg className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-black text-sm text-slate-900 leading-snug">
@@ -42,7 +42,8 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
 
       <form onSubmit={onSubmit} className="flex flex-col gap-2">
         <div className="flex flex-col sm:flex-row items-stretch gap-2.5 sm:gap-3">
-          <div className="flex w-full sm:flex-1">
+          <div className="flex w-full sm:flex-1 flex-col">
+            <label htmlFor="center-voucher-input" className="sr-only">كود كارت الشحن</label>
             <input
               id="center-voucher-input"
               type="text"
@@ -53,7 +54,7 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
               value={voucherCodeInput}
               onChange={(e) => onVoucherCodeChange(e.target.value.toUpperCase())}
               placeholder="ادخل الكود المطبوع على الكارت هنا"
-              className="w-full min-h-[44px] px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600/20 text-sm sm:text-base font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30 transition-all"
+              className="w-full min-h-[44px] px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-none focus:outline-purple-600/20 text-base sm:text-sm font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30 transition-all placeholder:text-slate-400"
               disabled={isRedeeming}
             />
           </div>

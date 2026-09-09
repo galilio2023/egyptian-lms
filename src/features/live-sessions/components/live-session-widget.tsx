@@ -137,12 +137,12 @@ export function LiveSessionWidget({
           <div className="flex items-center flex-wrap gap-2">
             {isLive ? (
               <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-rose-600/40 animate-pulse">
-                <Radio className="w-4 h-4" />
+                <Radio className="w-4 h-4" aria-hidden="true" />
                 <span>مباشر الآن (LIVE)</span>
               </span>
             ) : (
               <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-black border border-indigo-400/30 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>حصة مراجعة قادمة</span>
               </span>
             )}
@@ -202,11 +202,13 @@ export function LiveSessionWidget({
               {session.meetingPassword}
             </code>
             <button
+              type="button"
               onClick={handleCopyPassword}
               className="p-1 rounded-lg bg-purple-800/60 hover:bg-purple-700 text-purple-200 hover:text-white transition-colors cursor-pointer"
               title="نسخ كلمة السر"
+              aria-label="نسخ كلمة السر"
             >
-              {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
             </button>
           </div>
         )}
@@ -215,13 +217,13 @@ export function LiveSessionWidget({
           onClick={handleJoinMeeting}
           className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer ${
             isLive 
-              ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-102" 
+              ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-[1.02]" 
               : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 shadow-amber-400/25"
           }`}
         >
-          <Video className="w-4 h-4" />
+          <Video className="w-4 h-4" aria-hidden="true" />
           <span>{isLive ? "دخول غرفة البث المباشر وتسجيل الحضور 🔴" : "فتح رابط الغرفة على Zoom 🚀"}</span>
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </div>
 
@@ -241,14 +243,14 @@ export function LiveSessionWidget({
             aria-label="إرسال السؤال للمحاضر"
             className="min-h-[40px] px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">إرسال</span>
           </button>
         </form>
 
         {questionsSubmitted.length > 0 && (
           <div className="mt-2 text-[11px] text-emerald-300 flex items-center gap-1 font-medium">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
             <span>تم إرسال {questionsSubmitted.length} أسئلة للمحاضر ✓</span>
           </div>
         )}

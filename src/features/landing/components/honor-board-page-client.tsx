@@ -11,7 +11,8 @@ import {
   Medal, 
   Star, 
   GraduationCap,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -45,7 +46,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
     const text = encodeURIComponent(
       `🏆 شاهد لوحة الشرف وأبطال التميز في أكاديمية ${settings.academyNameArabic || "المنصة التعليمية"} لـ ${currentGradeObj.titleArabic}!\n\nرابط لوحة الشرف: ${typeof window !== "undefined" ? window.location.href : ""}`
     );
-    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -60,7 +61,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
         <section className="relative overflow-hidden py-14 sm:py-18 bg-linear-to-b from-amber-100/60 via-amber-50/30 to-white border-b border-amber-200/70">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs">
-              <Trophy className="w-4 h-4 text-amber-600" />
+              <Trophy className="w-4 h-4 text-amber-600" aria-hidden="true" />
               <span>لوحة الشرف الوطنية — تكريم أبطال الجمهورية</span>
             </div>
 
@@ -75,10 +76,11 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
             {/* Action buttons */}
             <div className="pt-2 flex items-center justify-center gap-3">
               <button
+                type="button"
                 onClick={handleShareWhatsApp}
-                className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95 min-h-[44px]"
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-4 h-4" aria-hidden="true" />
                 <span>مشاركة لوحة الشرف على واتساب</span>
               </button>
             </div>
@@ -134,7 +136,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
                   <span className="text-xs font-bold text-purple-700 block mt-0.5">{champ2.gradeBadge}</span>
                   <span className="text-[11px] text-slate-500 block mt-1">{champ2.schoolName} — {champ2.city}</span>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-slate-700 font-black text-sm">
-                    <Medal className="w-4 h-4 text-slate-400" />
+                    <Medal className="w-4 h-4 text-slate-400" aria-hidden="true" />
                     <span>{champ2.xpPoints} نقطة XP</span>
                   </div>
                 </div>
@@ -144,7 +146,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
               {champ1 && (
                 <div className="p-7 bg-gradient-to-b from-amber-500/15 via-white to-white border-2 border-amber-400 rounded-3xl shadow-2xl text-center relative overflow-hidden order-1 md:order-2 md:-translate-y-4 hover:scale-105 transition-all">
                   <div className="absolute top-3 start-3 px-3 py-1 rounded-full bg-amber-500 text-white font-black text-xs flex items-center gap-1 shadow-md">
-                    <Crown className="w-3.5 h-3.5" />
+                    <Crown className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>المركز الأول 🥇</span>
                   </div>
                   <div className="w-24 h-24 rounded-full mx-auto bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 p-1.5 mb-3 shadow-xl shadow-amber-500/30">
@@ -156,7 +158,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
                   <span className="text-xs font-black text-purple-800 block mt-0.5">{champ1.gradeBadge}</span>
                   <span className="text-[11px] text-slate-500 block mt-1">{champ1.schoolName} — {champ1.city}</span>
                   <div className="mt-4 pt-3 border-t border-amber-100 flex items-center justify-center gap-2 text-amber-600 font-black text-base">
-                    <ChampionCupSvg className="w-5 h-5" />
+                    <ChampionCupSvg className="w-5 h-5" aria-hidden="true" />
                     <span>{champ1.xpPoints} نقطة XP</span>
                   </div>
                 </div>
@@ -177,7 +179,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
                   <span className="text-xs font-bold text-purple-700 block mt-0.5">{champ3.gradeBadge}</span>
                   <span className="text-[11px] text-slate-500 block mt-1">{champ3.schoolName} — {champ3.city}</span>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-amber-700 font-black text-sm">
-                    <Medal className="w-4 h-4 text-amber-600" />
+                    <Medal className="w-4 h-4 text-amber-600" aria-hidden="true" />
                     <span>{champ3.xpPoints} نقطة XP</span>
                   </div>
                 </div>
@@ -189,7 +191,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
             {otherChamps.length > 0 && (
               <div className="max-w-4xl mx-auto space-y-3">
                 <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-amber-500" />
+                  <Star className="w-5 h-5 text-amber-500" aria-hidden="true" />
                   <span>باقي أبطال الشرف المتألقين</span>
                 </h3>
 
@@ -210,7 +212,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
                       </div>
 
                       <div className="flex items-center gap-1.5 text-amber-600 font-black text-xs">
-                        <XpGemSvg className="w-4 h-4" />
+                        <XpGemSvg className="w-4 h-4" aria-hidden="true" />
                         <span>{c.xpPoints} XP</span>
                       </div>
                     </div>
@@ -239,7 +241,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <div className="p-6 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-md space-y-3 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-                  <Flame className="w-6 h-6" />
+                  <Flame className="w-6 h-6" aria-hidden="true" />
                 </div>
                 <h3 className="font-black text-base">1. التتابع اليومي (Streaks)</h3>
                 <p className="text-xs text-purple-200 leading-relaxed">
@@ -249,7 +251,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
 
               <div className="p-6 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-md space-y-3 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center mx-auto">
-                  <Sparkles className="w-6 h-6" />
+                  <Sparkles className="w-6 h-6" aria-hidden="true" />
                 </div>
                 <h3 className="font-black text-base">2. الاختبارات الذكية</h3>
                 <p className="text-xs text-purple-200 leading-relaxed">
@@ -259,7 +261,7 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
 
               <div className="p-6 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-md space-y-3 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-                  <GraduationCap className="w-6 h-6" />
+                  <GraduationCap className="w-6 h-6" aria-hidden="true" />
                 </div>
                 <h3 className="font-black text-base">3. واجبات الكشكول</h3>
                 <p className="text-xs text-purple-200 leading-relaxed">
@@ -271,10 +273,10 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
             <div className="text-center pt-10">
               <Link
                 href="/quizzes"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition-all shadow-lg hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition-all shadow-lg hover:scale-105 min-h-[44px]"
               >
                 <span>ابدأ جمع النقاط الآن عبر التحديات</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

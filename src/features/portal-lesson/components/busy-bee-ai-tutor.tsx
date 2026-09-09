@@ -49,6 +49,16 @@ export function BusyBeeAiTutor({
     }
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleEscape);
+      return () => window.removeEventListener("keydown", handleEscape);
+    }
+  }, [isOpen]);
+
   const speakArabicOrEnglish = (text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -147,12 +157,17 @@ export function BusyBeeAiTutor({
 
       {/* Drawer / Modal Interface */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="مساعد الدرس الذكي النحلة النشيطة"
+        >
           <div className="w-full sm:max-w-md h-[85vh] sm:h-[600px] flex flex-col bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-amber-200 overflow-hidden">
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 flex items-center justify-between text-amber-950">
               <div className="flex items-center gap-2.5">
-                <span className="text-3xl animate-pulse">🐝</span>
+                <span className="text-3xl animate-pulse" aria-hidden="true">🐝</span>
                 <div>
                   <h3 className="font-black text-sm text-slate-900 flex items-center gap-1.5">
                     <span>النحلة النشيطة Busy Bee</span>
@@ -169,7 +184,8 @@ export function BusyBeeAiTutor({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/40 hover:bg-white/70 flex items-center justify-center text-slate-900 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-white/40 hover:bg-white/70 flex items-center justify-center text-slate-900 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                aria-label="إغلاق المساعد الذكي"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -197,10 +213,10 @@ export function BusyBeeAiTutor({
                         <button
                           type="button"
                           onClick={() => speakArabicOrEnglish(msg.text)}
-                          className="text-amber-600 hover:text-amber-800 p-0.5 rounded transition-colors"
+                          className="text-amber-600 hover:text-amber-800 p-0.5 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="استمع للإجابة بصوت واضح"
                         >
-                          <Volume2 className="w-3.5 h-3.5" />
+                          <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       </div>
                     )}
@@ -216,7 +232,7 @@ export function BusyBeeAiTutor({
                           type="button"
                           disabled={isLoading}
                           onClick={() => handleSend(chip)}
-                          className="px-2.5 py-1 rounded-full bg-amber-100/80 hover:bg-amber-200/90 text-amber-900 text-[10px] font-bold border border-amber-300/60 transition-all text-end cursor-pointer disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-full bg-amber-100/80 hover:bg-amber-200/90 text-amber-900 text-[10px] font-bold border border-amber-300/60 transition-all text-end cursor-pointer disabled:opacity-50 min-h-[44px]"
                         >
                           {chip}
                         </button>
@@ -249,17 +265,17 @@ export function BusyBeeAiTutor({
                   }
                 }}
                 placeholder="اسأل النحلة عن كلمة أو قاعدة في الدرس..."
-                className="flex-1 min-h-[40px] py-2 px-3.5 rounded-xl border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/40 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400"
+                className="flex-1 min-h-[44px] py-2 px-3.5 rounded-xl border border-slate-200 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-300/40 text-base sm:text-xs text-slate-800 transition-all placeholder:text-slate-400"
               />
 
               <button
                 type="button"
                 onClick={() => handleSend()}
                 disabled={isLoading || !inputQuery.trim()}
-                className="p-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
+                className="p-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-40 cursor-pointer shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="إرسال السؤال"
               >
-                <Send className="w-4 h-4 rtl:rotate-180" />
+                <Send className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
               </button>
             </div>
           </div>

@@ -29,7 +29,7 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
   onPrint,
 }) => {
   return (
-    <div className="print:hidden p-6 space-y-6 border-b border-purple-100 bg-purple-50/40">
+    <form onSubmit={(e) => { e.preventDefault(); onGenerate(); }} noValidate className="print:hidden p-6 space-y-6 border-b border-purple-100 bg-purple-50/40">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Grade Level */}
         <div className="space-y-1 text-right">
@@ -81,12 +81,12 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <button
-          type="button"
-          onClick={onGenerate}
+          type="submit"
           disabled={isSaving}
+          aria-busy={isSaving}
           className="px-6 py-2.5 rounded-xl bg-gradient-vibrant hover:scale-105 text-white font-black text-xs shadow-md shadow-purple-500/25 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
         >
-          <Sparkles className="w-4 h-4 text-amber-300" />
+          <Sparkles aria-hidden="true" className="w-4 h-4 text-amber-300" />
           <span>{isSaving ? "جاري التوليد والحفظ..." : "توليد كروت الشحن الآن ✨"}</span>
         </button>
 
@@ -97,7 +97,7 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
               onClick={onCopyAll}
               className="px-4 py-2 rounded-xl bg-white border border-purple-200 text-purple-900 font-bold text-xs hover:bg-purple-50 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Copy className="w-3.5 h-3.5" />
+              <Copy aria-hidden="true" className="w-3.5 h-3.5" />
               <span>نسخ جميع الأكواد</span>
             </button>
 
@@ -106,12 +106,12 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
               onClick={onPrint}
               className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-105 text-white font-black text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
+              <Printer aria-hidden="true" className="w-4 h-4" />
               <span>طباعة شيت الكروت (A4)</span>
             </button>
           </div>
         )}
       </div>
-    </div>
+    </form>
   );
 };

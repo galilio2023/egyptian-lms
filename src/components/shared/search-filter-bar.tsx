@@ -22,21 +22,21 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   return (
     <div
       className={cn(
-        "modern-card p-4 bg-white/95 backdrop-blur-md border-2 border-purple-100 flex flex-col sm:flex-row items-center gap-3 rounded-2xl shadow-sm",
+        "p-4 bg-white/95 backdrop-blur-md border-2 border-purple-100 flex flex-col sm:flex-row items-center gap-3 rounded-2xl shadow-sm",
         className
       )}
     >
-      <div className="relative flex-1 w-full">
-        <Search className="w-4 h-4 text-purple-400 absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <form role="search" onSubmit={(e) => e.preventDefault()} className="relative flex-1 w-full">
+        <Search className="w-4 h-4 text-purple-400 absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
         <input
-          type="text"
+          type="search"
           aria-label={placeholder}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full min-h-[42px] ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 font-medium transition-all"
+          className="w-full min-h-[44px] ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder:text-slate-400 text-base sm:text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 font-medium transition-all"
         />
-      </div>
+      </form>
 
       {filters && (
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">

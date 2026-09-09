@@ -304,6 +304,47 @@ To access the Admin Settings and brand the platform with your name and academy, 
 
 ---
 
+## 🛠️ Development & Testing Guide
+
+The platform includes built-in development utilities and authentication bypass pathways to enable rapid local development and UI/UX testing without requiring database connectivity or seeded records.
+
+### ⚡ Rapid Dev-Mode Authentication & Credentials
+
+When running in `NODE_ENV=development`, the login interface (`/student-login`) provides instant one-click bypass shortcuts and pre-configured credentials:
+
+| Role | Quick Access URL | Egyptian Mobile | Default Password | Target Route | Mock Identity |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Student** | [`/api/dev/session?role=student`](http://localhost:3000/api/dev/session?role=student) | `01012345678` | `12345678` | `/portal/dashboard` | `طالب تجريبي (وضع التطوير)` (Grade 1 • 850 XP • Unit 1 Enrolled) |
+| **Admin** | [`/api/dev/session?role=admin`](http://localhost:3000/api/dev/session?role=admin) | `01000000000` | Any (8+ chars) | `/admin` | `المشرف الأكاديمي (وضع التطوير)` |
+
+#### Ways to Activate Development Bypass:
+1. **One-Click Button:** On the `/student-login` page, click **"دخول سريع كطالب 🎓"** or **"دخول سريع كمسؤول 🛡️"**.
+2. **Form Entry:** Enter `01012345678` / `12345678` into the student login card.
+3. **Query Parameter:** Append `?dev=true` to any URL (e.g. `http://localhost:3000/portal/dashboard?dev=true`).
+4. **Environment Variable:** Set `DEV_BYPASS_AUTH="true"` in `.env.local` for continuous bypass during automated testing.
+5. **Clear Dev Session:** Visit [`/api/dev/session?action=clear`](http://localhost:3000/api/dev/session?action=clear) or click "مسح الجلسة" on the login card.
+
+### 🛡️ Dev-Mode Safety & Bypass Features
+
+- **Single-Device Lock Exemption:** The hardware fingerprint restriction is automatically bypassed in development mode, preventing local development lockouts.
+- **Full Lesson & Video DRM Preview:** All curriculum units, lesson videos, and checkpoints are fully accessible in dev mode without requiring active database subscriptions.
+- **Graceful Local DB Resilience:** If the remote database is unreachable or unseeded, the student portal and admin backoffice seamlessly fall back to realistic mock profiles and unit data so UI development never halts.
+- **Server Guard Authorization:** `requireStudentAuth` and `requireAdminAuth` automatically recognize dev bypass sessions, ensuring all backend API handlers (`/api/student/*`, `/api/homework/*`, `/api/quiz/*`) pass cleanly.
+
+### 📋 Quality & Verification Protocol
+
+Before pushing any changes, all code must pass the repository verification protocol:
+
+```bash
+# 1. Type-safety validation (must exit with 0 errors)
+pnpm tsc --noEmit
+
+# 2. Production build generation via Turbopack (must exit with code 0)
+pnpm build
+```
+
+---
+
 
 
 ## 📄 License & Attribution

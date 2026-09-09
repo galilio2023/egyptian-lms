@@ -54,16 +54,17 @@ export const AdminNavLinks: React.FC<AdminNavLinksProps> = ({ onItemClick }) => 
   });
 
   return (
-    <nav className="space-y-1.5">
+    <nav aria-label="قائمة التنقل الرئيسية للإدارة" className="space-y-1.5">
       {visibleNavItems.map((item) => {
         const ItemSvg = item.Svg;
-        const isActive = pathname === item.href;
+        const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
 
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onItemClick}
+            aria-current={isActive ? "page" : undefined}
             className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
               isActive
                 ? "bg-gradient-vibrant text-white shadow-md shadow-purple-500/25 scale-[1.02]"
@@ -71,7 +72,7 @@ export const AdminNavLinks: React.FC<AdminNavLinksProps> = ({ onItemClick }) => 
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <ItemSvg className="w-5 h-5 drop-shadow-sm" />
+              <ItemSvg aria-hidden="true" className="w-5 h-5 drop-shadow-sm" />
               <span>{item.label}</span>
             </div>
             {item.badge && (
