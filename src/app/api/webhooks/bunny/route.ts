@@ -14,15 +14,25 @@ import { logSecurityEvent } from "@/lib/security/audit-logger";
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization") || request.headers.get("x-bunny-signature");
-    const { searchParams } = new URL(request.url);
-    const tokenQuery = searchParams.get("token") || searchParams.get("secret");
-
     const configuredSecret = process.env.BUNNY_WEBHOOK_SECRET || process.env.BUNNY_STREAM_API_KEY;
+    if (process.env.NODE_ENV === "production" && !configuredSecret) {
+      await logSecurityEvent({
+        eventType: "unauthorized_portal_access",
+        severity: "critical",
+        description: "Bunny.net Stream webhook rejected because no webhook credential is configured.",
+        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+      });
+
+      return NextResponse.json(
+        { error: "Webhook authentication is not configured." },
+        { status: 503 }
+      );
+    }
+
     if (configuredSecret && process.env.NODE_ENV === "production") {
       const isAuthorized =
         authHeader === configuredSecret ||
-        authHeader === `Bearer ${configuredSecret}` ||
-        tokenQuery === configuredSecret;
+        authHeader === `Bearer ${configuredSecret}`;
 
       if (!isAuthorized) {
         logSecurityEvent({

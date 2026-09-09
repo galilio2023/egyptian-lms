@@ -2,7 +2,10 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, sql, count } from "drizzle-orm";
 import { revalidateCurriculumCache } from "@/lib/data-curriculum";
-import type { ParsedCurriculumUnit } from "@/lib/ai/curriculum-intake-parser";
+import {
+  findMatchingVocabulary,
+  type ParsedCurriculumUnit,
+} from "@/lib/ai/curriculum-intake-parser";
 import { DomainError, NotFoundError } from "@/server/errors";
 
 export interface CreateUnitPayload {
@@ -358,11 +361,24 @@ export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUni
 
       for (let j = 0; j < parsedUnit.quizQuestions.length; j++) {
         const q = parsedUnit.quizQuestions[j];
+        const correctOption = q.options.find((option) => option.isCorrect);
+        const vocabulary = correctOption
+          ? findMatchingVocabulary(correctOption.text, parsedUnit.vocabulary)
+          : undefined;
         await tx.insert(schema.quizQuestion).values({
           quizId: insertedQuiz.id,
           questionText: q.questionText,
           questionType: q.questionType || "multiple_choice",
-          options: q.options,
+          options: q.options.map((option) =>
+            option.isCorrect && vocabulary
+              ? {
+                  ...option,
+                  phonics: vocabulary.phonicsFocus,
+                  arabicMeaning: vocabulary.arabicMeaning,
+                  exampleSentence: vocabulary.exampleSentence,
+                }
+              : option
+          ),
           explanation: q.explanation || null,
           points: q.points || 1,
           orderIndex: j + 1,
@@ -387,4 +403,3 @@ export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUni
     questionsCount: result.questionsCount,
   };
 }
-

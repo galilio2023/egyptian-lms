@@ -26,7 +26,7 @@ export default function AdminOverviewPage() {
     totalUnits: 28,
     pendingOrders: 2,
     totalRevenueEgp: 762500,
-    atRiskStudents: 14,
+    atRiskStudents: undefined,
   });
 
   useEffect(() => {

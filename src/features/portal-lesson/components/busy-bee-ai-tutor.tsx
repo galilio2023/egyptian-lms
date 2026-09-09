@@ -3,11 +3,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send, Volume2 } from "lucide-react";
 import { toast } from "sonner";
+import { getSrsDeckStorageKey } from "@/lib/srs-storage";
 
 interface BusyBeeAiTutorProps {
   lessonTitle: string;
   unitTitle: string;
   studentName?: string;
+  userId?: string;
 }
 
 interface Message {
@@ -22,6 +24,7 @@ export function BusyBeeAiTutor({
   lessonTitle,
   unitTitle,
   studentName = "يا بطل",
+  userId,
 }: BusyBeeAiTutorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputQuery, setInputQuery] = useState("");
@@ -44,41 +47,48 @@ export function BusyBeeAiTutor({
 
   // Context-Aware Personalization: Detect recent remedial words from SRS deck
   useEffect(() => {
-    try {
-      const rawDeck = localStorage.getItem("egyptian_lms_srs_vocab_deck");
-      if (rawDeck) {
-        const parsedDeck = JSON.parse(rawDeck);
-        if (Array.isArray(parsedDeck)) {
-          const remedialWords = parsedDeck
-            .filter((c: { category?: string; word?: string }) => 
-              typeof c.word === "string" && (c.category?.includes("كويز") || c.category?.includes("مراجعة"))
-            )
-            .map((c: { word: string }) => c.word)
-            .filter(Boolean);
+    const storageKey = getSrsDeckStorageKey(userId);
+    if (!storageKey) return;
 
-          if (remedialWords.length > 0) {
-            setStruggledWords(remedialWords);
-            const focusWord = remedialWords[0];
-            setMessages([
-              {
-                id: "welcome-adaptive",
-                sender: "bee",
-                text: `أهلاً يا ${studentName}! 🐝 أنا النحلة النشيطة رفيقتك الذكية في درس "${lessonTitle}". لاحظت إنك كنت بتراجع كلمة "${focusWord}" في الكويز السابق، تحب نتدرب عليها سوا وننطقها صح ونحطها في جملة؟ 🌟`,
-                suggestedFollowUps: [
-                  `ازاي أنطق "${focusWord}" صح؟ 🎙️`,
-                  `اديني مثال بسيط على "${focusWord}" 🐝`,
-                  "اسألني سؤال سريع اختبرني! 💡",
-                ],
-                timestamp: "الآن",
-              },
-            ]);
+    const timer = window.setTimeout(() => {
+      try {
+        const rawDeck = localStorage.getItem(storageKey);
+        if (rawDeck) {
+          const parsedDeck = JSON.parse(rawDeck);
+          if (Array.isArray(parsedDeck)) {
+            const remedialWords = parsedDeck
+              .filter((c: { category?: string; word?: string }) =>
+                typeof c.word === "string" && (c.category?.includes("كويز") || c.category?.includes("مراجعة"))
+              )
+              .map((c: { word: string }) => c.word)
+              .filter(Boolean);
+
+            if (remedialWords.length > 0) {
+              setStruggledWords(remedialWords);
+              const focusWord = remedialWords[0];
+              setMessages([
+                {
+                  id: "welcome-adaptive",
+                  sender: "bee",
+                  text: `أهلاً يا ${studentName}! 🐝 أنا النحلة النشيطة رفيقتك الذكية في درس "${lessonTitle}". لاحظت إنك كنت بتراجع كلمة "${focusWord}" في الكويز السابق، تحب نتدرب عليها سوا وننطقها صح ونحطها في جملة؟ 🌟`,
+                  suggestedFollowUps: [
+                    `ازاي أنطق "${focusWord}" صح؟ 🎙️`,
+                    `اديني مثال بسيط على "${focusWord}" 🐝`,
+                    "اسألني سؤال سريع اختبرني! 💡",
+                  ],
+                  timestamp: "الآن",
+                },
+              ]);
+            }
           }
         }
+      } catch {
+        // Gracefully maintain default greeting
       }
-    } catch {
-      // Gracefully maintain default greeting
-    }
-  }, [lessonTitle, studentName]);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [lessonTitle, studentName, userId]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 

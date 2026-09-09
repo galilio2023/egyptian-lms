@@ -195,6 +195,9 @@ export interface QuizOption {
   id: string;
   text: string;
   isCorrect: boolean;
+  phonics?: string;
+  arabicMeaning?: string;
+  exampleSentence?: string;
 }
 
 export const quizQuestion = pgTable('quiz_question', {
@@ -607,4 +610,3 @@ export const securityAuditLogRelations = relations(securityAuditLog, ({ one }) =
     references: [user.id],
   }),
 }));
-

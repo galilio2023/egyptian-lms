@@ -5,6 +5,7 @@ import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { findMatchingVocabulary } from "@/lib/ai/curriculum-intake-parser";
 import { UnauthorizedError, ForbiddenError } from "@/server/errors";
 
 // Deterministic seeded shuffle per student session
@@ -224,7 +225,20 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
   } = params;
 
   let quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
-  let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string; audioUrl?: string | null }> = quiz.questions;
+  let questionsList: Array<{
+    id: string;
+    text: string;
+    options: Array<{
+      id: string;
+      text: string;
+      isCorrect: boolean;
+      phonics?: string;
+      arabicMeaning?: string;
+      exampleSentence?: string;
+    }>;
+    explanation: string;
+    audioUrl?: string | null;
+  }> = quiz.questions;
   let maxAttempts = 3;
   let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
   let dbQuizRecord: typeof schema.quiz.$inferSelect | null = null;
@@ -322,7 +336,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
             id: q.id,
             text: q.questionText,
             audioUrl: q.questionAudioUrl || undefined,
-            options: q.options as Array<{ id: string; text: string; isCorrect: boolean }>,
+            options: q.options,
             explanation: q.explanation || "إجابة صحيحة وفقاً للمنهج.",
           })),
         };
@@ -342,14 +356,15 @@ export async function gradeQuizForStudent(params: GradeQuizParams): Promise<Grad
 
     if (isCorrect) {
       correctCount++;
-    } else {
-      const targetWord = correctOption?.text || q.text;
+    } else if (correctOption) {
+      const targetWord = correctOption.text;
+      const vocabulary = findMatchingVocabulary(targetWord);
       missedConcepts.push({
         id: `remedial-${q.id}`,
         word: targetWord,
-        phonics: q.audioUrl ? "استمع للنطق الصوتي الصحيح 🎙️" : "مراجعة نطق وتثبيت الكلمة 🔤",
-        arabicMeaning: q.explanation || "مفهوم تم اختباره في الكويز ويحتاج إلى مراجعة",
-        exampleSentence: `سؤال: ${q.text} ➜ الإجابة الصحيحة: ${correctOption?.text || ""}`,
+        phonics: correctOption?.phonics || vocabulary?.phonicsFocus || "",
+        arabicMeaning: correctOption?.arabicMeaning || vocabulary?.arabicMeaning || "",
+        exampleSentence: correctOption?.exampleSentence || vocabulary?.exampleSentence || "",
         category: `مراجعة كويز: ${quiz.title}`,
       });
     }

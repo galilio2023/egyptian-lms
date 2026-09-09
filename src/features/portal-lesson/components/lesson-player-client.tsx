@@ -250,6 +250,7 @@ export function LessonPlayerClient({
           lessonTitle={lesson.title}
           unitTitle={unit.title}
           studentName={studentName}
+          userId={session?.user?.id}
         />
       </main>
     </div>

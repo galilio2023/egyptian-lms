@@ -57,7 +57,7 @@ export function OverviewKpiCards({ stats }: OverviewKpiCardsProps) {
 
       <StatCard
         title="مؤشر المتابعة الذكية (At-Risk)"
-        value={`${stats.atRiskStudents ?? 0} طالب`}
+        value={stats.atRiskStudents === undefined ? "—" : `${stats.atRiskStudents} طالب`}
         icon={<AlertTriangle className="w-7 h-7" />}
         variant="rose"
         description="طلاب بحاجة لدعم استذكاري وتواصل"

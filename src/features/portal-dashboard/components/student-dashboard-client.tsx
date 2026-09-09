@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { Volume2 } from "lucide-react";
+import { Radio, Volume2 } from "lucide-react";
 import { PhonicsSoundBoard } from "@/features/phonics";
 import { PrintableCertificate } from "@/features/certificates";
 import { PwaInstallBanner } from "@/components/ui/pwa-install-banner";
@@ -12,6 +12,7 @@ import { LiveSessionWidget } from "@/features/live-sessions";
 import { HomeworkSubmissionModal } from "@/features/homework";
 import { EgyptianCheckoutModal } from "@/features/checkout";
 import { Modal } from "@/components/ui/modal";
+import { EmptyState } from "@/components/ui/empty-state";
 import { StudentProgressTimeline } from "./student-progress-timeline";
 import {
   MascotLionSvg,
@@ -37,7 +38,6 @@ import {
 import {
   INITIAL_LESSONS,
   INITIAL_UNITS,
-  INITIAL_LIVE_SESSIONS,
   type MockHomeworkAssignment,
   type MockHomeworkSubmission,
   type MockUnit,
@@ -336,6 +336,7 @@ export function StudentDashboardClient({
         />
 
         <SmartSrsVocabCard
+          userId={studentId}
           onEarnXp={(earnedXp) => {
             setStudentProfile((prev) => ({ ...prev, xpPoints: prev.xpPoints + earnedXp }));
             fetch("/api/student/xp", {
@@ -348,10 +349,19 @@ export function StudentDashboardClient({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <div className="lg:col-span-7">
-            <LiveSessionWidget
-              session={initialDashboardData.liveSession ?? INITIAL_LIVE_SESSIONS[0]}
-              studentName={currentStudent.name}
-            />
+            {initialDashboardData.liveSession ? (
+              <LiveSessionWidget
+                session={initialDashboardData.liveSession}
+                studentName={currentStudent.name}
+              />
+            ) : (
+              <EmptyState
+                icon={<Radio className="w-7 h-7" />}
+                title="لا توجد حصة بث مباشر قادمة"
+                description="ستظهر هنا حصة المراجعة القادمة فور تحديد موعدها لصفك."
+                className="min-h-[280px] h-full bg-white/80"
+              />
+            )}
           </div>
           <div className="lg:col-span-5">
             {currentAssignment ? (

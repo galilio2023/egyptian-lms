@@ -23,6 +23,7 @@ interface QuizResultsCardProps {
   quiz: MockQuiz;
   studentName: string;
   gradeResult: ServerGradeResult;
+  srsSyncStatus: "synced" | "failed" | null;
   onRetake: () => void;
   onSpeakText: (text: string) => void;
 }
@@ -31,6 +32,7 @@ export function QuizResultsCard({
   quiz,
   studentName,
   gradeResult,
+  srsSyncStatus,
   onRetake,
   onSpeakText,
 }: QuizResultsCardProps) {
@@ -165,7 +167,11 @@ export function QuizResultsCard({
             </Link>
           </div>
           <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-            تمت إضافة ({gradeResult.missedConcepts.length}) مفاهيم وكلمات أخطأت بها تلقائياً إلى كروت الاستذكار المتباعد بلوحة التحكم لمراجعتها وتثبيتها 🌟
+            {srsSyncStatus === "synced"
+              ? "المفاهيم والكلمات التي أخطأت بها متاحة في كروت الاستذكار المتباعد بلوحة التحكم لمراجعتها وتثبيتها 🌟"
+              : srsSyncStatus === "failed"
+                ? "تعذر مزامنة هذه المفاهيم مع كروت الاستذكار على هذا الجهاز. يمكنك مراجعتها من القائمة أدناه والمحاولة لاحقاً."
+                : "هذه المفاهيم والكلمات تحتاج إلى مراجعة وتثبيت."}
           </p>
           <div className="flex flex-wrap gap-1.5 pt-1">
             {gradeResult.missedConcepts.map((concept) => (

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, gt, isNull, or, inArray, notInArray, desc } from "drizzle-orm";
+import { eq, and, gt, gte, isNull, or, inArray, notInArray, asc, desc } from "drizzle-orm";
 import {
   INITIAL_HOMEWORK_ASSIGNMENTS,
   INITIAL_HOMEWORK_SUBMISSIONS,
@@ -237,27 +237,50 @@ export async function getStudentDashboardData(
     // 1. Fetch upcoming / latest Live Session for student's grade
     let liveSessionData: MockLiveSession | null = null;
     try {
-      const [dbLive] = await db
-        .select({
-          id: schema.liveSession.id,
-          gradeId: schema.liveSession.gradeId,
-          gradeTitleArabic: schema.grade.titleArabic,
-          gradeSlug: schema.grade.slug,
-          title: schema.liveSession.title,
-          description: schema.liveSession.description,
-          scheduledAt: schema.liveSession.scheduledAt,
-          durationMinutes: schema.liveSession.durationMinutes,
-          provider: schema.liveSession.provider,
-          meetingUrl: schema.liveSession.meetingUrl,
-          meetingPassword: schema.liveSession.meetingPassword,
-          isLiveNow: schema.liveSession.isLiveNow,
-          recordingUrl: schema.liveSession.recordingUrl,
-        })
+      const liveSessionSelection = {
+        id: schema.liveSession.id,
+        gradeId: schema.liveSession.gradeId,
+        gradeTitleArabic: schema.grade.titleArabic,
+        gradeSlug: schema.grade.slug,
+        title: schema.liveSession.title,
+        description: schema.liveSession.description,
+        scheduledAt: schema.liveSession.scheduledAt,
+        durationMinutes: schema.liveSession.durationMinutes,
+        provider: schema.liveSession.provider,
+        meetingUrl: schema.liveSession.meetingUrl,
+        meetingPassword: schema.liveSession.meetingPassword,
+        isLiveNow: schema.liveSession.isLiveNow,
+        recordingUrl: schema.liveSession.recordingUrl,
+      };
+
+      const [activeLive] = await db
+        .select(liveSessionSelection)
         .from(schema.liveSession)
         .innerJoin(schema.grade, eq(schema.liveSession.gradeId, schema.grade.id))
-        .where(eq(schema.grade.gradeNumber, studentGrade))
+        .where(
+          and(
+            eq(schema.grade.gradeNumber, studentGrade),
+            eq(schema.liveSession.isLiveNow, true)
+          )
+        )
         .orderBy(desc(schema.liveSession.scheduledAt))
         .limit(1);
+
+      let dbLive = activeLive;
+      if (!dbLive) {
+        [dbLive] = await db
+          .select(liveSessionSelection)
+          .from(schema.liveSession)
+          .innerJoin(schema.grade, eq(schema.liveSession.gradeId, schema.grade.id))
+          .where(
+            and(
+              eq(schema.grade.gradeNumber, studentGrade),
+              gte(schema.liveSession.scheduledAt, now)
+            )
+          )
+          .orderBy(asc(schema.liveSession.scheduledAt))
+          .limit(1);
+      }
 
       if (dbLive) {
         liveSessionData = {
@@ -277,10 +300,10 @@ export async function getStudentDashboardData(
           instructorName: "مستر أحمد الطبلاوي",
         };
       } else {
-        liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? INITIAL_LIVE_SESSIONS[0] ?? null;
+        liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? null;
       }
     } catch {
-      liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? INITIAL_LIVE_SESSIONS[0] ?? null;
+      liveSessionData = INITIAL_LIVE_SESSIONS.find((s) => s.gradeSlug === gradeSlug) ?? null;
     }
 
     // 2. Dynamic streak calculation from lesson progress dates
@@ -323,7 +346,7 @@ export async function getStudentDashboardData(
     }
 
     // 3. Dynamic active quizzes in enrolled units
-    let activeQuizzesCount = 2;
+    let activeQuizzesCount = 0;
     if (enrolledUnitIds.length > 0) {
       try {
         const [totalQuizzes, passedAttempts] = await Promise.all([

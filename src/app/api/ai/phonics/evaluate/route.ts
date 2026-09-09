@@ -147,12 +147,31 @@ Return JSON in this EXACT schema:
             const score = Math.max(0, Math.min(100, Math.round(rawScore)));
             const xp = score >= 80 ? 25 : score >= 60 ? 15 : 5;
 
-            let actualXp = xp;
+            let actualXp = 0;
             try {
               const xpRes = await awardPracticeXp(session.user.id, "phonics_practice", xp);
               actualXp = xpRes.xpAwarded;
             } catch (xpErr) {
-              console.warn("Could not persist phonics XP to student profile:", xpErr);
+              console.error("Could not persist phonics XP to student profile:", xpErr);
+              return NextResponse.json(
+                {
+                  success: false,
+                  accuracyScore: score,
+                  recognizedText: parsed.recognizedText || cleanTarget,
+                  isPass: score >= 65,
+                  trapDetected: parsed.trapDetected || null,
+                  detectedPhonemes: Array.isArray(parsed.detectedPhonemes)
+                    ? parsed.detectedPhonemes
+                    : [],
+                  pedagogicalAdviceArabic:
+                    parsed.pedagogicalAdviceArabic ||
+                    "تم تقييم النطق، لكن تعذر حفظ مكافأة النقاط. حاول مرة أخرى لاحقاً.",
+                  praiseArabic: parsed.praiseArabic || "محاولة رائعة يا بطل! 👏",
+                  xpAwarded: 0,
+                  error: "تعذر حفظ نقاط تقييم النطق حالياً.",
+                } satisfies PhonicsEvaluationResponse,
+                { status: 503 }
+              );
             }
 
             const responsePayload: PhonicsEvaluationResponse = {
