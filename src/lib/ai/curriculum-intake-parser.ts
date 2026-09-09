@@ -561,7 +561,6 @@ export async function parseCurriculumWithAi(
 
   // Enrich with detected PDF metadata
   const detectedHeadings = pdfDoc.headings.length > 0 ? pdfDoc.headings : [];
-  const detectedVocab = pdfDoc.vocabularyHints.length > 0 ? pdfDoc.vocabularyHints : [];
 
   const enrichedUnit: ParsedCurriculumUnit = {
     ...basePreset,

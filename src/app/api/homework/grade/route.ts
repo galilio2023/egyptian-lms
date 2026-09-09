@@ -21,13 +21,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { submissionId, score, feedbackNotes, annotatedImages, studentName, parentPhone, assignmentTitle } = body as {
+    const { submissionId, score, feedbackNotes, annotatedImages, studentName, assignmentTitle } = body as {
       submissionId: string;
       score: number;
       feedbackNotes: string;
       annotatedImages?: Array<{ pageIndex: number; dataUrl: string }>;
       studentName?: string;
-      parentPhone?: string;
       assignmentTitle?: string;
     };
 

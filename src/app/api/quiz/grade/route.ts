@@ -56,7 +56,6 @@ export async function POST(request: NextRequest) {
       quizId, 
       answers, 
       studentName = session?.user?.name || "بطل أكاديمية إيليت",
-      parentPhone,
       studentPhone = (session?.user as Record<string, unknown>)?.phoneNumber as string | undefined,
       timeSpentSeconds = 0
     } = body as {

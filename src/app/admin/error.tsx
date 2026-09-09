@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RefreshCw, LayoutDashboard, ShieldAlert, ArrowRight } from "lucide-react";
+import { RefreshCw, LayoutDashboard, ShieldAlert } from "lucide-react";
 import { AdminShieldErrorSvg } from "@/components/ui/error-illustrations";
 
 export default function AdminError({

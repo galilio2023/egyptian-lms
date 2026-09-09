@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ParsedCurriculumUnit } from "@/lib/ai/curriculum-intake-parser";
+import { revalidateCurriculumCache } from "@/lib/data-curriculum";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,14 +29,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "بيانات الوحدة غير مكتملة." }, { status: 400 });
     }
 
-    // Attempt database transaction
-    let createdUnitRecord: { id: string; title: string; slug: string } | null = null;
-    let lessonsCreatedCount = 0;
-    let questionsCreatedCount = 0;
-
-    try {
+    const result = await db.transaction(async (tx) => {
       // 1. Resolve Grade
-      const [existingGrade] = await db
+      const [existingGrade] = await tx
         .select()
         .from(schema.grade)
         .where(eq(schema.grade.slug, parsedUnit.gradeSlug))
@@ -48,7 +44,7 @@ export async function POST(request: NextRequest) {
 
       // 2. Insert Course Unit
       const unitSlug = `${parsedUnit.gradeSlug}-u${parsedUnit.unitNumber}-${Date.now()}`;
-      const [insertedUnit] = await db
+      const [insertedUnit] = await tx
         .insert(schema.courseUnit)
         .values({
           gradeId,
@@ -56,13 +52,15 @@ export async function POST(request: NextRequest) {
           slug: unitSlug,
           description: parsedUnit.description,
           thumbnailUrl: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=60",
-          price: parsedUnit.suggestedPriceEgp || 250,
+          price: parsedUnit.suggestedPriceEgp ?? 250,
           isPublished: true,
           orderIndex: parsedUnit.unitNumber || 1,
         })
-        .returning();
-
-      createdUnitRecord = insertedUnit;
+        .returning({
+          id: schema.courseUnit.id,
+          title: schema.courseUnit.title,
+          slug: schema.courseUnit.slug,
+        });
 
       // 3. Insert Lessons
       const pdfPath = parsedUnit.pdfFileName.startsWith("/")
@@ -72,7 +70,7 @@ export async function POST(request: NextRequest) {
       for (let i = 0; i < parsedUnit.lessons.length; i++) {
         const l = parsedUnit.lessons[i];
         const lessonSlug = `${unitSlug}-l${i + 1}`;
-        await db.insert(schema.lesson).values({
+        await tx.insert(schema.lesson).values({
           unitId: insertedUnit.id,
           title: l.title,
           slug: lessonSlug,
@@ -83,12 +81,11 @@ export async function POST(request: NextRequest) {
           isFreePreview: l.isFreePreview || i === 0,
           orderIndex: i + 1,
         });
-        lessonsCreatedCount++;
       }
 
       // 4. Insert Quiz & Questions
       if (parsedUnit.quizQuestions && parsedUnit.quizQuestions.length > 0) {
-        const [insertedQuiz] = await db
+        const [insertedQuiz] = await tx
           .insert(schema.quiz)
           .values({
             unitId: insertedUnit.id,
@@ -101,7 +98,7 @@ export async function POST(request: NextRequest) {
 
         for (let j = 0; j < parsedUnit.quizQuestions.length; j++) {
           const q = parsedUnit.quizQuestions[j];
-          await db.insert(schema.quizQuestion).values({
+          await tx.insert(schema.quizQuestion).values({
             quizId: insertedQuiz.id,
             questionText: q.questionText,
             questionType: q.questionType || "multiple_choice",
@@ -110,27 +107,24 @@ export async function POST(request: NextRequest) {
             points: q.points || 1,
             orderIndex: j + 1,
           });
-          questionsCreatedCount++;
         }
       }
-    } catch (dbErr) {
-      console.warn("DB insert note (fallback/simulation mode):", dbErr);
-      // Fallback response for dev environments without seeded Postgres tables
-      createdUnitRecord = {
-        id: `unit-${Date.now()}`,
-        title: `${parsedUnit.titleEnglish} (${parsedUnit.titleArabic})`,
-        slug: `${parsedUnit.gradeSlug}-u${parsedUnit.unitNumber}-${Date.now()}`,
+
+      return {
+        unit: insertedUnit,
+        lessonsCount: parsedUnit.lessons.length,
+        questionsCount: parsedUnit.quizQuestions?.length ?? 0,
       };
-      lessonsCreatedCount = parsedUnit.lessons.length;
-      questionsCreatedCount = parsedUnit.quizQuestions.length;
-    }
+    });
+
+    revalidateCurriculumCache({ unitSlug: result.unit.slug });
 
     return NextResponse.json({
       success: true,
-      message: `تم اعتماد وحفظ (${createdUnitRecord.title}) وإضافتها إلى قائمة المنهج الدراسي بنجاح!`,
-      unit: createdUnitRecord,
-      lessonsCount: lessonsCreatedCount,
-      questionsCount: questionsCreatedCount,
+      message: `تم اعتماد وحفظ (${result.unit.title}) وإضافتها إلى قائمة المنهج الدراسي بنجاح!`,
+      unit: result.unit,
+      lessonsCount: result.lessonsCount,
+      questionsCount: result.questionsCount,
     });
   } catch (error) {
     console.error("Curriculum commit failed:", error);

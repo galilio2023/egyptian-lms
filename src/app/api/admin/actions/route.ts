@@ -6,6 +6,7 @@ import * as schema from "@/lib/db/schema";
 import { eq, and, desc, count, sql, inArray } from "drizzle-orm";
 import { INITIAL_PLATFORM_SETTINGS, type MockPlatformSettings } from "@/lib/db/mock-data";
 import { getPlatformSettings, invalidatePlatformSettingsCache } from "@/lib/utils/platform-settings";
+import { revalidateCurriculumCache } from "@/lib/data-curriculum";
 import { getRecentSecurityLogs, logSecurityEvent, SecurityAuditRecord } from "@/lib/security/audit-logger";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
@@ -956,6 +957,8 @@ export async function POST(request: NextRequest) {
           orderIndex: 1,
         }).returning();
 
+        revalidateCurriculumCache({ unitSlug });
+
         return NextResponse.json({
           success: true,
           unit: inserted,
@@ -968,6 +971,7 @@ export async function POST(request: NextRequest) {
         if (!unitId) return NextResponse.json({ error: "معرف الوحدة مطلوب" }, { status: 400 });
 
         await db.delete(schema.courseUnit).where(eq(schema.courseUnit.id, unitId));
+        revalidateCurriculumCache();
         return NextResponse.json({ success: true, message: "تم حذف الوحدة الدراسية بنجاح." });
       }
 
@@ -1016,6 +1020,8 @@ export async function POST(request: NextRequest) {
           return newLesson;
         });
 
+        revalidateCurriculumCache({ lessonSlug });
+
         return NextResponse.json({
           success: true,
           lesson: inserted,
@@ -1028,6 +1034,7 @@ export async function POST(request: NextRequest) {
         if (!lessonId) return NextResponse.json({ error: "معرف المحاضرة مطلوب" }, { status: 400 });
 
         await db.delete(schema.lesson).where(eq(schema.lesson.id, lessonId));
+        revalidateCurriculumCache();
         return NextResponse.json({ success: true, message: "تم حذف المحاضرة بنجاح." });
       }
 
@@ -1140,8 +1147,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "send_broadcast": {
-        const { recipientCount, gradeSlug, messageText } = payload as {
-          recipientCount?: number;
+        const { gradeSlug, messageText } = payload as {
           gradeSlug?: string;
           messageText?: string;
         };

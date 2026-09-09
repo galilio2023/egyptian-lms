@@ -13,8 +13,6 @@ import {
   AlertTriangle,
   Crown,
   Rocket,
-  Flame,
-  BookOpen,
   Compass,
   Layers,
   Eye
@@ -26,8 +24,7 @@ import {
   ToyDinoDinoSvg, 
   ToyRocketShuttleSvg, 
   ToyPrincessUnicornSvg, 
-  ToyMagmaAppleSvg,
-  MascotStarSvg 
+  ToyMagmaAppleSvg
 } from "@/components/ui/illustrated-icons";
 import type { MockPlatformSettings } from "@/lib/db/mock-data";
 

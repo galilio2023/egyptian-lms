@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UploadCloud, BookOpen, X } from "lucide-react";
+import { UploadCloud, BookOpen } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import type { MockHomeworkAssignment, MockHomeworkSubmission } from "@/lib/db/mock-data";

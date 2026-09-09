@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { INITIAL_GRADES, INITIAL_UNITS } from "@/lib/db/mock-data";
+import { INITIAL_UNITS } from "@/lib/db/mock-data";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://elite-academy.edu.eg";

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import QRCode from "qrcode";
 import { X, QrCode, Printer } from "lucide-react";
 import { EliteLogoBadge } from "@/components/ui/illustrated-icons";
@@ -95,9 +96,12 @@ export function StudentIDCardModal({
           {/* QR Code Container */}
           <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white shadow-inner">
             {qrDataUrl ? (
-              <img
+              <Image
                 src={qrDataUrl}
                 alt="Student Attendance QR"
+                width={192}
+                height={192}
+                unoptimized
                 className="w-48 h-48 rounded-xl object-contain"
               />
             ) : (

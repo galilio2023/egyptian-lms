@@ -8,11 +8,7 @@ import {
   UploadCloud,
   CheckCircle2,
   BookOpen,
-  HelpCircle,
-  Volume2,
-  ArrowRight,
   RefreshCw,
-  Eye,
   Check,
   Award,
 } from "lucide-react";

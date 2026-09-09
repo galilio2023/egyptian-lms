@@ -5,8 +5,7 @@ import {
   Clock, 
   ShieldCheck, 
   ShieldAlert, 
-  RotateCcw,
-  AlertTriangle
+  RotateCcw
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { INITIAL_LESSONS } from "@/lib/db/mock-data";
+import { getCachedLesson } from "@/lib/data-curriculum";
 
 export async function generateMetadata({
   params,
@@ -7,11 +7,11 @@ export async function generateMetadata({
   params: Promise<{ lessonSlug: string }>;
 }): Promise<Metadata> {
   const { lessonSlug } = await params;
-  const lesson = INITIAL_LESSONS.find((l) => l.slug === lessonSlug);
-  if (!lesson) return { title: "المحاضرة التعليمية", robots: { index: false, follow: false } };
+  const data = await getCachedLesson(lessonSlug);
+  if (!data?.lesson) return { title: "المحاضرة التعليمية", robots: { index: false, follow: false } };
   return {
-    title: lesson.title,
-    description: `محاضرة تفاعلية: ${lesson.title} (${lesson.videoDuration})`,
+    title: `${data.lesson.title} | ${data.unit.title}`,
+    description: `محاضرة تفاعلية: ${data.lesson.title} (${data.lesson.videoDuration})`,
     robots: { index: false, follow: false },
   };
 }

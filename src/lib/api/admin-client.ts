@@ -45,7 +45,7 @@ export async function executeAdminAction<TResult = unknown>(
     }
 
     return { success: true, data: data as TResult };
-  } catch (err) {
+  } catch {
     const errorMsg = options?.errorMessage || "حدث خطأ في الاتصال بالخادم.";
     if (showToast) {
       toast.error(errorMsg);

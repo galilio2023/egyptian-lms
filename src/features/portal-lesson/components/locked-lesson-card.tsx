@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { MockLesson, MockUnit } from "@/lib/db/mock-data";
 
 interface LockedLessonCardProps {
-  lesson: MockLesson;
+  lesson: Pick<MockLesson, "title">;
   unit: MockUnit;
   onOpenCheckout: () => void;
 }

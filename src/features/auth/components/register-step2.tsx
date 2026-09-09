@@ -1,5 +1,5 @@
 import React from "react";
-import { Eye, EyeOff, ChevronRight, Sparkles } from "lucide-react";
+import { Eye, EyeOff, ChevronRight } from "lucide-react";
 import { EgyptianPhoneSvg, SecurityLockSvg, XpGemSvg } from "@/components/ui/illustrated-icons";
 import { Button } from "@/components/ui/button";
 

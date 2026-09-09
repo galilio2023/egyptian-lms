@@ -1,6 +1,6 @@
 "use client";
 
-import { Save, Sparkles, Volume2, ArrowLeft, FastForward } from "lucide-react";
+import { Save, Sparkles, Volume2, FastForward } from "lucide-react";
 import type { MockHomeworkSubmission } from "@/lib/db/mock-data";
 
 interface GraderSidebarProps {
