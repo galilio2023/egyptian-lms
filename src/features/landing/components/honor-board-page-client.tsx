@@ -10,7 +10,6 @@ import {
   Flame, 
   Medal, 
   Star, 
-  CheckCircle,
   GraduationCap,
   ArrowRight
 } from "lucide-react";
@@ -23,7 +22,7 @@ import {
   type MockGradeChampion,
   type MockPlatformSettings 
 } from "@/lib/db/mock-data";
-import { ChampionCupSvg, XpGemSvg, EgyptianPhoneSvg } from "@/components/ui/illustrated-icons";
+import { ChampionCupSvg, XpGemSvg } from "@/components/ui/illustrated-icons";
 
 interface HonorBoardPageClientProps {
   settings: MockPlatformSettings;
@@ -31,7 +30,6 @@ interface HonorBoardPageClientProps {
 
 export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
   const [activeGrade, setActiveGrade] = useState<string>("grade-3");
-  const [copiedShare, setCopiedShare] = useState(false);
 
   const champions: MockGradeChampion[] =
     INITIAL_GRADE_CHAMPIONS[activeGrade] || INITIAL_GRADE_CHAMPIONS["grade-3"] || [];

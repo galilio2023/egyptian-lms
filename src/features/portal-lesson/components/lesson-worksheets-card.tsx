@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Volume2, CheckCircle2, Sparkles, BookOpen } from "lucide-react";
+import { Volume2, Sparkles, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { 

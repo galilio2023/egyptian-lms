@@ -1147,8 +1147,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "send_broadcast": {
-        const { recipientCount, gradeSlug, messageText } = payload as {
-          recipientCount?: number;
+        const { gradeSlug, messageText } = payload as {
           gradeSlug?: string;
           messageText?: string;
         };

@@ -174,16 +174,76 @@ export function StudentDashboardClient({
     }
   }, [studentId, studentName, studentPhone]);
 
-  // Only refetch if data wasn't pre-populated server-side
+  // Only fetch missing client data if not pre-populated server-side
   useEffect(() => {
+    let active = true;
+
     if (!initialDashboardData.profile) {
-      void refetchEnrollments();
+      fetch("/api/student/enrollments")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (active && d?.enrolledUnitIds) {
+            setEnrolledUnitIds(d.enrolledUnitIds);
+          }
+        })
+        .catch(() => {});
     }
+
     if (!initialDashboardData.currentAssignment) {
-      void fetchHomework();
+      fetch("/api/student/homework")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!active) return;
+          if (data?.assignments && data.assignments.length > 0) {
+            const first = data.assignments[0];
+            setCurrentAssignment({
+              id: first.id,
+              unitId: first.unitId,
+              unitTitle: first.unitTitle || "الوحدة الدراسية",
+              gradeSlug: first.gradeSlug || "grade-1",
+              lessonTitle: first.lessonTitle || undefined,
+              title: first.title,
+              instructions: first.instructions,
+              pageNumber: first.pageNumber,
+              maxScore: first.maxScore,
+              dueDate: first.dueDate,
+            });
+            if (first.submission) {
+              setStudentSubmission({
+                id: first.submission.id,
+                assignmentId: first.id,
+                assignmentTitle: first.title,
+                studentId,
+                studentName,
+                studentPhone,
+                parentPhone: "01000000000",
+                gradeTitle: first.gradeSlug || "Grade 1",
+                status: first.submission.status,
+                score: first.submission.score ?? undefined,
+                maxScore: first.maxScore || 10,
+                feedbackNotes: first.submission.feedbackNotes ?? undefined,
+                studentImages: first.submission.studentImages || [],
+                audioVoiceNoteUrl: first.submission.audioVoiceNoteUrl || undefined,
+                annotatedImages: first.submission.annotatedImages || undefined,
+                submittedAt: first.submission.submittedAt
+                  ? new Date(first.submission.submittedAt).toLocaleDateString("ar-EG")
+                  : "اليوم",
+              });
+            } else {
+              setStudentSubmission(undefined);
+            }
+          } else if (data?.assignments?.length === 0) {
+            setCurrentAssignment(null);
+            setStudentSubmission(undefined);
+          }
+        })
+        .catch(() => {});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [initialDashboardData.profile, initialDashboardData.currentAssignment, studentId, studentName, studentPhone]);
 
   const currentStudent: StudentDashboardProfile = {
     name: studentName,

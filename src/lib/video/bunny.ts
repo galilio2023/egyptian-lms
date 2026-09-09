@@ -114,7 +114,6 @@ export function generateBunnyUploadTicket(videoId: string): BunnyUploadTicket {
  * Protects against URL sharing and Telegram/piracy leeching.
  */
 export function generateBunnyPlaybackUrl({
-  provider = "bunny",
   videoId,
   clientIp,
   expiresInSeconds = 7200, // 2 hours by default

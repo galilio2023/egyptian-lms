@@ -9,7 +9,7 @@ import type { SecurityAuditRecord } from "../types";
 export function useAdminSecurity() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
-  const { data: logs, setData: setLogs, isLoading, refetch } = useAdminQuery<SecurityAuditRecord[]>(
+  const { data: logs, isLoading, refetch } = useAdminQuery<SecurityAuditRecord[]>(
     "security_logs",
     [],
     (res) => (res.securityLogs && Array.isArray(res.securityLogs) ? (res.securityLogs as SecurityAuditRecord[]) : undefined)
@@ -28,7 +28,7 @@ export function useAdminSecurity() {
     },
   });
 
-  const banStudent = async (userId: string, studentPhone?: string | null) => {
+  const banStudent = async (userId: string) => {
     setActionInProgress(userId);
     try {
       const result = await executeAdminAction(

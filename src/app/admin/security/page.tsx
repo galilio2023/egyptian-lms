@@ -40,7 +40,7 @@ export default function AdminSecurityPage() {
 
   const handleConfirmBan = async () => {
     if (!banningTarget) return;
-    await banStudent(banningTarget.userId, banningTarget.studentPhone);
+    await banStudent(banningTarget.userId);
     setBanningTarget(null);
   };
 
@@ -119,7 +119,7 @@ export default function AdminSecurityPage() {
       <SecurityLogsTable
         logs={filteredLogs}
         actionInProgress={actionInProgress}
-        onBanStudent={(userId, phone) => setBanningTarget({ userId, studentPhone: phone })}
+        onBanStudent={(userId: string, phone?: string | null) => setBanningTarget({ userId, studentPhone: phone })}
       />
 
       {/* 5. Batch Voucher Modal */}

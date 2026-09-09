@@ -18,9 +18,7 @@ export interface RateLimitResult {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __rateLimitStore: Map<string, RateLimitRecord> | undefined;
-  // eslint-disable-next-line no-var
   var __rateLimitGcInterval: ReturnType<typeof setInterval> | undefined;
 }
 

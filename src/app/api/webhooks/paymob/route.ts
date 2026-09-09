@@ -1,91 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
-
-const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET || "";
-
-/**
- * Paymob Webhook HMAC SHA-512 Verification
- *
- * Validates the webhook callback signature by concatenating the 20 specified
- * transaction fields in Paymob's required lexicographical order, computing
- * HMAC-SHA512 with the merchant's HMAC secret, and comparing via timing-safe
- * equality to prevent both spoofing and timing-based side-channel attacks.
- *
- * Reference: https://docs.paymob.com/docs/transaction-webhooks
- */
-function verifyPaymobHmac(
-  obj: Record<string, unknown>,
-  providedHmac: string
-): boolean {
-  if (!PAYMOB_HMAC_SECRET) {
-    console.error(
-      "⚠️ CRITICAL: PAYMOB_HMAC_SECRET is not configured. Webhook verification cannot proceed."
-    );
-    return false;
-  }
-
-  if (!providedHmac) {
-    return false;
-  }
-
-  // Extract nested fields safely
-  const order = (obj.order as Record<string, unknown>) || {};
-  const sourceData = (obj.source_data as Record<string, unknown>) || {};
-
-  // Concatenate the 20 fields in Paymob's strict lexicographical order
-  // Each value is converted to string exactly as Paymob sends it
-  const concatenated = [
-    String(obj.amount_cents ?? ""),
-    String(obj.created_at ?? ""),
-    String(obj.currency ?? ""),
-    String(obj.error_occured ?? "false"),
-    String(obj.has_parent_transaction ?? "false"),
-    String(obj.id ?? ""),
-    String(obj.integration_id ?? ""),
-    String(obj.is_3d_secure ?? "false"),
-    String(obj.is_auth ?? "false"),
-    String(obj.is_capture ?? "false"),
-    String(obj.is_refunded ?? "false"),
-    String(obj.is_standalone_payment ?? "true"),
-    String(obj.is_voided ?? "false"),
-    String(order.id ?? ""),
-    String(obj.owner ?? ""),
-    String(obj.pending ?? "false"),
-    String(sourceData.pan ?? ""),
-    String(sourceData.sub_type ?? ""),
-    String(sourceData.type ?? ""),
-    String(obj.success ?? "false"),
-  ].join("");
-
-  // Compute HMAC-SHA512
-  const computedHmac = crypto
-    .createHmac("sha512", PAYMOB_HMAC_SECRET)
-    .update(concatenated)
-    .digest("hex");
-
-  // Timing-safe comparison to prevent timing attacks
-  try {
-    const computedBuffer = Buffer.from(computedHmac, "hex");
-    const providedBuffer = Buffer.from(providedHmac, "hex");
-
-    if (computedBuffer.length !== providedBuffer.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(computedBuffer, providedBuffer);
-  } catch {
-    // If Buffer conversion fails (e.g., invalid hex), fall back to string comparison
-    return computedHmac === providedHmac;
-  }
-}
+import { verifyPaymobWebhookSignature } from "@/lib/api/paymob";
 
 /**
  * Paymob Webhook Handler with HMAC SHA-512 Verification & Strict Idempotency Protection
@@ -138,7 +60,7 @@ export async function POST(request: NextRequest) {
     // ──────────────────────────────────────────────────────────
     // HMAC SHA-512 Signature Verification (P0 Security Fix)
     // ──────────────────────────────────────────────────────────
-    const isHmacValid = verifyPaymobHmac(
+    const isHmacValid = verifyPaymobWebhookSignature(
       obj as unknown as Record<string, unknown>,
       providedHmac
     );
