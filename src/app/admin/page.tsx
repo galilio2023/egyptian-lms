@@ -20,11 +20,13 @@ export default function AdminOverviewPage() {
     totalUnits: number;
     pendingOrders: number;
     totalRevenueEgp: number;
+    atRiskStudents?: number;
   }>({
     totalStudents: 3050,
     totalUnits: 28,
     pendingOrders: 2,
     totalRevenueEgp: 762500,
+    atRiskStudents: 14,
   });
 
   useEffect(() => {

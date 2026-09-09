@@ -94,6 +94,8 @@ export function useAdminQuery<T>(
         } else if (response[resourceType]) {
           setData(response[resourceType] as T);
         }
+      } else {
+        setError("تعذر تحميل أحدث البيانات من الخادم. يرجى التحقق من اتصالك وصلاحياتك.");
       }
     } catch {
       setError("فشل تحميل البيانات من الخادم");
@@ -107,18 +109,22 @@ export function useAdminQuery<T>(
 
     fetchAdminData<Record<string, unknown>>(resourceType)
       .then((response) => {
-        if (!active || !response) return;
-        if (extractData) {
-          const extracted = extractData(response);
-          if (extracted !== undefined) {
-            setData(extracted);
+        if (!active) return;
+        if (response) {
+          if (extractData) {
+            const extracted = extractData(response);
+            if (extracted !== undefined) {
+              setData(extracted);
+            }
+          } else if (response[resourceType]) {
+            setData(response[resourceType] as T);
           }
-        } else if (response[resourceType]) {
-          setData(response[resourceType] as T);
+        } else {
+          setError("تعذر مزامنة أحدث البيانات مع الخادم. يرجى إعادة المحاولة.");
         }
       })
       .catch(() => {
-        if (active) setError("فشل تحميل البيانات");
+        if (active) setError("فشل تحميل البيانات من الخادم");
       })
       .finally(() => {
         if (active) setIsLoading(false);

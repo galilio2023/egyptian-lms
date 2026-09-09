@@ -284,7 +284,13 @@ export function SmartSrsVocabCard({ onEarnXp }: { onEarnXp?: (xp: number) => voi
             <span>
               بطاقة {currentIndex + 1} من {activeDeck.length}
             </span>
-            <span className="text-amber-300">{currentCard.category}</span>
+            {currentCard.category?.includes("كويز") ? (
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-500/30 border border-rose-400/60 text-rose-200 text-[10px] font-black animate-pulse flex items-center gap-1">
+                <span>🎯 كارت علاجي ذكي من الكويز</span>
+              </span>
+            ) : (
+              <span className="text-amber-300">{currentCard.category}</span>
+            )}
           </div>
 
           {/* Flashcard Box */}

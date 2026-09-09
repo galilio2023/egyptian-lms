@@ -4,7 +4,7 @@ import { eq, count, sql } from "drizzle-orm";
 
 export async function getAdminOverviewData(isAssistant = false) {
   try {
-    const [studentCountRes, unitCountRes, pendingOrdersRes, revenueRes] = await Promise.all([
+    const [studentCountRes, unitCountRes, pendingOrdersRes, revenueRes, atRiskRes] = await Promise.all([
       db
         .select({ value: count() })
         .from(schema.user)
@@ -20,6 +20,10 @@ export async function getAdminOverviewData(isAssistant = false) {
         .select({ total: sql<number>`coalesce(sum(${schema.order.amountEgp}), 0)` })
         .from(schema.order)
         .where(eq(schema.order.paymentStatus, "completed")),
+      db
+        .select({ value: count() })
+        .from(schema.studentProfile)
+        .where(sql`${schema.studentProfile.xpPoints} <= 0 OR ${schema.studentProfile.isBanned} = true`),
     ]);
 
     return {
@@ -28,6 +32,7 @@ export async function getAdminOverviewData(isAssistant = false) {
       pendingOrders: pendingOrdersRes[0]?.value || 0,
       // RBAC: Hide revenue figures from assistant accounts
       totalRevenueEgp: isAssistant ? 0 : Number(revenueRes[0]?.total || 0),
+      atRiskStudents: atRiskRes[0]?.value || 0,
       activeLiveSessions: 0,
     };
   } catch (err) {

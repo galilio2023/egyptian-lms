@@ -62,10 +62,10 @@ export async function GET() {
             },
           ],
           nextLesson: {
-            title: "الدرس الأول: الترحيب والتعارف (Hello & Welcome)",
+            title: "الدرس الأول: الحروف والنطق الصوتي (Phonics & Letters)",
             unitTitle: "Unit 1: Back to School",
-            durationMinutes: 20,
-            slug: "lesson-1-greetings",
+            durationMinutes: 24,
+            slug: "phonics-and-letters",
           },
         });
       }
@@ -75,20 +75,12 @@ export async function GET() {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Student enrollments fetch error:", error);
-    return NextResponse.json({
-      success: true,
-      profile: {
-        gradeLevel: 1,
-        gradeTitle: "Grade 1 (الصف الأول الابتدائي)",
-        gradeSlug: "grade-1",
-        xpPoints: 450,
-        completedLessons: 0,
-        parentPhoneNumber: "01000000000",
-        governorate: "cairo",
+    return NextResponse.json(
+      {
+        success: false,
+        error: "حدث خطأ أثناء تحميل بيانات الطالب واشتراكاته من قاعدة البيانات.",
       },
-      enrolledUnitIds: [],
-      enrollments: [],
-      nextLesson: null,
-    });
+      { status: 500 }
+    );
   }
 }

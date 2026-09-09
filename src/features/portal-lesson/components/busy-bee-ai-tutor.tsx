@@ -26,6 +26,7 @@ export function BusyBeeAiTutor({
   const [isOpen, setIsOpen] = useState(false);
   const [inputQuery, setInputQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [struggledWords, setStruggledWords] = useState<string[]>([]);
   const messageSeqRef = useRef(0);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -40,6 +41,44 @@ export function BusyBeeAiTutor({
       timestamp: "الآن",
     },
   ]);
+
+  // Context-Aware Personalization: Detect recent remedial words from SRS deck
+  useEffect(() => {
+    try {
+      const rawDeck = localStorage.getItem("egyptian_lms_srs_vocab_deck");
+      if (rawDeck) {
+        const parsedDeck = JSON.parse(rawDeck);
+        if (Array.isArray(parsedDeck)) {
+          const remedialWords = parsedDeck
+            .filter((c: { category?: string; word?: string }) => 
+              typeof c.word === "string" && (c.category?.includes("كويز") || c.category?.includes("مراجعة"))
+            )
+            .map((c: { word: string }) => c.word)
+            .filter(Boolean);
+
+          if (remedialWords.length > 0) {
+            setStruggledWords(remedialWords);
+            const focusWord = remedialWords[0];
+            setMessages([
+              {
+                id: "welcome-adaptive",
+                sender: "bee",
+                text: `أهلاً يا ${studentName}! 🐝 أنا النحلة النشيطة رفيقتك الذكية في درس "${lessonTitle}". لاحظت إنك كنت بتراجع كلمة "${focusWord}" في الكويز السابق، تحب نتدرب عليها سوا وننطقها صح ونحطها في جملة؟ 🌟`,
+                suggestedFollowUps: [
+                  `ازاي أنطق "${focusWord}" صح؟ 🎙️`,
+                  `اديني مثال بسيط على "${focusWord}" 🐝`,
+                  "اسألني سؤال سريع اختبرني! 💡",
+                ],
+                timestamp: "الآن",
+              },
+            ]);
+          }
+        }
+      }
+    } catch {
+      // Gracefully maintain default greeting
+    }
+  }, [lessonTitle, studentName]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -95,6 +134,7 @@ export function BusyBeeAiTutor({
           lessonTitle,
           unitTitle,
           studentName,
+          targetVocabulary: struggledWords,
           chatHistory: messages.slice(-6).map((m) => ({
             role: m.sender === "student" ? "user" : "model",
             content: m.text,

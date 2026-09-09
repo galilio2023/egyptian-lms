@@ -89,6 +89,45 @@ export function InteractiveQuizEngine({
             toast.error("لم تجتز درجة النجاح المطلوبة، يمكنك مراجعة الشرح وإعادة المحاولة.");
           }
 
+          // Intelligent Loop: Auto-route missed concepts to Spaced Repetition (SRS) Deck
+          if (data.missedConcepts && data.missedConcepts.length > 0) {
+            try {
+              const rawDeck = localStorage.getItem("egyptian_lms_srs_vocab_deck");
+              const existingDeck = rawDeck ? JSON.parse(rawDeck) : [];
+              const nowIso = new Date().toISOString();
+              let addedCount = 0;
+
+              data.missedConcepts.forEach((concept) => {
+                const alreadyExists = Array.isArray(existingDeck) && existingDeck.some(
+                  (c: { id?: string; word?: string }) =>
+                    c.id === concept.id || c.word?.toLowerCase() === concept.word?.toLowerCase()
+                );
+                if (!alreadyExists) {
+                  existingDeck.unshift({
+                    id: concept.id,
+                    word: concept.word,
+                    phonics: concept.phonics,
+                    arabicMeaning: concept.arabicMeaning,
+                    exampleSentence: concept.exampleSentence,
+                    category: concept.category,
+                    intervalDays: 1,
+                    repetitions: 0,
+                    easeFactor: 2.3,
+                    dueDate: nowIso,
+                  });
+                  addedCount++;
+                }
+              });
+
+              if (addedCount > 0) {
+                localStorage.setItem("egyptian_lms_srs_vocab_deck", JSON.stringify(existingDeck));
+                toast.info(`🧠 تمت إضافة ${addedCount} مفاهيم تحتاج لمراجعة تلقائياً لكروت الاستذكار الذكي (SRS)!`);
+              }
+            } catch (storageErr) {
+              console.warn("Could not sync missed quiz concepts to SRS storage:", storageErr);
+            }
+          }
+
           onComplete?.(data.score, data.passed);
         }
       } catch (err) {

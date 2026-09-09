@@ -149,6 +149,13 @@ export async function POST(request: NextRequest) {
       if (otherDeviceSession) {
         // Check if parent confirmed device transfer
         if (parentConfirmationPhone && profile?.parentPhoneNumber) {
+          if (!session?.user?.id && !isDevBypass) {
+            return NextResponse.json(
+              { error: "يجب تسجيل الدخول بكلمة المرور أولاً قبل تأكيد نقل الحساب إلى جهاز جديد." },
+              { status: 401 }
+            );
+          }
+
           const cleanParentAttempt = parentConfirmationPhone.replace(/\D/g, "");
           const cleanRegisteredParent = profile.parentPhoneNumber.replace(/\D/g, "");
 

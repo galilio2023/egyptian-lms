@@ -346,7 +346,7 @@ export async function getStudentProgressTimeline(userId: string): Promise<{
 
 const ALLOWED_XP_REASONS: Record<string, number> = {
   srs_daily_challenge: 20,
-  phonics_practice: 15,
+  phonics_practice: 25,
   practice_challenge: 10,
 };
 

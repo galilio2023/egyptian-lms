@@ -30,7 +30,7 @@ export const LoginCard: React.FC = () => {
     handleLogin,
     handleParentTransferConfirm,
     handleCancelTransfer,
-  } = useLoginForm();
+  } = useLoginForm({ loginRole });
 
   return (
     <div className="bg-white/95 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl border-2 border-purple-200/90 shadow-2xl space-y-5">

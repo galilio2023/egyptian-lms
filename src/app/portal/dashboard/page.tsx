@@ -77,10 +77,10 @@ export default async function StudentDashboardPage() {
     }
     if (!dashboardData.nextLesson) {
       dashboardData.nextLesson = {
-        title: "الدرس الأول: الترحيب والتعارف (Hello & Welcome)",
+        title: "الدرس الأول: الحروف والنطق الصوتي (Phonics & Letters)",
         unitTitle: "Unit 1: Back to School",
-        durationMinutes: 20,
-        slug: "lesson-1-greetings",
+        durationMinutes: 24,
+        slug: "phonics-and-letters",
       };
     }
   }

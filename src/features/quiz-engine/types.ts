@@ -8,6 +8,15 @@ export interface InteractiveQuizEngineProps {
   onComplete?: (score: number, passed: boolean) => void;
 }
 
+export interface MissedConceptCard {
+  id: string;
+  word: string;
+  phonics: string;
+  arabicMeaning: string;
+  exampleSentence: string;
+  category: string;
+}
+
 export interface ServerGradeResult {
   score: number;
   total: number;
@@ -18,6 +27,7 @@ export interface ServerGradeResult {
   remainingAttempts?: number;
   maxAttempts?: number;
   results: Record<string, { correct: boolean; correctAnswerId: string; explanation: string }>;
+  missedConcepts?: MissedConceptCard[];
   parentNotification?: {
     parentPhone: string;
     whatsappUrl: string;

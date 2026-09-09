@@ -254,9 +254,9 @@ export function StudentDashboardClient({
     xpPoints: studentProfile.xpPoints,
     nextLevelXp: Math.max(600, Math.ceil((studentProfile.xpPoints + 150) / 200) * 200),
     levelNumber: Math.max(1, Math.floor(studentProfile.xpPoints / 150) + 1),
-    streakDays: 4,
+    streakDays: initialDashboardData.streakDays ?? 4,
     completedLessons: studentProfile.completedLessons,
-    activeQuizzes: 2,
+    activeQuizzes: initialDashboardData.activeQuizzesCount ?? 2,
   };
 
   const handleRedeemVoucher = async (e: React.FormEvent) => {
@@ -348,7 +348,10 @@ export function StudentDashboardClient({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <div className="lg:col-span-7">
-            <LiveSessionWidget session={INITIAL_LIVE_SESSIONS[0]} studentName={currentStudent.name} />
+            <LiveSessionWidget
+              session={initialDashboardData.liveSession ?? INITIAL_LIVE_SESSIONS[0]}
+              studentName={currentStudent.name}
+            />
           </div>
           <div className="lg:col-span-5">
             {currentAssignment ? (

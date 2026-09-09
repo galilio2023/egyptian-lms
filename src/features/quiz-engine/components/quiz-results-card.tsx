@@ -146,6 +146,40 @@ export function QuizResultsCard({
         </div>
       )}
 
+      {/* Intelligent Spaced Repetition Remediation Callout */}
+      {gradeResult.missedConcepts && gradeResult.missedConcepts.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50 to-amber-50 border-2 border-purple-300/80 p-4 text-right space-y-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+              <span className="font-black text-slate-900 text-xs sm:text-sm">
+                كروت الاستذكار الذكي التلقائية (Spaced Repetition) 🧠
+              </span>
+            </div>
+            <Link
+              href="/portal/dashboard#srs-vocab"
+              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-[11px] flex items-center gap-1 shadow-sm transition-all"
+            >
+              <span>فتح كروت المراجعة</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+          <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+            تمت إضافة ({gradeResult.missedConcepts.length}) مفاهيم وكلمات أخطأت بها تلقائياً إلى كروت الاستذكار المتباعد بلوحة التحكم لمراجعتها وتثبيتها 🌟
+          </p>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {gradeResult.missedConcepts.map((concept) => (
+              <span
+                key={concept.id}
+                className="px-2.5 py-1 rounded-lg bg-white/90 border border-purple-200 text-purple-900 text-[11px] font-bold flex items-center gap-1 shadow-2xs"
+              >
+                <bdi dir="ltr">🔤 {concept.word}</bdi>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Question Review Breakdown */}
       <div className="text-right space-y-3 pt-2">
         <h4 className="font-bold text-sm text-slate-900">مراجعة الإجابات النموذجية والشرح:</h4>
