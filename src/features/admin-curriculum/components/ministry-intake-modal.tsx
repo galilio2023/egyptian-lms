@@ -146,7 +146,7 @@ export function MinistryIntakeModal({
       ...parsedData,
       titleEnglish: unitTitleEnglish,
       titleArabic: unitTitleArabic,
-      suggestedPriceEgp: Number(unitPrice) || 250,
+      suggestedPriceEgp: Math.max(0, Number(unitPrice) || 0),
       description: unitDescription,
     };
 
@@ -530,7 +530,7 @@ export function MinistryIntakeModal({
                       type="number"
                       min={0}
                       value={unitPrice}
-                      onChange={(e) => setUnitPrice(Number(e.target.value))}
+                      onChange={(e) => setUnitPrice(Math.max(0, Number(e.target.value) || 0))}
                       className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
                     />
                   </div>

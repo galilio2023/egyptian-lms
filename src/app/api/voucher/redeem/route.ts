@@ -4,6 +4,7 @@ import { requireStudentAuth } from "@/server/auth/guards";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { redeemVoucherCode } from "@/server/services/vouchers.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireStudentAuth(
@@ -65,9 +66,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Voucher redemption error:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء معالجة كود الشحن" },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء معالجة كود الشحن");
+    return NextResponse.json({ error: message }, { status });
   }
 }
+

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getQuizForStudent } from "@/server/services/student-quiz.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function GET(
   request: NextRequest,
@@ -24,8 +25,9 @@ export async function GET(
 
     return NextResponse.json(quiz);
   } catch (err: unknown) {
-    const message = (err as Error)?.message || "حدث خطأ أثناء تحميل بيانات الاختبار";
-    const status = message.includes("يجب تسجيل الدخول") ? 401 : message.includes("مخصص للطلاب") ? 403 : 500;
+    console.error("Quiz load error:", err);
+    const { error: message, status } = handleRouteError(err, "حدث خطأ أثناء تحميل بيانات الاختبار");
     return NextResponse.json({ error: message }, { status });
   }
 }
+

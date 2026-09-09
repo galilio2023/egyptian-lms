@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireStudentAuth } from "@/server/auth/guards";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { awardPracticeXp } from "@/server/services/student-progress.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireStudentAuth("يجب تسجيل الدخول لحفظ النقاط.");
@@ -13,7 +14,6 @@ export async function POST(request: NextRequest) {
   const userId = context.userId;
 
   try {
-
     // Strict Rate Limiting: max 4 practice XP awards per 10 minutes per student
     const rateKey = `student-xp:${userId}`;
     const rateCheck = checkRateLimit(rateKey, { maxRequests: 4, windowMs: 10 * 60 * 1000 });
@@ -36,9 +36,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Failed to persist student XP:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء حفظ نقاط الخبرة." },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء حفظ نقاط الخبرة.");
+    return NextResponse.json({ error: message }, { status });
   }
 }
+

@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { DomainError, NotFoundError, ConflictError } from "@/server/errors";
 
 export interface ApproveOrderPayload {
   orderId?: string;
@@ -101,7 +102,7 @@ export async function approveOrder(payload: ApproveOrderPayload) {
   }
 
   if (!targetUserId || !effectiveUnitId) {
-    throw new Error("تعذر تحديد حساب الطالب أو الوحدة الدراسية المرتبطة بهذا الطلب.");
+    throw new DomainError("تعذر تحديد حساب الطالب أو الوحدة الدراسية المرتبطة بهذا الطلب.");
   }
 
   // Fetch unit title for customized parent notification
@@ -120,10 +121,20 @@ export async function approveOrder(payload: ApproveOrderPayload) {
   // Atomic transaction: mark order completed and activate enrollment
   await db.transaction(async (tx) => {
     if (orderId && typeof orderId === "string") {
-      await tx
+      const updatedOrders = await tx
         .update(schema.order)
         .set({ paymentStatus: "completed", updatedAt: new Date() })
-        .where(eq(schema.order.id, orderId));
+        .where(
+          and(
+            eq(schema.order.id, orderId),
+            inArray(schema.order.paymentStatus, ["manual_review", "pending"])
+          )
+        )
+        .returning({ id: schema.order.id });
+
+      if (updatedOrders.length === 0) {
+        throw new ConflictError("الطلب غير موجود أو تمت معالجته بالفعل مسبقاً.");
+      }
     }
 
     await tx
@@ -183,17 +194,27 @@ export async function rejectOrder(payload: RejectOrderPayload) {
   const { orderId, reason, parentPhone } = payload;
 
   if (!orderId || typeof orderId !== "string") {
-    throw new Error("معرف الطلب مطلوب.");
+    throw new DomainError("معرف الطلب مطلوب.");
   }
 
-  await db
+  const updatedOrders = await db
     .update(schema.order)
     .set({ 
       paymentStatus: "failed", 
       reviewerNotes: reason || "إيصال غير واضح أو غير مطابق",
       updatedAt: new Date() 
     })
-    .where(eq(schema.order.id, orderId));
+    .where(
+      and(
+        eq(schema.order.id, orderId),
+        inArray(schema.order.paymentStatus, ["manual_review", "pending"])
+      )
+    )
+    .returning({ id: schema.order.id });
+
+  if (updatedOrders.length === 0) {
+    throw new ConflictError("الطلب غير موجود أو تمت معالجته بالفعل مسبقاً.");
+  }
 
   let targetParentPhone = parentPhone;
   if (!targetParentPhone) {

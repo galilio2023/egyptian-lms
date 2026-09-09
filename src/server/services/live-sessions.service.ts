@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { DomainError, NotFoundError, ForbiddenError } from "@/server/errors";
 
 export interface AttendLiveSessionParams {
   sessionId: string;
@@ -20,7 +21,7 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
 
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
   if (!isUUID) {
-    throw new Error("معرف الحصة غير صالح.");
+    throw new DomainError("معرف الحصة غير صالح.");
   }
 
   const [liveRecord] = await db
@@ -30,7 +31,7 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
     .limit(1);
 
   if (!liveRecord) {
-    throw new Error("لم يتم العثور على حصة البث المباشر المطلوبة.");
+    throw new NotFoundError("لم يتم العثور على حصة البث المباشر المطلوبة.");
   }
 
   // Enforce attendance window: 15 minutes prior to scheduled start until scheduled duration end
@@ -41,11 +42,12 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
   const isJoinable = liveRecord.isLiveNow || isWithinAttendanceWindow;
 
   if (!isJoinable) {
-    throw new Error("حصة البث المباشر لم تبدأ بعد، يرجى الانتظار حتى موعد البث المباشر لتسجيل الحضور والانضمام.");
+    throw new DomainError("حصة البث المباشر لم تبدأ بعد، يرجى الانتظار حتى موعد البث المباشر لتسجيل الحضور والانضمام.");
   }
 
-  // Authorization check: Student must have active enrollment in a unit of this grade
-  if (userRole !== "admin" && userRole !== "teacher" && userRole !== "assistant") {
+  // If student (not teacher or assistant), enforce active enrollment in target grade
+  const isPrivilegedStaff = userRole === "teacher" || userRole === "assistant";
+  if (!isPrivilegedStaff) {
     const [activeEnrollment] = await db
       .select({ id: schema.enrollment.id })
       .from(schema.enrollment)
@@ -60,7 +62,7 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
       .limit(1);
 
     if (!activeEnrollment) {
-      logSecurityEvent({
+      await logSecurityEvent({
         eventType: "unauthorized_portal_access",
         severity: "medium",
         userId,
@@ -69,7 +71,7 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
         details: { sessionId: liveRecord.id, gradeId: liveRecord.gradeId },
       });
 
-      throw new Error("عذراً، هذه الحصة مخصصة لطلاب الصف المشتركين فقط 🔒");
+      throw new ForbiddenError("عذراً، هذه الحصة مخصصة لطلاب الصف المشتركين فقط 🔒");
     }
   }
 
@@ -100,10 +102,11 @@ export async function attendLiveSession(params: AttendLiveSessionParams) {
       }
     });
   } catch (dbErr) {
-    console.warn("Live session attendance DB note:", dbErr);
+    console.error("Live session attendance DB error:", dbErr);
+    throw new DomainError("تعذر تسجيل حضور الحصة المباشرة. يرجى المحاولة مرة أخرى.");
   }
 
-  logSecurityEvent({
+  await logSecurityEvent({
     eventType: "live_session_attended",
     severity: "low",
     userId,

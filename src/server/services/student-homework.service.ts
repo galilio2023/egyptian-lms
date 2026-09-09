@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { and, eq, gt, inArray, isNull, or, desc } from "drizzle-orm";
 import { INITIAL_HOMEWORK_ASSIGNMENTS, INITIAL_HOMEWORK_SUBMISSIONS, type MockHomeworkSubmission } from "@/lib/db/mock-data";
+import { DomainError, NotFoundError, ForbiddenError } from "@/server/errors";
 
 export interface StudentHomeworkAssignmentDto {
   id: string;
@@ -233,29 +234,31 @@ export async function submitStudentHomework(params: SubmitHomeworkParams): Promi
       .where(eq(schema.homeworkAssignment.id, assignmentId))
       .limit(1);
 
-    if (dbAssignment) {
-      assignmentTitle = dbAssignment.title;
-      maxScore = dbAssignment.maxScore;
+    if (!dbAssignment) {
+      throw new NotFoundError("عذراً، لم يتم العثور على الواجب المطلوب.");
+    }
 
-      // Check active enrollment in assignment unit
-      if (dbAssignment.unitId) {
-        const now = new Date();
-        const [activeEnrollment] = await db
-          .select({ id: schema.enrollment.id })
-          .from(schema.enrollment)
-          .where(
-            and(
-              eq(schema.enrollment.userId, userId),
-              eq(schema.enrollment.unitId, dbAssignment.unitId),
-              eq(schema.enrollment.isActive, true),
-              or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
-            )
+    assignmentTitle = dbAssignment.title;
+    maxScore = dbAssignment.maxScore;
+
+    // Check active enrollment in assignment unit
+    if (dbAssignment.unitId) {
+      const now = new Date();
+      const [activeEnrollment] = await db
+        .select({ id: schema.enrollment.id })
+        .from(schema.enrollment)
+        .where(
+          and(
+            eq(schema.enrollment.userId, userId),
+            eq(schema.enrollment.unitId, dbAssignment.unitId),
+            eq(schema.enrollment.isActive, true),
+            or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
           )
-          .limit(1);
+        )
+        .limit(1);
 
-        if (!activeEnrollment) {
-          throw new Error("عذراً، يجب أن تكون مشتركاً ومفعّلاً في هذه الوحدة لتسليم الواجب.");
-        }
+      if (!activeEnrollment) {
+        throw new ForbiddenError("عذراً، يجب أن تكون مشتركاً ومفعّلاً في هذه الوحدة لتسليم الواجب.");
       }
     }
 
@@ -273,12 +276,13 @@ export async function submitStudentHomework(params: SubmitHomeworkParams): Promi
       .limit(1);
 
     if (existingPending) {
+      const hasNewImages = studentImages && studentImages.length > 0;
       await db
         .update(schema.homeworkSubmission)
         .set({
-          studentImages,
-          audioVoiceNoteUrl: audioVoiceNoteUrl || null,
-          createdAt: new Date(),
+          ...(hasNewImages ? { studentImages } : {}),
+          ...(audioVoiceNoteUrl ? { audioVoiceNoteUrl } : {}),
+          updatedAt: new Date(),
         })
         .where(eq(schema.homeworkSubmission.id, existingPending.id));
       submissionId = existingPending.id;
@@ -296,7 +300,10 @@ export async function submitStudentHomework(params: SubmitHomeworkParams): Promi
       if (inserted?.id) submissionId = inserted.id;
     }
   } else {
-    const mockAssignment = INITIAL_HOMEWORK_ASSIGNMENTS.find((a) => a.id === assignmentId) || INITIAL_HOMEWORK_ASSIGNMENTS[0];
+    const mockAssignment = INITIAL_HOMEWORK_ASSIGNMENTS.find((a) => a.id === assignmentId);
+    if (!mockAssignment) {
+      throw new NotFoundError("عذراً، لم يتم العثور على الواجب المطلوب.");
+    }
     assignmentTitle = mockAssignment.title;
     maxScore = mockAssignment.maxScore;
     unitTitle = mockAssignment.unitTitle;

@@ -280,6 +280,8 @@ export const order = pgTable('order', {
 export const voucherCode = pgTable('voucher_code', {
   id: uuid('id').defaultRandom().primaryKey(),
   code: text('code').unique().notNull(), // e.g. "ELITE-GR1-998271"
+  serialNumber: text('serial_number'),
+  priceEgp: integer('price_egp'),
   unitId: uuid('unit_id').references(() => courseUnit.id, { onDelete: 'cascade' }).notNull(),
   isRedeemed: boolean('is_redeemed').default(false).notNull(),
   redeemedByUserId: text('redeemed_by_user_id').references(() => user.id, { onDelete: 'set null' }),
@@ -455,6 +457,7 @@ export const homeworkSubmission = pgTable('homework_submission', {
   annotatedImages: jsonb('annotated_images').$type<Array<{ pageIndex: number; dataUrl: string }>>(),
   gradedByUserId: text('graded_by_user_id').references(() => user.id, { onDelete: 'set null' }),
   gradedAt: timestamp('graded_at'),
+  updatedAt: timestamp('updated_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('hw_sub_user_id_idx').on(table.userId),

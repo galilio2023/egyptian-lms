@@ -5,6 +5,7 @@ import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { UnauthorizedError, ForbiddenError } from "@/server/errors";
 
 // Deterministic seeded shuffle per student session
 function seededShuffle<T>(arr: T[], seed: string): T[] {
@@ -107,7 +108,7 @@ export async function getQuizForStudent(
   if (dbQuiz.unitId) {
     const now = new Date();
     if (!userId) {
-      throw new Error("يجب تسجيل الدخول والاشتراك في الوحدة الدراسية لخوض هذا الاختبار.");
+      throw new UnauthorizedError("يجب تسجيل الدخول والاشتراك في الوحدة الدراسية لخوض هذا الاختبار.");
     }
 
     const [activeEnrollment] = await db
@@ -124,7 +125,7 @@ export async function getQuizForStudent(
       .limit(1);
 
     if (!activeEnrollment) {
-      throw new Error("عذراً، هذا الاختبار مخصص للطلاب المشتركين بالوحدة فقط. يرجى تفعيل الوحدة أولاً.");
+      throw new ForbiddenError("عذراً، هذا الاختبار مخصص للطلاب المشتركين بالوحدة فقط. يرجى تفعيل الوحدة أولاً.");
     }
   }
 
@@ -175,10 +176,33 @@ export interface GradeQuizParams {
   clientIp?: string;
 }
 
+export type GradeQuizResult =
+  | {
+      success: false;
+      error: string;
+      maxAttemptsReached: boolean;
+      attemptsCount: number;
+      maxAttempts: number;
+    }
+  | {
+      success: true;
+      score: number;
+      total: number;
+      percentage: number;
+      passed: boolean;
+      earnedXp: number;
+      alreadyPassed: boolean;
+      remainingAttempts: number;
+      maxAttempts: number;
+      results: Record<string, { correct: boolean; correctAnswerId: string; explanation: string }>;
+      whatsappAutoDelivery: { success: boolean; simulated?: boolean };
+      parentNotification: { parentPhone: string; whatsappUrl: string; messageText: string } | null;
+    };
+
 /**
  * Grades student quiz answers on the server, verifies attempts, persists results, and alerts parents via WhatsApp.
  */
-export async function gradeQuizForStudent(params: GradeQuizParams) {
+export async function gradeQuizForStudent(params: GradeQuizParams): Promise<GradeQuizResult> {
   const {
     quizId,
     answers,
@@ -193,6 +217,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams) {
   let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = quiz.questions;
   let maxAttempts = 3;
   let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
+  let dbQuizRecord: typeof schema.quiz.$inferSelect | null = null;
 
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(quizId);
 
@@ -204,6 +229,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams) {
       .limit(1);
 
     if (dbQuiz) {
+      dbQuizRecord = dbQuiz;
       maxAttempts = dbQuiz.maxAttempts ?? 3;
 
       if (dbQuiz.unitId && targetUserId) {
@@ -222,7 +248,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams) {
           .limit(1);
 
         if (!activeEnrollment) {
-          throw new Error("يجب الاشتراك وتفعيل الوحدة الدراسية لتسجيل درجات الاختبار والتقدم.");
+          throw new ForbiddenError("يجب الاشتراك وتفعيل الوحدة الدراسية لتسجيل درجات الاختبار والتقدم.");
         }
       }
 
@@ -253,6 +279,7 @@ export async function gradeQuizForStudent(params: GradeQuizParams) {
           });
 
           return {
+            success: false,
             error: `لقد استنفدت الحد الأقصى للمحاولات المسموح بها لهذا الاختبار (${maxAttempts} محاولات). يرجى مراجعة المعلم لإعادة فتح المحاولة.`,
             maxAttemptsReached: true,
             attemptsCount: existingAttempts.length,
@@ -324,9 +351,9 @@ export async function gradeQuizForStudent(params: GradeQuizParams) {
   if (targetUserId) {
     try {
       await db.transaction(async (tx) => {
-        if (isUUID) {
+        if (dbQuizRecord) {
           await tx.insert(schema.quizAttempt).values({
-            quizId: quiz.id,
+            quizId: dbQuizRecord.id,
             userId: targetUserId,
             score: correctCount,
             totalPossibleScore: totalQuestions,

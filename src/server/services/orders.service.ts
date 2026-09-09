@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai/receipt-verifier";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { DomainError, NotFoundError, ConflictError, UnauthorizedError } from "@/server/errors";
 import crypto from "crypto";
 
 export interface SubmitOrderPayload {
@@ -92,48 +93,50 @@ export async function processOrderSubmission(params: {
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unitId);
 
   if (isUUID) {
-    try {
-      const [dbUnit] = await db
-        .select()
-        .from(schema.courseUnit)
-        .where(eq(schema.courseUnit.id, unitId))
+    const [dbUnit] = await db
+      .select({
+        id: schema.courseUnit.id,
+        title: schema.courseUnit.title,
+        price: schema.courseUnit.price,
+      })
+      .from(schema.courseUnit)
+      .where(eq(schema.courseUnit.id, unitId))
+      .limit(1);
+
+    if (!dbUnit) {
+      throw new NotFoundError("الوحدة الدراسية المطلوبة غير موجودة في قاعدة البيانات.");
+    }
+
+    verifiedPrice = dbUnit.price ?? 250;
+    verifiedTitle = dbUnit.title;
+
+    // Check if student already has active enrollment
+    if (userId) {
+      const now = new Date();
+      const [alreadyEnrolled] = await db
+        .select({ id: schema.enrollment.id })
+        .from(schema.enrollment)
+        .where(
+          and(
+            eq(schema.enrollment.userId, userId),
+            eq(schema.enrollment.unitId, unitId),
+            eq(schema.enrollment.isActive, true),
+            or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
+          )
+        )
         .limit(1);
 
-      if (dbUnit) {
-        verifiedPrice = dbUnit.price || 250;
-        verifiedTitle = dbUnit.title;
+      if (alreadyEnrolled) {
+        throw new ConflictError("أنت مشترك ومفعّل بالفعل في هذه الوحدة الدراسية حالياً.");
       }
-
-      // Check if student already has active enrollment
-      if (userId) {
-        const now = new Date();
-        const [alreadyEnrolled] = await db
-          .select({ id: schema.enrollment.id })
-          .from(schema.enrollment)
-          .where(
-            and(
-              eq(schema.enrollment.userId, userId),
-              eq(schema.enrollment.unitId, unitId),
-              eq(schema.enrollment.isActive, true),
-              or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
-            )
-          )
-          .limit(1);
-
-        if (alreadyEnrolled) {
-          throw new Error("أنت مشترك ومفعّل بالفعل في هذه الوحدة الدراسية حالياً.");
-        }
-      }
-    } catch (err: unknown) {
-      if ((err as Error)?.message?.includes("أنت مشترك ومفعّل")) throw err;
-      console.warn("Unit price lookup note:", err);
     }
   } else {
     const mockU = INITIAL_UNITS.find((u) => u.id === unitId || u.slug === unitId);
-    if (mockU) {
-      verifiedPrice = mockU.priceEgp || 250;
-      verifiedTitle = mockU.title;
+    if (!mockU) {
+      throw new NotFoundError("الوحدة الدراسية المطلوبة غير موجودة.");
     }
+    verifiedPrice = mockU.priceEgp || 250;
+    verifiedTitle = mockU.title;
   }
 
   // Server-Side Promo Coupon Verification & Discount Calculation
@@ -167,32 +170,36 @@ export async function processOrderSubmission(params: {
 
   // 1. Idempotency Check: Return existing order if identical request is replayed
   if (effectiveIdempotencyKey && isUUID) {
-    try {
-      const [existingOrder] = await db
-        .select()
-        .from(schema.order)
-        .where(eq(schema.order.idempotencyKey, effectiveIdempotencyKey))
-        .limit(1);
+    if (!userId) {
+      throw new UnauthorizedError("يجب تسجيل الدخول لإتمام الطلب والتحقق من عدم التكرار.");
+    }
 
-      if (existingOrder) {
-        return {
-          success: true,
-          orderId: existingOrder.id,
-          isIdempotentReplay: true,
-          status: existingOrder.paymentStatus,
-          message: "تم استرجاع طلبك السابق المسجل بنجاح ومنع تكرار العملية (Idempotent Replay).",
-          orderDetails: {
-            id: existingOrder.id,
-            unitTitle: verifiedTitle,
-            amountEgp: existingOrder.amountEgp,
-            paymentMethod: existingOrder.paymentMethod,
-            referenceNumber: existingOrder.referenceNumber || undefined,
-            createdAt: existingOrder.createdAt.toISOString(),
-          },
-        };
+    const [existingOrder] = await db
+      .select()
+      .from(schema.order)
+      .where(eq(schema.order.idempotencyKey, effectiveIdempotencyKey))
+      .limit(1);
+
+    if (existingOrder) {
+      if (existingOrder.userId !== userId) {
+        throw new ConflictError("مفتاح العملية مستخدم بالفعل لحساب آخر.");
       }
-    } catch (idempErr) {
-      console.warn("Idempotency lookup note:", idempErr);
+
+      return {
+        success: true,
+        orderId: existingOrder.id,
+        isIdempotentReplay: true,
+        status: existingOrder.paymentStatus,
+        message: "تم استرجاع طلبك السابق المسجل بنجاح ومنع تكرار العملية (Idempotent Replay).",
+        orderDetails: {
+          id: existingOrder.id,
+          unitTitle: verifiedTitle,
+          amountEgp: existingOrder.amountEgp,
+          paymentMethod: existingOrder.paymentMethod,
+          referenceNumber: existingOrder.referenceNumber || undefined,
+          createdAt: existingOrder.createdAt.toISOString(),
+        },
+      };
     }
   }
 
@@ -205,7 +212,7 @@ export async function processOrderSubmission(params: {
       .limit(1);
 
     if (duplicateRef) {
-      logSecurityEvent({
+      await logSecurityEvent({
         eventType: "rate_limit_triggered",
         severity: "high",
         userId,
@@ -215,7 +222,7 @@ export async function processOrderSubmission(params: {
         details: { referenceNumber: cleanRef, conflictingOrderId: duplicateRef.id },
       });
 
-      throw new Error("هذا الرقم المرجعي للتحويل تم تسجيله واستخدامه مسبقاً لحساب آخر. يرجى التأكد من رقم إيصالك.");
+      throw new ConflictError("هذا الرقم المرجعي للتحويل تم تسجيله واستخدامه مسبقاً لحساب آخر. يرجى التأكد من رقم إيصالك.");
     }
   }
 
@@ -274,75 +281,79 @@ export async function processOrderSubmission(params: {
     isUUID
   );
 
-  if (userId && isUUID) {
-    const initialStatus: (typeof schema.paymentStatusEnum.enumValues)[number] = paymentMethod.startsWith("paymob")
-      ? "pending"
-      : shouldAutoFulfill
-      ? "completed"
-      : "manual_review";
+  if (!userId || !isUUID) {
+    throw new DomainError("بيانات الطلب غير مكتملة أو المستخدم غير مسجل لحفظ الطلب في قاعدة البيانات.");
+  }
 
-    const orderValues = {
-      userId: userId,
-      unitId: unitId,
-      amountEgp: verifiedPrice,
-      paymentMethod: paymentMethod as (typeof schema.paymentMethodEnum.enumValues)[number],
-      paymentStatus: initialStatus,
-      referenceNumber: persistedReference || `REF-${Date.now()}`,
-      receiptImageUrl: receiptImageUrl || null,
-      receiptHash: computedReceiptHash,
-      ocrData: ocrScanData,
-      idempotencyKey: effectiveIdempotencyKey,
-    };
+  const initialStatus: (typeof schema.paymentStatusEnum.enumValues)[number] = paymentMethod.startsWith("paymob")
+    ? "pending"
+    : shouldAutoFulfill
+    ? "completed"
+    : "manual_review";
 
-    if (shouldAutoFulfill) {
-      const transactionResult = await db.transaction(async (tx) => {
-        const [insertedOrder] = await tx
-          .insert(schema.order)
-          .values(orderValues)
-          .returning({ id: schema.order.id });
-        const [activatedEnrollment] = await tx
-          .insert(schema.enrollment)
-          .values({
-            userId,
-            unitId,
-            isActive: true,
-            enrolledAt: new Date(),
-          })
-          .onConflictDoUpdate({
-            target: [schema.enrollment.userId, schema.enrollment.unitId],
-            set: { isActive: true, enrolledAt: new Date() },
-          })
-          .returning({ id: schema.enrollment.id });
+  const persistedReferenceNumber = persistedReference || `REF-${Date.now()}`;
 
-        if (!insertedOrder?.id || !activatedEnrollment?.id) {
-          throw new Error("Order fulfillment transaction returned incomplete records.");
-        }
+  const orderValues = {
+    userId: userId,
+    unitId: unitId,
+    amountEgp: verifiedPrice,
+    paymentMethod: paymentMethod as (typeof schema.paymentMethodEnum.enumValues)[number],
+    paymentStatus: initialStatus,
+    referenceNumber: persistedReferenceNumber,
+    receiptImageUrl: receiptImageUrl || null,
+    receiptHash: computedReceiptHash,
+    ocrData: ocrScanData,
+    idempotencyKey: effectiveIdempotencyKey,
+  };
 
-        return {
-          orderId: insertedOrder.id,
-          enrollmentId: activatedEnrollment.id,
-        };
-      });
-      insertedOrderId = transactionResult.orderId;
-      enrollmentActivated = Boolean(transactionResult.enrollmentId);
-    } else {
-      const [insertedOrder] = await db
+  if (shouldAutoFulfill) {
+    const transactionResult = await db.transaction(async (tx) => {
+      const [insertedOrder] = await tx
         .insert(schema.order)
         .values(orderValues)
         .returning({ id: schema.order.id });
-      insertedOrderId = insertedOrder?.id || null;
-    }
+      const [activatedEnrollment] = await tx
+        .insert(schema.enrollment)
+        .values({
+          userId,
+          unitId,
+          isActive: true,
+          enrolledAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [schema.enrollment.userId, schema.enrollment.unitId],
+          set: { isActive: true, enrolledAt: new Date() },
+        })
+        .returning({ id: schema.enrollment.id });
 
-    if (!insertedOrderId || (shouldAutoFulfill && !enrollmentActivated)) {
-      throw new Error("تعذر تسجيل الطلب وتفعيل الاشتراك. يرجى المحاولة مرة أخرى.");
-    }
+      if (!insertedOrder?.id || !activatedEnrollment?.id) {
+        throw new DomainError("فشلت عملية تفعيل الاشتراك وحفظ الطلب. يرجى إعادة المحاولة.");
+      }
+
+      return {
+        orderId: insertedOrder.id,
+        enrollmentId: activatedEnrollment.id,
+      };
+    });
+    insertedOrderId = transactionResult.orderId;
+    enrollmentActivated = Boolean(transactionResult.enrollmentId);
+  } else {
+    const [insertedOrder] = await db
+      .insert(schema.order)
+      .values(orderValues)
+      .returning({ id: schema.order.id });
+    insertedOrderId = insertedOrder?.id || null;
+  }
+
+  if (!insertedOrderId || (shouldAutoFulfill && !enrollmentActivated)) {
+    throw new DomainError("تعذر تسجيل الطلب وتفعيل الاشتراك. يرجى المحاولة مرة أخرى.");
   }
 
   if (paymentMethod.startsWith("paymob") && !insertedOrderId) {
-    throw new Error("تعذر بدء عملية الدفع عبر باي موب لعدم حفظ الطلب في قاعدة البيانات. يرجى تسجيل الدخول وإعادة المحاولة.");
+    throw new DomainError("تعذر بدء عملية الدفع عبر باي موب لعدم حفظ الطلب في قاعدة البيانات. يرجى تسجيل الدخول وإعادة المحاولة.");
   }
 
-  const orderIdToReturn = insertedOrderId || fallbackOrderId;
+  const orderIdToReturn = insertedOrderId;
   const isAutoApproved = Boolean(
     shouldAutoFulfill && insertedOrderId && enrollmentActivated
   );
@@ -424,7 +435,7 @@ export async function processOrderSubmission(params: {
       unitTitle: verifiedTitle,
       amountEgp: verifiedPrice,
       paymentMethod,
-      referenceNumber,
+      referenceNumber: orderValues.referenceNumber,
       createdAt: new Date().toISOString(),
     },
   };

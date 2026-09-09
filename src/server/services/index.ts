@@ -15,3 +15,4 @@ export * from "./orders.service";
 export * from "./vouchers.service";
 export * from "./public-curriculum.service";
 export * from "./live-sessions.service";
+export * from "../errors";

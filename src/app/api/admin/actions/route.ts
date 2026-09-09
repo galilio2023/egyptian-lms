@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/server/auth/guards";
 import { getRecentSecurityLogs, type SecurityAuditRecord } from "@/lib/security/audit-logger";
+import { handleRouteError } from "@/server/errors";
 import {
   getAdminOrders,
   approveOrder,
@@ -143,10 +144,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Admin fetch error:", error);
-    return NextResponse.json(
-      { error: "حدث خطأ أثناء جلب البيانات", details: (error as Error)?.message },
-      { status: 500 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء جلب البيانات");
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -167,6 +166,10 @@ export async function POST(request: NextRequest) {
 
     if (!action) {
       return NextResponse.json({ error: "الإجراء غير محدد" }, { status: 400 });
+    }
+
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return NextResponse.json({ error: "بيانات الإجراء غير صالحة." }, { status: 400 });
     }
 
     // RBAC: Assistants are restricted from destructive / financial actions
@@ -298,9 +301,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: unknown) {
     console.error("Admin action error:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء تنفيذ الإجراء الإداري" },
-      { status: 500 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء تنفيذ الإجراء الإداري");
+    return NextResponse.json({ error: message }, { status });
   }
 }

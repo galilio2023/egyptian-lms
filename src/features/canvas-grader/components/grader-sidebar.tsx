@@ -113,7 +113,7 @@ export function GraderSidebar({
 
         {/* Score Selector */}
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-300 flex items-center justify-between">
+          <label htmlFor="grader-score-input" className="text-xs font-black text-slate-300 flex items-center justify-between cursor-pointer">
             <span>درجة الكراسة المكتسبة</span>
             <span className="text-purple-400">الدرجة العظمى: {submission.maxScore}</span>
           </label>

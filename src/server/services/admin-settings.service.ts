@@ -16,6 +16,9 @@ export async function getAdminSettingsData() {
 }
 
 export async function updatePlatformSettings(payload: UpdateSettingsPayload) {
+  // Strip immutable / reserved fields from payload
+  const { id: _ignoredId, updatedAt: _ignoredUpdatedAt, createdAt: _ignoredCreatedAt, ...safePayload } = payload as Record<string, unknown>;
+
   const [existing] = await db
     .select()
     .from(schema.platformSettings)
@@ -26,7 +29,7 @@ export async function updatePlatformSettings(payload: UpdateSettingsPayload) {
     await db
       .update(schema.platformSettings)
       .set({
-        ...payload,
+        ...safePayload,
         updatedAt: new Date(),
       })
       .where(eq(schema.platformSettings.id, "default"));
@@ -45,7 +48,7 @@ export async function updatePlatformSettings(payload: UpdateSettingsPayload) {
       vodafoneCashNumber: payload.vodafoneCashNumber || INITIAL_PLATFORM_SETTINGS.vodafoneCashNumber,
       instapayAddress: payload.instapayAddress || INITIAL_PLATFORM_SETTINGS.instapayAddress,
       heroVideoUrl: payload.heroVideoUrl || INITIAL_PLATFORM_SETTINGS.heroVideoUrl,
-      sampleLectures: payload.sampleLectures || [],
+      sampleLectures: payload.sampleLectures || INITIAL_PLATFORM_SETTINGS.sampleLectures,
       enableHeroToys: payload.enableHeroToys ?? INITIAL_PLATFORM_SETTINGS.enableHeroToys,
       enableHeroPhonicsStrip: payload.enableHeroPhonicsStrip ?? INITIAL_PLATFORM_SETTINGS.enableHeroPhonicsStrip,
       enableMascotCards: payload.enableMascotCards ?? INITIAL_PLATFORM_SETTINGS.enableMascotCards,

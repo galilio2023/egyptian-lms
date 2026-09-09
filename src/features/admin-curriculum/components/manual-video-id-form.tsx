@@ -24,11 +24,11 @@ export const ManualVideoIdForm: React.FC<ManualVideoIdFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4 text-right">
       <div className="space-y-1.5">
-        <label htmlFor="manual-video-id-input" className="text-xs font-bold text-slate-700 flex items-center justify-between cursor-pointer">
-          <span className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between">
+          <label htmlFor="manual-video-id-input" className="text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer">
             <HardDrive className="w-4 h-4 text-purple-600" />
             <span>معرف الفيديو (Bunny Stream Video ID أو رابط التضمين)</span>
-          </span>
+          </label>
           {onCheckStatus && manualVideoId.trim() && (
             <button
               type="button"
@@ -40,7 +40,7 @@ export const ManualVideoIdForm: React.FC<ManualVideoIdFormProps> = ({
               <span>فحص حالة التشفير</span>
             </button>
           )}
-        </label>
+        </div>
         <input
           id="manual-video-id-input"
           type="text"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/server/auth/guards";
 import { commitParsedCurriculumUnit } from "@/server/services/admin-curriculum.service";
 import type { ParsedCurriculumUnit } from "@/lib/ai/curriculum-intake-parser";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdminAuth({ allowAssistant: false });
@@ -21,9 +22,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Curriculum commit failed:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء اعتماد المنهج في قاعدة البيانات." },
-      { status: 500 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء اعتماد المنهج في قاعدة البيانات.");
+    return NextResponse.json({ error: message }, { status });
   }
 }

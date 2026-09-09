@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentAuth } from "@/server/auth/guards";
 import { recordLessonOrCheckpointProgress } from "@/server/services/student-progress.service";
+import { handleRouteError } from "@/server/errors";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -42,8 +43,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Lesson progress error:", error);
-    const message = (error as Error)?.message || "تعذر حفظ تقدم الدرس. حاول مرة أخرى.";
-    const status = message.includes("لم يتم العثور") ? 404 : message.includes("لا يوجد اشتراك") ? 403 : 400;
+    const { error: message, status } = handleRouteError(error, "تعذر حفظ تقدم الدرس. حاول مرة أخرى.");
     return NextResponse.json({ error: message }, { status });
   }
 }
+

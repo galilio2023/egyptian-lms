@@ -3,6 +3,7 @@ import * as schema from "@/lib/db/schema";
 import { and, desc, eq, gt, isNull, or, sql, count } from "drizzle-orm";
 import type { TimelineEvent } from "@/lib/types/timeline";
 import { validateEgyptianPhone, normalizeGovernorate } from "@/lib/utils";
+import { DomainError, NotFoundError, ForbiddenError } from "@/server/errors";
 
 const COMPLETION_XP = 15;
 
@@ -41,7 +42,7 @@ export async function recordLessonOrCheckpointProgress(params: RecordLessonProgr
     .limit(1);
 
   if (!lessonRecord) {
-    throw new Error("لم يتم العثور على الدرس المطلوب.");
+    throw new NotFoundError("لم يتم العثور على الدرس المطلوب.");
   }
 
   // 2. Check entitlement if not a free preview
@@ -60,7 +61,7 @@ export async function recordLessonOrCheckpointProgress(params: RecordLessonProgr
       .limit(1);
 
     if (!activeEnrollment) {
-      throw new Error("لا يوجد اشتراك نشط يتيح إكمال هذا الدرس.");
+      throw new ForbiddenError("لا يوجد اشتراك نشط يتيح إكمال هذا الدرس.");
     }
   }
 
@@ -70,96 +71,114 @@ export async function recordLessonOrCheckpointProgress(params: RecordLessonProgr
       (candidate) => candidate.id === checkpointId
     );
     if (!checkpoint) {
-      throw new Error("نقطة التحقق غير موجودة في هذا الدرس.");
+      throw new NotFoundError("نقطة التحقق غير موجودة في هذا الدرس.");
     }
 
     const configuredRewardXp = checkpoint.rewardXp ?? 10;
     if (!Number.isInteger(configuredRewardXp) || configuredRewardXp < 0 || configuredRewardXp > 100) {
-      throw new Error("Checkpoint has an invalid configured XP reward");
+      throw new DomainError("Checkpoint has an invalid configured XP reward");
     }
     if (rewardXp !== undefined && rewardXp !== configuredRewardXp) {
-      throw new Error("قيمة مكافأة نقطة التحقق غير صالحة.");
+      throw new DomainError("قيمة مكافأة نقطة التحقق غير صالحة.");
     }
 
-    const result = await db.execute<{ totalXp: number; xpAwarded: number }>(sql`
-      with inserted_checkpoint as (
-        insert into "lesson_checkpoint_progress" ("user_id", "lesson_id", "checkpoint_id", "xp_awarded")
-        select ${userId}, ${lessonRecord.id}, ${checkpoint.id}, ${configuredRewardXp}
-        from "student_profile"
-        where "user_id" = ${userId}
-        on conflict ("user_id", "lesson_id", "checkpoint_id") do nothing
-        returning "xp_awarded"
-      )
-      update "student_profile"
-      set "xp_points" = "student_profile"."xp_points" + inserted_checkpoint.xp_awarded
-      from inserted_checkpoint
-      where "student_profile"."user_id" = ${userId}
-      returning "student_profile"."xp_points" as "totalXp", inserted_checkpoint.xp_awarded as "xpAwarded"
-    `);
-    const awarded = result.rows[0];
+    const [insertedCheckpoint] = await db
+      .insert(schema.lessonCheckpointProgress)
+      .values({
+        userId,
+        lessonId: lessonRecord.id,
+        checkpointId: checkpoint.id,
+        xpAwarded: configuredRewardXp,
+      })
+      .onConflictDoNothing()
+      .returning({ xpAwarded: schema.lessonCheckpointProgress.xpAwarded });
+
+    if (insertedCheckpoint) {
+      const [updatedProfile] = await db
+        .update(schema.studentProfile)
+        .set({
+          xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${insertedCheckpoint.xpAwarded}`,
+        })
+        .where(eq(schema.studentProfile.userId, userId))
+        .returning({ xpPoints: schema.studentProfile.xpPoints });
+
+      return {
+        success: true,
+        checkpointCompleted: true,
+        checkpointId: checkpoint.id,
+        alreadyCompleted: false,
+        xpAwarded: insertedCheckpoint.xpAwarded,
+        totalXp: updatedProfile?.xpPoints ?? (await getCurrentUserXp(userId)),
+      };
+    }
 
     return {
       success: true,
       checkpointCompleted: true,
       checkpointId: checkpoint.id,
-      alreadyCompleted: !awarded,
-      xpAwarded: awarded?.xpAwarded ?? 0,
-      totalXp: awarded?.totalXp ?? (await getCurrentUserXp(userId)),
+      alreadyCompleted: true,
+      xpAwarded: 0,
+      totalXp: await getCurrentUserXp(userId),
     };
   }
 
   // 4. Case B: Full Lesson Completion
-  const result = await db.execute<{ totalXp: number; xpAwarded: number; completedAt: Date }>(sql`
-    with inserted_progress as (
-      insert into "lesson_progress" ("user_id", "lesson_id", "xp_awarded")
-      select ${userId}, ${lessonRecord.id}, ${COMPLETION_XP}
-      from "student_profile"
-      where "user_id" = ${userId}
-      on conflict ("user_id", "lesson_id") do nothing
-      returning "xp_awarded", "completed_at"
-    )
-    update "student_profile"
-    set "xp_points" = "student_profile"."xp_points" + inserted_progress.xp_awarded
-    from inserted_progress
-    where "student_profile"."user_id" = ${userId}
-    returning
-      "student_profile"."xp_points" as "totalXp",
-      inserted_progress.xp_awarded as "xpAwarded",
-      inserted_progress.completed_at as "completedAt"
-  `);
-  const awarded = result.rows[0];
+  const [insertedProgress] = await db
+    .insert(schema.lessonProgress)
+    .values({
+      userId,
+      lessonId: lessonRecord.id,
+      xpAwarded: COMPLETION_XP,
+    })
+    .onConflictDoNothing()
+    .returning({
+      xpAwarded: schema.lessonProgress.xpAwarded,
+      completedAt: schema.lessonProgress.completedAt,
+    });
 
-  if (!awarded) {
-    const [existingProgress] = await db
-      .select({ completedAt: schema.lessonProgress.completedAt })
-      .from(schema.lessonProgress)
-      .where(
-        and(
-          eq(schema.lessonProgress.userId, userId),
-          eq(schema.lessonProgress.lessonId, lessonRecord.id)
-        )
-      )
-      .limit(1);
+  if (insertedProgress) {
+    const [updatedProfile] = await db
+      .update(schema.studentProfile)
+      .set({
+        xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${insertedProgress.xpAwarded}`,
+      })
+      .where(eq(schema.studentProfile.userId, userId))
+      .returning({ xpPoints: schema.studentProfile.xpPoints });
 
     return {
       success: true,
       completed: true,
       lessonId: lessonRecord.id,
-      alreadyCompleted: true,
-      completedAt: existingProgress?.completedAt ?? new Date(),
-      xpAwarded: 0,
-      totalXp: await getCurrentUserXp(userId),
+      alreadyCompleted: false,
+      completedAt: insertedProgress.completedAt,
+      xpAwarded: insertedProgress.xpAwarded,
+      totalXp: updatedProfile?.xpPoints ?? (await getCurrentUserXp(userId)),
     };
+  }
+
+  const [existingProgress] = await db
+    .select({ completedAt: schema.lessonProgress.completedAt })
+    .from(schema.lessonProgress)
+    .where(
+      and(
+        eq(schema.lessonProgress.userId, userId),
+        eq(schema.lessonProgress.lessonId, lessonRecord.id)
+      )
+    )
+    .limit(1);
+
+  if (!existingProgress) {
+    throw new DomainError("تعذر حفظ تقدم الدرس في قاعدة البيانات. حاول مرة أخرى.");
   }
 
   return {
     success: true,
     completed: true,
     lessonId: lessonRecord.id,
-    alreadyCompleted: false,
-    completedAt: awarded.completedAt,
-    xpAwarded: awarded.xpAwarded,
-    totalXp: awarded.totalXp,
+    alreadyCompleted: true,
+    completedAt: existingProgress.completedAt,
+    xpAwarded: 0,
+    totalXp: await getCurrentUserXp(userId),
   };
 }
 
@@ -336,7 +355,7 @@ const ALLOWED_XP_REASONS: Record<string, number> = {
  */
 export async function awardPracticeXp(userId: string, reason: string, requestedXp?: number) {
   if (!Object.prototype.hasOwnProperty.call(ALLOWED_XP_REASONS, reason)) {
-    throw new Error("نوع النشاط غير معتمد لتسجيل النقاط.");
+    throw new DomainError("نوع النشاط غير معتمد لتسجيل النقاط.");
   }
 
   const maxAllowed = ALLOWED_XP_REASONS[reason] || 15;
@@ -353,11 +372,15 @@ export async function awardPracticeXp(userId: string, reason: string, requestedX
       newXpPoints: schema.studentProfile.xpPoints,
     });
 
+  if (!updatedProfile) {
+    throw new NotFoundError("ملف الطالب الشخصي غير موجود لإضافة نقاط الخبرة.");
+  }
+
   return {
     success: true,
     xpAwarded: xpAmount,
     reason,
-    newTotalXp: updatedProfile?.newXpPoints ?? null,
+    newTotalXp: updatedProfile.newXpPoints,
   };
 }
 
@@ -393,11 +416,11 @@ export async function upsertStudentProfile(params: UpsertProfileParams) {
   const cleanParentPhone = validateEgyptianPhone(parentPhoneNumber || "");
 
   if (!cleanStdPhone || !cleanParentPhone) {
-    throw new Error("يرجى إدخال أرقام هواتف مصرية صحيحة للطالب وولي الأمر.");
+    throw new DomainError("يرجى إدخال أرقام هواتف مصرية صحيحة للطالب وولي الأمر.");
   }
 
   if (cleanStdPhone === cleanParentPhone) {
-    throw new Error("رقم موبايل الطالب ورقم ولي الأمر يجب أن يكونا مختلفين.");
+    throw new DomainError("رقم موبايل الطالب ورقم ولي الأمر يجب أن يكونا مختلفين.");
   }
 
   const [existingProfile] = await db
@@ -406,7 +429,8 @@ export async function upsertStudentProfile(params: UpsertProfileParams) {
     .where(eq(schema.studentProfile.userId, userId))
     .limit(1);
 
-  const safeGradeLevel = Math.max(1, Math.min(6, parseInt(String(gradeLevel || "1"), 10)));
+  const parsedGrade = parseInt(String(gradeLevel || "1"), 10);
+  const safeGradeLevel = Number.isNaN(parsedGrade) ? 1 : Math.max(1, Math.min(6, parsedGrade));
   const normalizedGov = normalizeGovernorate(governorate || "cairo");
   const safeGov = (schema.governorateEnum.enumValues.includes(
     normalizedGov as (typeof schema.governorateEnum.enumValues)[number]

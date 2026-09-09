@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import { validateEgyptianPhone } from "@/lib/utils";
+import { DomainError, NotFoundError } from "@/server/errors";
 
 export interface GradeHomeworkPayload {
   submissionId?: string;
@@ -68,12 +69,16 @@ export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: 
   const { submissionId, score, feedbackNotes, annotatedImages, studentName, assignmentTitle } = payload;
 
   if (!submissionId) {
-    throw new Error("معرف تسليم الواجب مطلوب");
+    throw new DomainError("معرف تسليم الواجب مطلوب");
   }
 
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(submissionId);
   if (!isUUID) {
-    throw new Error("معرف تسليم الواجب غير صالح.");
+    throw new DomainError("معرف تسليم الواجب غير صالح.");
+  }
+
+  if (score !== undefined && (typeof score !== "number" || !Number.isFinite(score))) {
+    throw new DomainError("درجة الواجب غير صالحة.");
   }
 
   // 1. Fetch submission with its assignment to obtain dynamic maxScore
@@ -81,6 +86,7 @@ export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: 
     .select({
       id: schema.homeworkSubmission.id,
       userId: schema.homeworkSubmission.userId,
+      status: schema.homeworkSubmission.status,
       assignmentId: schema.homeworkSubmission.assignmentId,
       assignmentTitle: schema.homeworkAssignment.title,
       assignmentMaxScore: schema.homeworkAssignment.maxScore,
@@ -91,13 +97,14 @@ export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: 
     .limit(1);
 
   if (!existingSub) {
-    throw new Error("لم يتم العثور على تسليم الواجب المطلوب في قاعدة البيانات.");
+    throw new NotFoundError("لم يتم العثور على تسليم الواجب المطلوب في قاعدة البيانات.");
   }
 
   const maxAssignmentScore = existingSub.assignmentMaxScore || 10;
   const safeScore = Math.max(0, Math.min(maxAssignmentScore, Math.round(score ?? maxAssignmentScore)));
   const scorePercentage = (safeScore / maxAssignmentScore) * 100;
-  const earnedXp = scorePercentage >= 80 ? 30 : 15;
+  const isFirstGrading = existingSub.status !== "graded";
+  const earnedXp = isFirstGrading ? (scorePercentage >= 80 ? 30 : 15) : 0;
 
   // 2. Persist updated score
   const [updated] = await db
@@ -113,19 +120,13 @@ export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: 
     .where(eq(schema.homeworkSubmission.id, submissionId))
     .returning({ userId: schema.homeworkSubmission.userId });
 
-  if (updated?.userId) {
-    const [profile] = await db
-      .select()
-      .from(schema.studentProfile)
-      .where(eq(schema.studentProfile.userId, updated.userId))
-      .limit(1);
-
-    if (profile) {
-      await db
-        .update(schema.studentProfile)
-        .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-        .where(eq(schema.studentProfile.userId, updated.userId));
-    }
+  if (updated?.userId && isFirstGrading && earnedXp > 0) {
+    await db
+      .update(schema.studentProfile)
+      .set({
+        xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${earnedXp}`,
+      })
+      .where(eq(schema.studentProfile.userId, updated.userId));
   }
 
   // 3. Automated WhatsApp dispatch to parent

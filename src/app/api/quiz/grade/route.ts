@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { gradeQuizForStudent } from "@/server/services/student-quiz.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       clientIp,
     });
 
-    if (result.error) {
+    if (!result.success) {
       const status = result.maxAttemptsReached ? 403 : 400;
       return NextResponse.json(result, { status });
     }
@@ -71,8 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Quiz grading error:", error);
-    const message = (error as Error)?.message || "حدث خطأ في تصحيح الاختبار";
-    const status = message.includes("يجب الاشتراك") ? 403 : 500;
+    const { error: message, status } = handleRouteError(error, "حدث خطأ في تصحيح الاختبار");
     return NextResponse.json(
       { error: message },
       { status }

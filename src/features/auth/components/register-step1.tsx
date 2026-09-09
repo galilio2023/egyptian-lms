@@ -53,7 +53,7 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
           dir="ltr"
           required
           maxLength={11}
-          autoComplete="username tel"
+          autoComplete="username"
           placeholder="010xxxxxxxx"
           value={studentPhone}
           onChange={(e) => setStudentPhone(e.target.value.replace(/\D/g, ""))}

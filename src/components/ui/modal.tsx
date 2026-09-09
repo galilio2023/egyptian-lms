@@ -34,18 +34,72 @@ export const Modal: React.FC<ModalProps> = ({
   const effectiveMaxWidth = size || maxWidth || "lg";
   const titleId = React.useId();
   const descId = React.useId();
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const previousActiveElement = React.useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+
+    // Move initial focus into dialog
+    const focusTimer = setTimeout(() => {
+      if (dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) {
+          focusable[0].focus();
+        } else {
+          dialogRef.current.focus();
+        }
+      }
+    }, 50);
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => el.offsetParent !== null);
+
+        if (focusable.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = focusable[0];
+        const lastElement = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
     };
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
-    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
+      clearTimeout(focusTimer);
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement.current?.focus?.();
     };
   }, [isOpen, onClose]);
 
@@ -74,12 +128,14 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Dialog Shell */}
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col",
+          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col focus:outline-none",
           maxWidthStyles[effectiveMaxWidth],
           className
         )}

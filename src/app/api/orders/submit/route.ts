@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { processOrderSubmission, type SubmitOrderPayload } from "@/server/services/orders.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,9 +53,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Order submission error:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء معالجة الطلب" },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء معالجة الطلب");
+    return NextResponse.json({ error: message }, { status });
   }
 }
+

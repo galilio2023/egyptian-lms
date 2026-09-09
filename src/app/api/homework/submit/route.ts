@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { requireStudentAuth } from "@/server/auth/guards";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { submitStudentHomework } from "@/server/services/student-homework.service";
+import { handleRouteError } from "@/server/errors";
 
 function isValidAudioVoiceNote(url: unknown): url is string {
   if (!url || typeof url !== "string") return false;
@@ -87,9 +88,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (err: unknown) {
     console.error("Homework submission error:", err);
-    return NextResponse.json(
-      { error: (err as Error)?.message || "حدث خطأ أثناء معالجة تسليم الواجب." },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(err, "حدث خطأ أثناء معالجة تسليم الواجب.");
+    return NextResponse.json({ error: message }, { status });
   }
 }

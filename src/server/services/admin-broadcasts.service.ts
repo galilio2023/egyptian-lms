@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { validateEgyptianPhone } from "@/lib/utils";
+import { DomainError } from "@/server/errors";
 
 export interface SendBroadcastPayload {
   gradeSlug?: string;
@@ -12,7 +14,7 @@ export async function sendBroadcast(payload: SendBroadcastPayload) {
   const { gradeSlug, messageText } = payload;
 
   if (!messageText || messageText.trim().length === 0) {
-    throw new Error("نص الرسالة مطلوب");
+    throw new DomainError("نص الرسالة مطلوب");
   }
 
   const conditions = [eq(schema.studentProfile.isBanned, false)];
@@ -33,14 +35,24 @@ export async function sendBroadcast(payload: SendBroadcastPayload) {
     .innerJoin(schema.user, eq(schema.studentProfile.userId, schema.user.id))
     .where(and(...conditions));
 
+  const validParents = parents
+    .map((p) => ({
+      ...p,
+      cleanPhone: p.parentPhoneNumber ? validateEgyptianPhone(p.parentPhoneNumber) : null,
+    }))
+    .filter((p): p is typeof p & { cleanPhone: string } => Boolean(p.cleanPhone));
+
+  const totalMatched = parents.length;
+  const totalValidRecipients = validParents.length;
+
   let sentCount = 0;
-  if (parents.length > 0) {
+  if (validParents.length > 0) {
     // Process real phone records (capped at batch limit of 50 to avoid gateway starvation)
-    const batch = parents.slice(0, 50);
+    const batch = validParents.slice(0, 50);
     const results = await Promise.allSettled(
       batch.map((p) =>
         sendAutomatedWhatsAppNotification({
-          to: p.parentPhoneNumber,
+          to: p.cleanPhone,
           message: messageText,
         })
       )
@@ -53,9 +65,12 @@ export async function sendBroadcast(payload: SendBroadcastPayload) {
   return {
     success: true,
     sentCount,
+    totalRecipients: totalValidRecipients,
+    totalMatched,
+    batchCapped: totalValidRecipients > 50,
     deliveredAt: new Date().toISOString(),
     message: sentCount > 0 
-      ? `تم إرسال الرسالة بنجاح عبر API واتساب إلى ${sentCount} ولي أمر.`
-      : "لم يتم العثور على أرقام أولياء أمور مسجلة ومطابقة للشروط المحددة.",
+      ? `تم إرسال الرسالة بنجاح عبر API واتساب إلى ${sentCount} ولي أمر (من إجمالي ${totalValidRecipients}).`
+      : "لم يتم العثور على أرقام أولياء أمور مسجلة وصالحة ومطابقة للشروط المحددة.",
   };
 }

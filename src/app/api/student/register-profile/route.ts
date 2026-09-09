@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentAuth } from "@/server/auth/guards";
 import { upsertStudentProfile } from "@/server/services/student-progress.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireStudentAuth("غير مصرح. يجب تسجيل الدخول لإنشاء أو تحديث الملف الشخصي للطالب.");
@@ -11,7 +12,6 @@ export async function POST(request: NextRequest) {
   const { context } = authResult;
 
   try {
-
     const body = await request.json();
     const { 
       phoneNumber, 
@@ -38,9 +38,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Profile registration error:", error);
-    return NextResponse.json(
-      { error: (error as Error)?.message || "حدث خطأ أثناء حفظ الملف الشخصي" },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء حفظ الملف الشخصي");
+    return NextResponse.json({ error: message }, { status });
   }
 }
+

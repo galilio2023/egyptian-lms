@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminAuth } from "@/server/auth/guards";
 import { gradeHomework } from "@/server/services/admin-homework.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdminAuth();
@@ -16,10 +17,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err: unknown) {
-    console.error("Homework grade error:", err);
-    return NextResponse.json(
-      { error: (err as Error)?.message || "حدث خطأ أثناء رصد درجات الواجب." },
-      { status: 400 }
-    );
+    const { error: message, status } = handleRouteError(err, "حدث خطأ أثناء رصد درجات الواجب.");
+    return NextResponse.json({ error: message }, { status });
   }
 }

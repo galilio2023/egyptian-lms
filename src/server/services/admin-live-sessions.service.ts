@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { DomainError, NotFoundError } from "@/server/errors";
 
 export interface CreateLiveSessionPayload {
   gradeId?: string;
@@ -59,6 +60,19 @@ export async function getLiveSessionsData() {
 export async function createLiveSession(payload: CreateLiveSessionPayload) {
   const { gradeId, title, description, scheduledAt, durationMinutes, meetingUrl, meetingPassword } = payload;
 
+  if (!title || !title.trim()) {
+    throw new DomainError("عنوان الحصة مطلوب");
+  }
+
+  if (!meetingUrl || !meetingUrl.trim()) {
+    throw new DomainError("رابط الاجتماع مطلوب");
+  }
+
+  const parsedDate = scheduledAt ? new Date(scheduledAt) : null;
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    throw new DomainError("تاريخ ووقت الحصة غير صالح");
+  }
+
   let targetGradeId = gradeId;
   if (!targetGradeId) {
     const [firstGrade] = await db.select().from(schema.grade).limit(1);
@@ -66,14 +80,14 @@ export async function createLiveSession(payload: CreateLiveSessionPayload) {
   }
 
   if (!targetGradeId) {
-    throw new Error("المرحلة الدراسية مطلوبة");
+    throw new NotFoundError("المرحلة الدراسية مطلوبة أو غير مسجلة");
   }
 
   const [inserted] = await db.insert(schema.liveSession).values({
     gradeId: targetGradeId,
     title: title.trim(),
     description: description?.trim() || null,
-    scheduledAt: new Date(scheduledAt),
+    scheduledAt: parsedDate,
     durationMinutes: durationMinutes || 60,
     provider: "zoom",
     meetingUrl: meetingUrl.trim(),
@@ -89,7 +103,7 @@ export async function createLiveSession(payload: CreateLiveSessionPayload) {
 }
 
 export async function toggleLiveSession(sessionId: string, isLiveNow: boolean) {
-  if (!sessionId) throw new Error("معرف الحصة مطلوب");
+  if (!sessionId) throw new DomainError("معرف الحصة مطلوب");
 
   await db
     .update(schema.liveSession)
@@ -103,7 +117,7 @@ export async function toggleLiveSession(sessionId: string, isLiveNow: boolean) {
 }
 
 export async function deleteLiveSession(sessionId: string) {
-  if (!sessionId) throw new Error("معرف الحصة مطلوب");
+  if (!sessionId) throw new DomainError("معرف الحصة مطلوب");
 
   await db.delete(schema.liveSession).where(eq(schema.liveSession.id, sessionId));
   return { success: true, message: "تم حذف جلسة البث المباشر بنجاح." };

@@ -5,6 +5,7 @@ import { validateEgyptianPhone } from "@/lib/utils";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
+import { DomainError, NotFoundError } from "@/server/errors";
 
 export interface ManualEnrollPayload {
   studentId?: string;
@@ -107,7 +108,7 @@ export async function manualEnrollStudent(payload: ManualEnrollPayload) {
   const { studentId, unitId, notifyParent } = payload;
 
   if (!studentId || !unitId) {
-    throw new Error("يجب تحديد الطالب والوحدة الدراسية المراد تفعيلها.");
+    throw new DomainError("يجب تحديد الطالب والوحدة الدراسية المراد تفعيلها.");
   }
 
   const [studentRecord] = await db
@@ -121,7 +122,7 @@ export async function manualEnrollStudent(payload: ManualEnrollPayload) {
     .limit(1);
 
   if (!studentRecord) {
-    throw new Error("لم يتم العثور على حساب الطالب المحدد.");
+    throw new NotFoundError("لم يتم العثور على حساب الطالب المحدد.");
   }
 
   const [unitRecord] = await db
@@ -135,7 +136,7 @@ export async function manualEnrollStudent(payload: ManualEnrollPayload) {
     .limit(1);
 
   if (!unitRecord) {
-    throw new Error("لم يتم العثور على الوحدة الدراسية المحددة.");
+    throw new NotFoundError("لم يتم العثور على الوحدة الدراسية المحددة.");
   }
 
   await db
@@ -201,13 +202,15 @@ export async function resetDevice(
     if (userRecord) targetUserId = userRecord.id;
   }
 
-  if (targetUserId) {
-    await db
-      .delete(schema.session)
-      .where(eq(schema.session.userId, targetUserId));
+  if (!targetUserId) {
+    throw new NotFoundError("لم يتم العثور على حساب الطالب المحدد لفك ربط جهازه.");
   }
 
-  logSecurityEvent({
+  await db
+    .delete(schema.session)
+    .where(eq(schema.session.userId, targetUserId));
+
+  await logSecurityEvent({
     eventType: "device_transferred",
     severity: actor.userRole === "assistant" ? "medium" : "low",
     userId: actor.userId,
@@ -243,12 +246,14 @@ export async function toggleBan(payload: ToggleBanPayload) {
     if (userRecord) targetUserId = userRecord.id;
   }
 
-  if (targetUserId) {
-    await db
-      .update(schema.studentProfile)
-      .set({ isBanned: Boolean(isBanned) })
-      .where(eq(schema.studentProfile.userId, targetUserId));
+  if (!targetUserId) {
+    throw new NotFoundError("لم يتم العثور على حساب الطالب المحدد لتعديل حالة الحظر.");
   }
+
+  await db
+    .update(schema.studentProfile)
+    .set({ isBanned: Boolean(isBanned) })
+    .where(eq(schema.studentProfile.userId, targetUserId));
 
   return {
     success: true,
@@ -259,7 +264,7 @@ export async function toggleBan(payload: ToggleBanPayload) {
 export async function banStudent(payload: BanStudentPayload) {
   const { userId, reason } = payload;
   if (!userId) {
-    throw new Error("معرف الطالب مطلوب");
+    throw new DomainError("معرف الطالب مطلوب");
   }
 
   await db
@@ -272,7 +277,7 @@ export async function banStudent(payload: BanStudentPayload) {
     .set({ expiresAt: new Date(), updatedAt: new Date() })
     .where(eq(schema.session.userId, userId));
 
-  logSecurityEvent({
+  await logSecurityEvent({
     eventType: "user_banned",
     severity: "high",
     userId,
@@ -288,7 +293,7 @@ export async function banStudent(payload: BanStudentPayload) {
 
 export async function unbanStudent(userId: string) {
   if (!userId) {
-    throw new Error("معرف الطالب مطلوب");
+    throw new DomainError("معرف الطالب مطلوب");
   }
 
   await db
@@ -298,6 +303,6 @@ export async function unbanStudent(userId: string) {
 
   return {
     success: true,
-    message: "تم رفع الحظر عن حساب الطالب بنجاح.",
+    message: "تم فك حظر حساب الطالب بنجاح.",
   };
 }

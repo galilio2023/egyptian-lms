@@ -5,6 +5,7 @@ import { logSecurityEvent } from "@/lib/security/audit-logger";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { NotFoundError, ConflictError } from "@/server/errors";
 
 export interface RedeemVoucherParams {
   code: string;
@@ -30,7 +31,7 @@ export async function redeemVoucherCode(params: RedeemVoucherParams) {
     .limit(1);
 
   if (!existingVoucher) {
-    logSecurityEvent({
+    await logSecurityEvent({
       eventType: "voucher_redeem_failed",
       severity: "low",
       userId: currentUserId,
@@ -41,7 +42,7 @@ export async function redeemVoucherCode(params: RedeemVoucherParams) {
       details: { attemptedCode: cleanCode },
     });
 
-    throw new Error("كود كارت الشحن غير صحيح أو غير مسجل بالنظام. يرجى التأكد من كتابة الكود كما هو مطبوع على الكارت.");
+    throw new NotFoundError("كود كارت الشحن غير صحيح أو غير مسجل بالنظام. يرجى التأكد من كتابة الكود كما هو مطبوع على الكارت.");
   }
 
   // Atomic transaction: mark voucher redeemed and activate course enrollment
@@ -81,7 +82,7 @@ export async function redeemVoucherCode(params: RedeemVoucherParams) {
   });
 
   if (txResult.alreadyRedeemed || !txResult.voucher) {
-    logSecurityEvent({
+    await logSecurityEvent({
       eventType: "voucher_redeem_failed",
       severity: "low",
       userId: currentUserId,
@@ -92,11 +93,11 @@ export async function redeemVoucherCode(params: RedeemVoucherParams) {
       details: { attemptedCode: cleanCode },
     });
 
-    throw new Error("هذا الكود تم استخدامه وتفعيله مسبقاً.");
+    throw new ConflictError("هذا الكود تم استخدامه وتفعيله مسبقاً.");
   }
 
   // Log successful voucher redemption
-  logSecurityEvent({
+  await logSecurityEvent({
     eventType: "voucher_redeem_success",
     severity: "low",
     userId: currentUserId,

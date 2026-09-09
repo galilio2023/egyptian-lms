@@ -3,6 +3,7 @@ import * as schema from "@/lib/db/schema";
 import { eq, sql, count } from "drizzle-orm";
 import { revalidateCurriculumCache } from "@/lib/data-curriculum";
 import type { ParsedCurriculumUnit } from "@/lib/ai/curriculum-intake-parser";
+import { DomainError, NotFoundError } from "@/server/errors";
 
 export interface CreateUnitPayload {
   gradeSlug: string;
@@ -140,6 +141,10 @@ export async function getQuizzesData() {
 export async function createUnit(payload: CreateUnitPayload) {
   const { gradeSlug, title, priceEgp, description, thumbnailUrl } = payload;
 
+  if (!title || !title.trim()) {
+    throw new DomainError("عنوان الوحدة مطلوب");
+  }
+
   const [gradeRecord] = await db
     .select()
     .from(schema.grade)
@@ -147,7 +152,7 @@ export async function createUnit(payload: CreateUnitPayload) {
     .limit(1);
 
   if (!gradeRecord) {
-    throw new Error("المرحلة الدراسية غير موجودة");
+    throw new NotFoundError("المرحلة الدراسية غير موجودة");
   }
 
   const unitSlug = `${gradeSlug}-unit-${Date.now()}`;
@@ -172,7 +177,7 @@ export async function createUnit(payload: CreateUnitPayload) {
 }
 
 export async function deleteUnit(unitId: string) {
-  if (!unitId) throw new Error("معرف الوحدة مطلوب");
+  if (!unitId) throw new DomainError("معرف الوحدة مطلوب");
   await db.delete(schema.courseUnit).where(eq(schema.courseUnit.id, unitId));
   revalidateCurriculumCache();
   return { success: true, message: "تم حذف الوحدة الدراسية بنجاح." };
@@ -181,13 +186,22 @@ export async function deleteUnit(unitId: string) {
 export async function createLesson(payload: CreateLessonPayload) {
   const { unitId, title, videoId, videoDurationSeconds, pdfAttachmentUrl, isFreePreview, prerequisiteType, prerequisiteLessonId } = payload;
 
+  if (!unitId || !title || !title.trim() || !videoId || !videoId.trim()) {
+    throw new DomainError("بيانات المحاضرة غير مكتملة (معرف الوحدة، العنوان، ومعرف الفيديو مطلوب).");
+  }
+
   const lessonSlug = `lesson-${Date.now()}`;
   const inserted = await db.transaction(async (tx) => {
-    try {
-      await tx.execute(sql`SELECT id FROM ${schema.courseUnit} WHERE id = ${unitId} FOR UPDATE`);
-    } catch {
-      // Row locking fallback
+    const [existingUnit] = await tx
+      .select({ id: schema.courseUnit.id })
+      .from(schema.courseUnit)
+      .where(eq(schema.courseUnit.id, unitId));
+
+    if (!existingUnit) {
+      throw new NotFoundError("الوحدة الدراسية غير موجودة.");
     }
+
+    await tx.execute(sql`SELECT id FROM ${schema.courseUnit} WHERE id = ${unitId} FOR UPDATE`);
 
     const [maxOrder] = await tx
       .select({ maxOrder: sql<number>`COALESCE(MAX(${schema.lesson.orderIndex}), 0)` })
@@ -223,7 +237,7 @@ export async function createLesson(payload: CreateLessonPayload) {
 }
 
 export async function deleteLesson(lessonId: string) {
-  if (!lessonId) throw new Error("معرف المحاضرة مطلوب");
+  if (!lessonId) throw new DomainError("معرف المحاضرة مطلوب");
   await db.delete(schema.lesson).where(eq(schema.lesson.id, lessonId));
   revalidateCurriculumCache();
   return { success: true, message: "تم حذف المحاضرة بنجاح." };
@@ -232,6 +246,10 @@ export async function deleteLesson(lessonId: string) {
 export async function createQuestion(payload: CreateQuestionPayload) {
   const { quizId, text, audioUrl, options, explanation, points } = payload;
 
+  if (!text || !text.trim()) {
+    throw new DomainError("نص السؤال مطلوب");
+  }
+
   let targetQuizId = quizId;
   if (!targetQuizId) {
     const [anyQuiz] = await db.select().from(schema.quiz).limit(1);
@@ -239,7 +257,7 @@ export async function createQuestion(payload: CreateQuestionPayload) {
   }
 
   if (!targetQuizId) {
-    throw new Error("لم يتم العثور على اختبار لربط السؤال به");
+    throw new NotFoundError("لم يتم العثور على اختبار لربط السؤال به");
   }
 
   const [inserted] = await db.insert(schema.quizQuestion).values({
@@ -260,14 +278,14 @@ export async function createQuestion(payload: CreateQuestionPayload) {
 }
 
 export async function deleteQuestion(questionId: string) {
-  if (!questionId) throw new Error("معرف السؤال مطلوب");
+  if (!questionId) throw new DomainError("معرف السؤال مطلوب");
   await db.delete(schema.quizQuestion).where(eq(schema.quizQuestion.id, questionId));
   return { success: true, message: "تم حذف السؤال بنجاح من بنك الأسئلة." };
 }
 
 export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUnit) {
   if (!parsedUnit || !parsedUnit.titleEnglish || !parsedUnit.gradeSlug) {
-    throw new Error("بيانات الوحدة غير مكتملة.");
+    throw new DomainError("بيانات الوحدة غير مكتملة.");
   }
 
   const result = await db.transaction(async (tx) => {
@@ -280,7 +298,7 @@ export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUni
 
     const gradeId = existingGrade?.id;
     if (!gradeId) {
-      throw new Error(`المرحلة الدراسية (${parsedUnit.gradeSlug}) غير مسجلة في قاعدة البيانات.`);
+      throw new NotFoundError(`المرحلة الدراسية (${parsedUnit.gradeSlug}) غير مسجلة في قاعدة البيانات.`);
     }
 
     // 2. Insert Course Unit
@@ -304,12 +322,13 @@ export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUni
       });
 
     // 3. Insert Lessons
-    const pdfPath = parsedUnit.pdfFileName.startsWith("/")
-      ? parsedUnit.pdfFileName
-      : `/curriculum-pdfs/${parsedUnit.pdfFileName}`;
+    const pdfPath = typeof parsedUnit.pdfFileName === "string" && parsedUnit.pdfFileName.trim().length > 0
+      ? (parsedUnit.pdfFileName.startsWith("/") ? parsedUnit.pdfFileName : `/curriculum-pdfs/${parsedUnit.pdfFileName}`)
+      : null;
 
-    for (let i = 0; i < parsedUnit.lessons.length; i++) {
-      const l = parsedUnit.lessons[i];
+    const lessonsList = Array.isArray(parsedUnit.lessons) ? parsedUnit.lessons : [];
+    for (let i = 0; i < lessonsList.length; i++) {
+      const l = lessonsList[i];
       const lessonSlug = `${unitSlug}-l${i + 1}`;
       await tx.insert(schema.lesson).values({
         unitId: insertedUnit.id,
@@ -353,7 +372,7 @@ export async function commitParsedCurriculumUnit(parsedUnit: ParsedCurriculumUni
 
     return {
       unit: insertedUnit,
-      lessonsCount: parsedUnit.lessons.length,
+      lessonsCount: lessonsList.length,
       questionsCount: parsedUnit.quizQuestions?.length ?? 0,
     };
   });

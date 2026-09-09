@@ -2,9 +2,10 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateSecureVoucherBatch } from "@/lib/security/crypto-voucher";
+import { NotFoundError } from "@/server/errors";
 
 export interface SaveVouchersPayload {
-  vouchers: Array<{ code: string; serialNumber: string; priceEgp: number }>;
+  vouchers: Array<{ code: string; serialNumber?: string; priceEgp?: number }>;
   batchName?: string;
   gradeNumber?: number;
   unitId?: string;
@@ -43,7 +44,7 @@ export async function saveVouchers(payload: SaveVouchersPayload) {
   }
 
   if (!unitIdToBind) {
-    throw new Error("لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها.");
+    throw new NotFoundError("لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها.");
   }
 
   let insertedCount = 0;
@@ -52,6 +53,8 @@ export async function saveVouchers(payload: SaveVouchersPayload) {
       code: v.code.trim().toUpperCase(),
       unitId: unitIdToBind!,
       isRedeemed: false,
+      serialNumber: v.serialNumber || null,
+      priceEgp: v.priceEgp || null,
       batchName: batchName || "دفعة سناتر ومكتبات 2026",
     }));
 
@@ -106,7 +109,7 @@ export async function generateSecureVouchers(payload: GenerateSecureVouchersPayl
   }
 
   if (!unitIdToBind) {
-    throw new Error("لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها.");
+    throw new NotFoundError("لم يتم العثور على وحدة دراسية مطابقة للصف المحدد لربط كروت الشحن بها.");
   }
 
   let insertedCount = 0;
@@ -115,6 +118,8 @@ export async function generateSecureVouchers(payload: GenerateSecureVouchersPayl
       code: v.code.trim().toUpperCase(),
       unitId: unitIdToBind!,
       isRedeemed: false,
+      serialNumber: v.serialNumber || null,
+      priceEgp: v.priceEgp || null,
       batchName: batchName || `دفعة كروت سناتر الصف ${safeGrade} - مشفرة عالي الأمان`,
     }));
 

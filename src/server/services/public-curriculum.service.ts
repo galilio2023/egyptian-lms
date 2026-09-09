@@ -282,7 +282,7 @@ export async function getPublicUnitDetails(unitSlug: string, currentUserId?: str
         thumbnailUrl: dbUnit.thumbnailUrl || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=60",
         priceEgp: dbUnit.priceEgp || 250,
         lessonsCount: formattedLessons.length || 4,
-        quizzesCount: dbQuiz ? 1 : 1,
+        quizzesCount: dbQuiz ? 1 : 0,
         isPublished: dbUnit.isPublished,
       },
       lessons: formattedLessons,
@@ -408,6 +408,8 @@ export async function getPublicLessonDetails(
         slug: schema.lesson.slug,
         orderIndex: schema.lesson.orderIndex,
         isFreePreview: schema.lesson.isFreePreview,
+        videoId: schema.lesson.videoId,
+        videoProvider: schema.lesson.videoProvider,
         videoDuration: sql<string>`concat(round(coalesce(${schema.lesson.videoDurationSeconds}, 1200) / 60), ' دقيقة')`,
       })
       .from(schema.lesson)
@@ -528,10 +530,26 @@ export async function getPublicLessonDetails(
       prerequisiteMessage,
       isCompleted: Boolean(completedProgress),
       quizId: dbQuiz?.id || INITIAL_QUIZ.id,
-      playlist: dbPlaylist.map((p) => ({
-        ...p,
-        videoUrl: (canAccessVideo || p.isFreePreview) ? secureVideoUrl : null,
-      })),
+      playlist: dbPlaylist.map((p) => {
+        const canAccessEntry = Boolean(p.isFreePreview || (activeEnrollmentList && activeEnrollmentList.length > 0));
+        return {
+          id: p.id,
+          unitId: p.unitId,
+          title: p.title,
+          slug: p.slug,
+          orderIndex: p.orderIndex,
+          isFreePreview: p.isFreePreview,
+          videoDuration: p.videoDuration,
+          videoUrl: (canAccessEntry && p.videoId)
+            ? generateBunnyPlaybackUrl({
+                provider: p.videoProvider,
+                videoId: p.videoId,
+                clientIp,
+                expiresInSeconds: 7200,
+              })
+            : null,
+        };
+      }),
       lesson: {
         id: dbLesson.id,
         unitId: dbLesson.unitId,
