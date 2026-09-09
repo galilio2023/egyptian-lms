@@ -1,200 +1,54 @@
-export interface MockGrade {
-  id: string;
-  gradeNumber: number;
-  titleArabic: string;
-  titleEnglish: string;
-  slug: string;
-  badgeColor: string;
-  unitsCount: number;
-  studentsCount: number;
-}
+import type {
+  Grade,
+  CourseUnit,
+  VideoCheckpointOption,
+  VideoCheckpoint,
+  Lesson,
+  QuestionOption,
+  Question,
+  Quiz,
+  AdventureQuiz,
+  GradeChampion,
+  StudentProfile,
+  Order,
+  OrderOcrData,
+  HomeworkAssignment,
+  HomeworkSubmission,
+  LiveSession,
+} from '@/lib/types/domain';
 
-export interface MockUnit {
-  id: string;
-  gradeId: string;
-  gradeSlug: string;
-  gradeTitle: string;
-  title: string;
-  slug: string;
-  description: string;
-  priceEgp: number;
-  thumbnailUrl: string;
-  lessonsCount: number;
-  quizzesCount: number;
-  isPublished: boolean;
-}
+export type {
+  Grade,
+  CourseUnit,
+  VideoCheckpointOption,
+  VideoCheckpoint,
+  Lesson,
+  QuestionOption,
+  Question,
+  Quiz,
+  AdventureQuiz,
+  GradeChampion,
+  StudentProfile,
+  Order,
+  OrderOcrData,
+  HomeworkAssignment,
+  HomeworkSubmission,
+  LiveSession,
+};
 
-export interface VideoCheckpointOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
+export type MockGrade = Grade;
+export type MockUnit = CourseUnit;
+export type MockLesson = Lesson;
+export type MockQuestion = Question;
+export type MockQuiz = Quiz;
+export type MockAdventureQuiz = AdventureQuiz;
+export type MockGradeChampion = GradeChampion;
+export type MockStudent = StudentProfile;
+export type MockOrder = Order;
+export type MockHomeworkAssignment = HomeworkAssignment;
+export type MockHomeworkSubmission = HomeworkSubmission;
+export type MockLiveSession = LiveSession;
 
-export interface VideoCheckpoint {
-  id: string;
-  timestampSeconds: number;
-  questionText: string;
-  options: VideoCheckpointOption[];
-  explanation?: string;
-  rewardXp?: number;
-}
-
-export interface MockLesson {
-  id: string;
-  unitId: string;
-  title: string;
-  slug: string;
-  videoUrl: string; // Sample HLS or MP4 stream
-  videoDuration: string;
-  pdfAttachmentUrl?: string;
-  pdfTitle?: string;
-  isFreePreview: boolean;
-  orderIndex: number;
-  prerequisiteType?: 'none' | 'previous_quiz_passed' | 'previous_homework_submitted';
-  prerequisiteLessonId?: string;
-  isPrerequisiteBlocked?: boolean;
-  prerequisiteMessage?: string;
-  checkpoints?: VideoCheckpoint[];
-}
-
-export interface MockQuestion {
-  id: string;
-  text: string;
-  audioUrl?: string;
-  options: { id: string; text: string; isCorrect: boolean }[];
-  explanation: string;
-  remedialLessonSlug?: string;
-  remedialTimestampSeconds?: number;
-}
-
-export interface MockQuiz {
-  id: string;
-  unitId: string;
-  lessonId?: string;
-  title: string;
-  timeLimitMinutes: number;
-  passPercentage: number;
-  questions: MockQuestion[];
-}
-
-export interface MockAdventureQuiz {
-  id: string;
-  slug: string;
-  title: string;
-  theme: 'zoo' | 'spiderman' | 'fruits' | 'numbers';
-  subtitle: string;
-  gradeBadge: string;
-  questionsCount: number;
-  durationMinutes: number;
-  xpReward: number;
-  accentBg: string;
-  accentBorder: string;
-  buttonColor: string;
-  tag: string;
-}
-
-export interface MockGradeChampion {
-  rank: 1 | 2 | 3;
-  name: string;
-  initials: string;
-  gradeBadge: string;
-  schoolName: string;
-  city: string;
-  xpPoints: number;
-}
-
-export interface MockStudent {
-  id: string;
-  name: string;
-  studentPhone: string;
-  parentPhone: string;
-  parentName: string;
-  governorate: string;
-  gradeLevel: number;
-  gradeTitle: string;
-  schoolName: string;
-  xpPoints: number;
-  enrolledUnits: string[];
-  lastActive: string;
-  deviceLocked: boolean;
-  isBanned?: boolean;
-}
-
-export interface MockOrder {
-  id: string;
-  studentName: string;
-  studentPhone: string;
-  parentPhone: string;
-  unitTitle: string;
-  unitId: string;
-  gradeTitle: string;
-  amountEgp: number;
-  paymentMethod: 'paymob_wallet' | 'paymob_card' | 'instapay_manual' | 'wallet_manual';
-  status: 'pending' | 'completed' | 'failed' | 'manual_review';
-  referenceNumber: string;
-  receiptImageUrl?: string;
-  receiptHash?: string;
-  ocrData?: {
-    extractedReference?: string;
-    extractedAmount?: number;
-    extractedDate?: string;
-    matchedSender?: string;
-    confidenceScore?: number;
-    isSuspectedDuplicate?: boolean;
-    duplicateOrderId?: string;
-  };
-  createdAt: string;
-}
-
-export interface MockHomeworkAssignment {
-  id: string;
-  unitId: string;
-  unitTitle: string;
-  lessonTitle?: string;
-  gradeSlug: string;
-  title: string;
-  instructions: string;
-  pageNumber: string;
-  maxScore: number;
-  dueDate: string;
-}
-
-export interface MockHomeworkSubmission {
-  id: string;
-  assignmentId: string;
-  assignmentTitle: string;
-  studentId: string;
-  studentName: string;
-  studentPhone: string;
-  parentPhone: string;
-  gradeTitle: string;
-  studentImages: Array<{ pageNumber: number; imageUrl: string }>;
-  audioVoiceNoteUrl?: string;
-  status: 'submitted' | 'in_review' | 'graded' | 'rejected';
-  score?: number;
-  maxScore: number;
-  feedbackNotes?: string;
-  annotatedImages?: Array<{ pageIndex: number; dataUrl: string }>;
-  submittedAt: string;
-  gradedAt?: string;
-}
-
-export interface MockLiveSession {
-  id: string;
-  gradeId: string;
-  gradeTitle: string;
-  gradeSlug: string;
-  title: string;
-  description: string;
-  scheduledAt: string; // ISO string
-  durationMinutes: number;
-  provider: 'zoom' | 'livekit' | 'youtube_live';
-  meetingUrl: string;
-  meetingPassword?: string;
-  isLiveNow: boolean;
-  recordingUrl?: string;
-  instructorName: string;
-}
 
 
 export const INITIAL_GRADES: MockGrade[] = [
