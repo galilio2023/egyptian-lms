@@ -13,16 +13,22 @@ import { EgyptianCheckoutModal } from "@/features/checkout";
 import { PortalTopBar } from "@/components/shared/portal-top-bar";
 import { LockedLessonCard, LessonWorksheetsCard, BusyBeeAiTutor } from "@/features/portal-lesson";
 
+type LessonPlayerLesson = Omit<MockLesson, "videoUrl" | "checkpoints"> &
+  Partial<Pick<MockLesson, "videoUrl" | "checkpoints">>;
+type PlaylistLesson = Omit<MockLesson, "videoUrl" | "checkpoints">;
+
 export interface LessonPlayerClientProps {
-  initialLesson: MockLesson;
+  initialLesson: LessonPlayerLesson;
+  initialIsAccessible: boolean;
   initialUnit: MockUnit;
-  initialPlaylist: MockLesson[];
+  initialPlaylist: PlaylistLesson[];
   initialQuizId: string;
   lessonSlug: string;
 }
 
 export function LessonPlayerClient({
   initialLesson,
+  initialIsAccessible,
   initialUnit,
   initialPlaylist,
   initialQuizId,
@@ -30,45 +36,25 @@ export function LessonPlayerClient({
 }: LessonPlayerClientProps) {
   const { data: session } = useSession();
 
-  const [lesson, setLesson] = useState<MockLesson>(initialLesson);
+  const [lesson, setLesson] = useState<LessonPlayerLesson>(initialLesson);
   const [unit, setUnit] = useState<MockUnit>(initialUnit);
-  const [playlist, setPlaylist] = useState<MockLesson[]>(initialPlaylist);
+  const [playlist, setPlaylist] = useState<PlaylistLesson[]>(initialPlaylist);
   const [quizId, setQuizId] = useState<string>(initialQuizId);
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isEnrolled, setIsEnrolled] = useState<boolean>(Boolean(initialLesson.isFreePreview));
+  const [isEnrolled, setIsEnrolled] = useState<boolean>(initialIsAccessible);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
   // Sync state if initial props change
   useEffect(() => {
+    // Intentional prop synchronization; access state is preserved for same-lesson refreshes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLesson(initialLesson);
     setUnit(initialUnit);
     setPlaylist(initialPlaylist);
     setQuizId(initialQuizId);
-    setIsEnrolled(Boolean(initialLesson.isFreePreview));
   }, [initialLesson, initialUnit, initialPlaylist, initialQuizId]);
-
-  // Check enrollment in the background if not a free preview
-  useEffect(() => {
-    if (lesson.isFreePreview) return;
-    let active = true;
-    fetch("/api/student/enrollments")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (active && data?.enrolledUnitIds) {
-          const hasAccess =
-            data.enrolledUnitIds.includes(unit.id) || data.enrolledUnitIds.includes(unit.slug);
-          if (hasAccess) {
-            setIsEnrolled(true);
-          }
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [lesson.isFreePreview, unit.id, unit.slug]);
 
   const handleEnrollSuccess = () => {
     fetch(`/api/public/lesson/${lessonSlug}`)
@@ -80,7 +66,7 @@ export function LessonPlayerClient({
           if (data.playlist && Array.isArray(data.playlist) && data.playlist.length > 0) {
             setPlaylist(data.playlist);
           }
-          setIsEnrolled(Boolean(data.isEnrolled || data.lesson.isFreePreview));
+          setIsEnrolled(Boolean((data.isEnrolled || data.lesson.isFreePreview) && !data.isLocked));
         }
       })
       .catch(() => {});
@@ -90,7 +76,7 @@ export function LessonPlayerClient({
   const studentName = session?.user?.name || "طالب بطل";
   const studentPhone =
     ((session?.user as Record<string, unknown>)?.phoneNumber as string) || "01000000000";
-  const isAccessible = isEnrolled || Boolean(lesson.isFreePreview);
+  const isAccessible = isEnrolled;
 
   const unitLessons =
     playlist.length > 0
@@ -184,7 +170,7 @@ export function LessonPlayerClient({
             {/* DRM Video Player */}
             <div className="rounded-3xl p-3 bg-gradient-to-tr from-purple-950 via-slate-900 to-black shadow-2xl border-2 border-purple-500/30">
               <ProtectedVideoPlayer
-                src={lesson.videoUrl}
+                src={lesson.videoUrl || ""}
                 studentName={studentName}
                 studentPhone={studentPhone}
                 title={lesson.title}

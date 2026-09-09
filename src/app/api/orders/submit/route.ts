@@ -290,13 +290,13 @@ export async function POST(request: NextRequest) {
     );
     try {
       if (userId && isUUID) {
-        const initialStatus = paymentMethod.startsWith("paymob")
+        const initialStatus: (typeof schema.paymentStatusEnum.enumValues)[number] = paymentMethod.startsWith("paymob")
           ? "pending"
           : shouldAutoFulfill
           ? "completed"
           : "manual_review";
 
-        const orderInsert = db.insert(schema.order).values({
+        const orderValues = {
           userId: userId,
           unitId: unitId,
           amountEgp: verifiedPrice, // Always server verified!
@@ -307,30 +307,44 @@ export async function POST(request: NextRequest) {
           receiptHash: computedReceiptHash,
           ocrData: ocrScanData,
           idempotencyKey: effectiveIdempotencyKey,
-        }).returning({ id: schema.order.id });
+        };
 
         if (shouldAutoFulfill) {
-          const enrollmentInsert = db
-            .insert(schema.enrollment)
-            .values({
-              userId,
-              unitId,
-              isActive: true,
-              enrolledAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [schema.enrollment.userId, schema.enrollment.unitId],
-              set: { isActive: true, enrolledAt: new Date() },
-            })
-            .returning({ id: schema.enrollment.id });
-          const [insertedOrders, activatedEnrollments] = await db.batch([
-            orderInsert,
-            enrollmentInsert,
-          ]);
-          insertedOrderId = insertedOrders[0]?.id || null;
-          enrollmentActivated = Boolean(activatedEnrollments[0]?.id);
+          const transactionResult = await db.transaction(async (tx) => {
+            const [insertedOrder] = await tx
+              .insert(schema.order)
+              .values(orderValues)
+              .returning({ id: schema.order.id });
+            const [activatedEnrollment] = await tx
+              .insert(schema.enrollment)
+              .values({
+                userId,
+                unitId,
+                isActive: true,
+                enrolledAt: new Date(),
+              })
+              .onConflictDoUpdate({
+                target: [schema.enrollment.userId, schema.enrollment.unitId],
+                set: { isActive: true, enrolledAt: new Date() },
+              })
+              .returning({ id: schema.enrollment.id });
+
+            if (!insertedOrder?.id || !activatedEnrollment?.id) {
+              throw new Error("Order fulfillment transaction returned incomplete records.");
+            }
+
+            return {
+              orderId: insertedOrder.id,
+              enrollmentId: activatedEnrollment.id,
+            };
+          });
+          insertedOrderId = transactionResult.orderId;
+          enrollmentActivated = Boolean(transactionResult.enrollmentId);
         } else {
-          const [insertedOrder] = await orderInsert;
+          const [insertedOrder] = await db
+            .insert(schema.order)
+            .values(orderValues)
+            .returning({ id: schema.order.id });
           insertedOrderId = insertedOrder?.id || null;
         }
 

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { getCachedLesson } from "@/lib/data-curriculum";
+import { auth } from "@/lib/auth/auth";
+import { getCachedLesson, getLessonViewerAccess } from "@/lib/data-curriculum";
 import { LessonPlayerClient } from "@/features/portal-lesson";
 
 interface PageProps {
@@ -32,9 +34,32 @@ export default async function LessonPlayerPage({ params }: PageProps) {
     notFound();
   }
 
+  const headerList = await headers();
+  const session = await auth.api.getSession({ headers: headerList });
+  const clientIp =
+    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headerList.get("x-real-ip") ||
+    undefined;
+  const viewerAccess = await getLessonViewerAccess(
+    data.lesson.id,
+    session?.user?.id,
+    clientIp
+  );
+  const initialLesson = {
+    ...data.lesson,
+    ...(viewerAccess.isAccessible
+      ? {
+          videoUrl: viewerAccess.videoUrl,
+          checkpoints: viewerAccess.checkpoints,
+        }
+      : {}),
+  };
+
   return (
     <LessonPlayerClient
-      initialLesson={data.lesson}
+      key={lessonSlug}
+      initialLesson={initialLesson}
+      initialIsAccessible={viewerAccess.isAccessible}
       initialUnit={data.unit}
       initialPlaylist={data.playlist}
       initialQuizId={data.quizId}

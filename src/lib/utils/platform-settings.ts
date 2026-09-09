@@ -8,15 +8,8 @@ import { cache } from "react";
 export type PlatformSettingsData = MockPlatformSettings;
 
 let localMemSettings: MockPlatformSettings | null = null;
-let localMemTimestamp = 0;
-const MEM_CACHE_TTL_MS = 60000; // 60 seconds local process fallback
 
 const fetchPlatformSettingsFromDb = async (): Promise<MockPlatformSettings> => {
-  const now = Date.now();
-  if (localMemSettings && now - localMemTimestamp < MEM_CACHE_TTL_MS) {
-    return localMemSettings;
-  }
-
   try {
     const [dbSettings] = await db
       .select()
@@ -50,7 +43,6 @@ const fetchPlatformSettingsFromDb = async (): Promise<MockPlatformSettings> => {
         customBackgroundUrl: dbSettings.customBackgroundUrl ?? INITIAL_PLATFORM_SETTINGS.customBackgroundUrl,
         cardVibeStyle: (dbSettings.cardVibeStyle as MockPlatformSettings['cardVibeStyle']) || INITIAL_PLATFORM_SETTINGS.cardVibeStyle,
       };
-      localMemTimestamp = now;
       return localMemSettings;
     }
   } catch (err) {
@@ -87,7 +79,6 @@ export const getPlatformSettings = cache(async (): Promise<MockPlatformSettings>
  */
 export function invalidatePlatformSettingsCache(): void {
   localMemSettings = null;
-  localMemTimestamp = 0;
   try {
     revalidateTag("platform-settings", { expire: 0 });
     revalidateTag("landing-data", { expire: 0 });
