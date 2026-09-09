@@ -31,8 +31,8 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
-  --font-arabic: 'Cairo', sans-serif;
-  --font-sans: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+  --font-arabic: var(--font-cairo), 'Cairo', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', var(--font-cairo), 'Cairo', sans-serif;
 }
 
 html, body {
@@ -44,7 +44,7 @@ html, body {
 body {
   background: linear-gradient(135deg, #fdf4ff 0%, #f5f3ff 40%, #f0fdf4 100%);
   color: #0f172a;
-  font-family: 'Cairo', sans-serif;
+  font-family: var(--font-cairo), 'Cairo', sans-serif;
   direction: rtl;
   text-align: right;
   -webkit-font-smoothing: antialiased;

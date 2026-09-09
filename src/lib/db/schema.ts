@@ -80,7 +80,10 @@ export const studentProfile = pgTable('student_profile', {
   xpPoints: integer('xp_points').default(0).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('student_profile_xp_points_idx').on(table.xpPoints),
+  index('student_profile_grade_level_idx').on(table.gradeLevel),
+]);
 
 // Academic Curriculum
 export const grade = pgTable('grade', {
@@ -106,6 +109,8 @@ export const courseUnit = pgTable('course_unit', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('course_unit_grade_id_idx').on(table.gradeId),
+  uniqueIndex('course_unit_slug_unique_idx').on(table.slug),
+  index('course_unit_published_order_idx').on(table.isPublished, table.orderIndex),
 ]);
 
 export interface VideoCheckpointOption {
@@ -139,7 +144,8 @@ export const lesson = pgTable('lesson', {
   checkpoints: jsonb('checkpoints').$type<VideoCheckpoint[]>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
-  index('lesson_unit_id_idx').on(table.unitId),
+  uniqueIndex('lesson_slug_unique_idx').on(table.slug),
+  index('lesson_unit_order_idx').on(table.unitId, table.orderIndex),
 ]);
 
 export const lessonProgress = pgTable('lesson_progress', {
@@ -149,7 +155,6 @@ export const lessonProgress = pgTable('lesson_progress', {
   xpAwarded: integer('xp_awarded').default(15).notNull(),
   completedAt: timestamp('completed_at').defaultNow().notNull(),
 }, (table) => [
-  index('lesson_progress_user_id_idx').on(table.userId),
   index('lesson_progress_lesson_id_idx').on(table.lessonId),
   uniqueIndex('lesson_progress_user_lesson_unique_idx').on(table.userId, table.lessonId),
 ]);
@@ -162,7 +167,6 @@ export const lessonCheckpointProgress = pgTable('lesson_checkpoint_progress', {
   xpAwarded: integer('xp_awarded').notNull(),
   completedAt: timestamp('completed_at').defaultNow().notNull(),
 }, (table) => [
-  index('lesson_checkpoint_progress_user_id_idx').on(table.userId),
   index('lesson_checkpoint_progress_lesson_id_idx').on(table.lessonId),
   uniqueIndex('lesson_checkpoint_progress_user_checkpoint_unique_idx').on(
     table.userId,
@@ -221,6 +225,7 @@ export const quizAttempt = pgTable('quiz_attempt', {
 }, (table) => [
   index('quiz_attempt_user_id_idx').on(table.userId),
   index('quiz_attempt_quiz_id_idx').on(table.quizId),
+  index('quiz_attempt_user_quiz_idx').on(table.userId, table.quizId),
 ]);
 
 // Enrollments & Orders
@@ -232,9 +237,9 @@ export const enrollment = pgTable('enrollment', {
   expiresAt: timestamp('expires_at'),
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => [
-  index('enrollment_user_id_idx').on(table.userId),
   index('enrollment_unit_id_idx').on(table.unitId),
   uniqueIndex('enrollment_user_unit_unique_idx').on(table.userId, table.unitId),
+  index('enrollment_active_check_idx').on(table.userId, table.unitId, table.isActive),
 ]);
 
 export const order = pgTable('order', {
@@ -266,7 +271,8 @@ export const order = pgTable('order', {
   index('order_unit_id_idx').on(table.unitId),
   index('order_idempotency_key_idx').on(table.idempotencyKey),
   index('order_reference_number_idx').on(table.referenceNumber),
-  index('order_payment_status_idx').on(table.paymentStatus),
+  index('order_receipt_hash_idx').on(table.receiptHash),
+  index('order_status_created_idx').on(table.paymentStatus, table.createdAt),
   index('order_created_at_idx').on(table.createdAt),
 ]);
 
@@ -274,6 +280,8 @@ export const order = pgTable('order', {
 export const voucherCode = pgTable('voucher_code', {
   id: uuid('id').defaultRandom().primaryKey(),
   code: text('code').unique().notNull(), // e.g. "ELITE-GR1-998271"
+  serialNumber: text('serial_number'),
+  priceEgp: integer('price_egp'),
   unitId: uuid('unit_id').references(() => courseUnit.id, { onDelete: 'cascade' }).notNull(),
   isRedeemed: boolean('is_redeemed').default(false).notNull(),
   redeemedByUserId: text('redeemed_by_user_id').references(() => user.id, { onDelete: 'set null' }),
@@ -449,10 +457,12 @@ export const homeworkSubmission = pgTable('homework_submission', {
   annotatedImages: jsonb('annotated_images').$type<Array<{ pageIndex: number; dataUrl: string }>>(),
   gradedByUserId: text('graded_by_user_id').references(() => user.id, { onDelete: 'set null' }),
   gradedAt: timestamp('graded_at'),
+  updatedAt: timestamp('updated_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('hw_sub_user_id_idx').on(table.userId),
   index('hw_sub_assignment_id_idx').on(table.assignmentId),
+  index('hw_sub_assignment_status_idx').on(table.assignmentId, table.status),
 ]);
 
 // Live Revision & Interactive Sessions (حصص المراجعة والزووم المباشرة)
@@ -479,7 +489,6 @@ export const liveSessionAttendance = pgTable('live_session_attendance', {
   userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }).notNull(),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
 }, (table) => [
-  index('live_attendance_session_id_idx').on(table.sessionId),
   index('live_attendance_user_id_idx').on(table.userId),
   uniqueIndex('live_attendance_session_user_idx').on(table.sessionId, table.userId),
 ]);
@@ -588,6 +597,7 @@ export const securityAuditLog = pgTable('security_audit_log', {
 }, (table) => [
   index('audit_event_type_idx').on(table.eventType),
   index('audit_user_id_idx').on(table.userId),
+  index('audit_event_created_idx').on(table.eventType, table.createdAt),
   index('audit_created_at_idx').on(table.createdAt),
 ]);
 

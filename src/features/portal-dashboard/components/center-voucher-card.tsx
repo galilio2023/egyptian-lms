@@ -44,21 +44,23 @@ export const CenterVoucherCard: React.FC<CenterVoucherCardProps> = ({
         <div className="flex flex-col sm:flex-row items-stretch gap-2.5 sm:gap-3">
           <div className="flex w-full sm:flex-1">
             <input
+              id="center-voucher-input"
               type="text"
+              aria-label="كود كارت الشحن (Center Scratch Card)"
               inputMode="text"
               autoComplete="one-time-code"
               autoCapitalize="characters"
               value={voucherCodeInput}
               onChange={(e) => onVoucherCodeChange(e.target.value.toUpperCase())}
               placeholder="ادخل الكود المطبوع على الكارت هنا"
-              className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-hidden text-sm sm:text-base font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30"
+              className="w-full min-h-[44px] px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-purple-200 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600/20 text-sm sm:text-base font-mono font-bold tracking-wider uppercase text-slate-800 bg-purple-50/30 transition-all"
               disabled={isRedeeming}
             />
           </div>
           <button
             type="submit"
             disabled={isRedeeming}
-            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all shrink-0 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all shrink-0 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
           >
             {isRedeeming ? "جاري الشحن..." : "تفعيل الكارت فورياً"}
           </button>

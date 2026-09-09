@@ -112,14 +112,15 @@ export function BroadcastComposerForm() {
       <form onSubmit={handleSendBroadcast} className="space-y-4">
         {/* Target Audience */}
         <div className="space-y-1.5 text-right">
-          <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+          <label htmlFor="broadcast-target-grade" className="text-xs font-bold text-slate-700 flex items-center justify-between cursor-pointer">
             <span>اختر الفئة المستهدفة (الصف الدراسي)</span>
             <UsersGraduationSvg className="w-4 h-4" />
           </label>
           <select
+            id="broadcast-target-grade"
             value={selectedGrade}
             onChange={(e) => setSelectedGrade(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs focus:outline-none focus:border-purple-600 font-bold"
+            className="w-full px-4 py-2.5 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 font-bold transition-all cursor-pointer"
           >
             <option value="all">جميع المراحل (كل أولياء الأمور - 3,050 مستلم)</option>
             {INITIAL_GRADES.map((g) => (
@@ -133,7 +134,9 @@ export function BroadcastComposerForm() {
         {/* Message Content */}
         <div className="space-y-2 text-right">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700">نص الرسالة المرسلة لولي الأمر</span>
+            <label htmlFor="broadcast-message-text" className="text-xs font-bold text-slate-700 cursor-pointer">
+              نص الرسالة المرسلة لولي الأمر
+            </label>
             <div className="flex items-center gap-1 text-[10px] text-purple-700 font-bold">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin" />
               <span>الصياغة الذكية التلقائية:</span>
@@ -177,12 +180,13 @@ export function BroadcastComposerForm() {
           </div>
 
           <textarea
+            id="broadcast-message-text"
             rows={6}
             required
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="اكتب نص الرسالة هنا أو اختر صياغة سريعة من الأعلى..."
-            className="w-full p-4 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-purple-600 leading-relaxed font-medium"
+            className="w-full p-4 rounded-2xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 leading-relaxed font-medium transition-all"
           />
         </div>
 

@@ -167,6 +167,7 @@ export function ManualTransferForm({
       >
         <input
           type="file"
+          aria-label="صورة إيصال التحويل أو السكرين شوت"
           accept="image/*"
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"

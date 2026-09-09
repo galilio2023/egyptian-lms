@@ -12,13 +12,15 @@ export const SubmissionFilePicker: React.FC<SubmissionFilePickerProps> = ({
 }) => {
   return (
     <div className="space-y-2 text-right">
-      <label className="text-xs font-black text-slate-700 block">
+      <label htmlFor="homework-file-picker-input" className="text-xs font-black text-slate-700 block cursor-pointer">
         التقط أو ارفع صور صفحات الكراسة أو كتاب النشاط:
       </label>
 
       <div className="relative border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-3xl p-6 text-center bg-purple-50/40 transition-colors">
         <input
+          id="homework-file-picker-input"
           type="file"
+          aria-label="التقط أو ارفع صور صفحات الكراسة أو كتاب النشاط"
           accept="image/*"
           multiple
           disabled={isSubmitting}

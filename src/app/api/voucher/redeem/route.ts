@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
-import { db } from "@/lib/db";
-import * as schema from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { requireStudentAuth } from "@/server/auth/guards";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
-import { validateEgyptianPhone } from "@/lib/utils";
-import { getPlatformSettings } from "@/lib/utils/platform-settings";
-import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { redeemVoucherCode } from "@/server/services/vouchers.service";
+import { handleRouteError } from "@/server/errors";
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireStudentAuth(
+    "يجب تسجيل الدخول أولاً بحساب الطالب المعتمد لشحن الكارت وتفعيل الوحدة الدراسية في حسابه."
+  );
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+
+  const { context } = authResult;
+
   try {
     const reqHeaders = await headers();
     const clientIp = getClientIp(reqHeaders);
@@ -34,7 +39,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await auth.api.getSession({ headers: reqHeaders });
     const body = await request.json();
     const { code, studentPhone } = body as {
       code: string;
@@ -48,169 +52,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cleanCode = code.trim().toUpperCase();
+    const currentUserId = context.userId;
 
-    // Require authenticated student session to prevent IDOR / unlinked voucher code burning
-    const currentUserId = session?.user?.id;
-    if (!currentUserId) {
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولاً بحساب الطالب المعتمد لشحن الكارت وتفعيل الوحدة الدراسية في حسابه." },
-        { status: 401 }
-      );
-    }
+    const result = await redeemVoucherCode({
+      code,
+      currentUserId,
+      studentPhone,
+      clientIp,
+      userAgent,
+      studentName: context.userName || undefined,
+    });
 
-    // 1. Atomic query & update to prevent concurrency race conditions
-    try {
-      const [existingVoucher] = await db
-        .select()
-        .from(schema.voucherCode)
-        .where(eq(schema.voucherCode.code, cleanCode))
-        .limit(1);
-
-      if (!existingVoucher) {
-        logSecurityEvent({
-          eventType: "voucher_redeem_failed",
-          severity: "low",
-          userId: currentUserId,
-          studentPhone,
-          ipAddress: clientIp,
-          userAgent,
-          description: `محاولة إدخال كود كارت شحن غير صحيح: ${cleanCode}`,
-          details: { attemptedCode: cleanCode },
-        });
-
-        return NextResponse.json(
-          { error: "كود كارت الشحن غير صحيح أو غير مسجل بالنظام. يرجى التأكد من كتابة الكود كما هو مطبوع على الكارت." },
-          { status: 400 }
-        );
-      }
-
-      // Atomic transaction: mark voucher redeemed and activate course enrollment
-      const txResult = await db.transaction(async (tx) => {
-        const [redeemedVoucher] = await tx
-          .update(schema.voucherCode)
-          .set({
-            isRedeemed: true,
-            redeemedByUserId: currentUserId,
-            redeemedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(schema.voucherCode.code, cleanCode),
-              eq(schema.voucherCode.isRedeemed, false)
-            )
-          )
-          .returning();
-
-        if (!redeemedVoucher) {
-          return { success: false, alreadyRedeemed: true, voucher: null };
-        }
-
-        await tx
-          .insert(schema.enrollment)
-          .values({
-            userId: currentUserId,
-            unitId: redeemedVoucher.unitId,
-            isActive: true,
-          })
-          .onConflictDoUpdate({
-            target: [schema.enrollment.userId, schema.enrollment.unitId],
-            set: { isActive: true, enrolledAt: new Date() },
-          });
-
-        return { success: true, alreadyRedeemed: false, voucher: redeemedVoucher };
-      });
-
-      if (txResult.alreadyRedeemed || !txResult.voucher) {
-        logSecurityEvent({
-          eventType: "voucher_redeem_failed",
-          severity: "low",
-          userId: currentUserId,
-          studentPhone,
-          ipAddress: clientIp,
-          userAgent,
-          description: `محاولة إدخال كود كارت شحن تم تفعيله مسبقاً: ${cleanCode}`,
-          details: { attemptedCode: cleanCode },
-        });
-
-        return NextResponse.json(
-          { error: "هذا الكود تم استخدامه وتفعيله مسبقاً." },
-          { status: 400 }
-        );
-      }
-
-      // Log successful voucher redemption
-      logSecurityEvent({
-        eventType: "voucher_redeem_success",
-        severity: "low",
-        userId: currentUserId,
-        studentPhone,
-        ipAddress: clientIp,
-        userAgent,
-        description: `تم شحن كارت الشحن بنجاح وتفعيل الوحدة الدراسية: ${cleanCode}`,
-        details: { unitId: txResult.voucher.unitId, batchName: txResult.voucher.batchName },
-      });
-
-      // Automated WhatsApp notification to parent
-      try {
-        const [profile] = await db
-          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
-          .from(schema.studentProfile)
-          .where(eq(schema.studentProfile.userId, currentUserId))
-          .limit(1);
-
-        const targetParentPhone = profile?.parentPhoneNumber || null;
-        const cleanParent = targetParentPhone ? validateEgyptianPhone(targetParentPhone) : null;
-
-        if (cleanParent) {
-          const [unitRecord] = await db
-            .select({ title: schema.courseUnit.title })
-            .from(schema.courseUnit)
-            .where(eq(schema.courseUnit.id, txResult.voucher.unitId))
-            .limit(1);
-
-          const unitTitle = unitRecord?.title || "الوحدة الدراسية";
-          const settings = await getPlatformSettings();
-          const studentName = session.user.name || "بطل الأكاديمية";
-
-          await sendAutomatedWhatsAppNotification({
-            to: cleanParent,
-            message: `🎉 *${settings.academyNameArabic} - تأكيد شحن كارت السنتر*\n` +
-              `ولي أمر البطل / ${studentName} 🌟\n` +
-              `تم بنجاح شحن كارت السنتر (${txResult.voucher.batchName || "كارت الشحن"}) وتفعيل اشتراك (${unitTitle}) في حساب الطالب.\n` +
-              `يمكن للطالب الآن الدخول للمنصة وحضور كافة الدروس وحل التمارين فوراً!\n` +
-              `نتمنى له دوام التوفيق والنجاح والتفوق دائماً.\n` +
-              `👨‍🏫 *المشرف الأكاديمي:* ${settings.teacherNameArabic}`,
-          });
-        }
-      } catch (waErr) {
-        console.warn("Voucher redeem WhatsApp dispatch note:", waErr);
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: "🎉 تم شحن الكود وتفعيل الوحدة الدراسية بنجاح!",
-        unitId: txResult.voucher.unitId,
-        batchName: txResult.voucher.batchName,
-      });
-    } catch (dbErr) {
-      console.warn("Voucher DB lookup error:", dbErr);
-      return NextResponse.json(
-        { error: "تعذر التحقق من كود الشحن عبر قاعدة البيانات. يرجى المحاولة لاحقاً." },
-        { status: 500 }
-      );
-    }
-
-    // If code is not found in database, reject immediately
-    return NextResponse.json(
-      { error: "كود كارت الشحن غير صحيح أو غير مسجل بالنظام. يرجى التأكد من كتابة الكود كما هو مطبوع على الكارت." },
-      { status: 400 }
-    );
+    return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Voucher redemption error:", error);
-    return NextResponse.json(
-      { error: "حدث خطأ أثناء معالجة كود الشحن", details: (error as Error)?.message },
-      { status: 500 }
-    );
+    const { error: message, status } = handleRouteError(error, "حدث خطأ أثناء معالجة كود الشحن");
+    return NextResponse.json({ error: message }, { status });
   }
 }
+

@@ -32,6 +32,7 @@ export const RegisterCard: React.FC = () => {
     showConfirmPassword,
     setShowConfirmPassword,
     handleNextStep,
+    handleFormSubmit,
     handleRegister,
   } = useRegisterForm();
 
@@ -98,7 +99,7 @@ export const RegisterCard: React.FC = () => {
       )}
 
       {/* Form */}
-      <form onSubmit={handleRegister}>
+      <form onSubmit={handleFormSubmit}>
         {step === 1 ? (
           <RegisterStep1
             fullname={fullname}

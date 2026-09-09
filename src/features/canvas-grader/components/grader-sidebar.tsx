@@ -113,13 +113,15 @@ export function GraderSidebar({
 
         {/* Score Selector */}
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-300 flex items-center justify-between">
+          <label htmlFor="grader-score-input" className="text-xs font-black text-slate-300 flex items-center justify-between cursor-pointer">
             <span>درجة الكراسة المكتسبة</span>
             <span className="text-purple-400">الدرجة العظمى: {submission.maxScore}</span>
           </label>
           <div className="flex items-center gap-3">
             <input
+              id="grader-score-input"
               type="number"
+              aria-label="درجة تقييم الواجب"
               min={0}
               max={submission.maxScore}
               value={score}
@@ -131,7 +133,7 @@ export function GraderSidebar({
                   )
                 )
               }
-              className="w-24 px-4 py-2.5 rounded-2xl bg-slate-900 border-2 border-purple-500/50 text-white font-black text-2xl text-center focus:outline-none focus:border-purple-400"
+              className="w-24 px-4 py-2.5 rounded-2xl bg-slate-900 border-2 border-purple-500/50 text-white font-black text-2xl text-center focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
             />
             <span className="text-slate-400 font-black text-lg">من {submission.maxScore}</span>
 
@@ -146,15 +148,16 @@ export function GraderSidebar({
 
         {/* Feedback Note */}
         <div className="space-y-2">
-          <label className="text-xs font-black text-slate-300">
+          <label htmlFor="grader-feedback-notes" className="text-xs font-black text-slate-300 cursor-pointer block">
             ملاحظات وتوجيهات المعلم للطفل
           </label>
           <textarea
+            id="grader-feedback-notes"
             rows={3}
             value={feedbackNotes}
             onChange={(e) => onChangeNotes(e.target.value)}
             placeholder="اكتب تشجيعاً أو ملاحظة صوتية حول تنظيم الخط..."
-            className="w-full p-3.5 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 text-xs leading-relaxed focus:outline-none focus:border-purple-500 font-medium resize-none"
+            className="w-full p-3.5 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 text-xs leading-relaxed focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-medium resize-none transition-all"
           />
         </div>
 

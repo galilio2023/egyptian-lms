@@ -36,7 +36,7 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
     <div className="space-y-4 text-right">
       {/* Parent Phone */}
       <div className="space-y-1.5 text-right">
-        <label className="block text-xs font-black text-slate-700">
+        <label htmlFor="register-parent-phone" className="block text-xs font-black text-slate-700 cursor-pointer">
           رقم موبايل ولي الأمر (واتساب للإشعارات)
         </label>
         <div className="relative">
@@ -44,14 +44,17 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             <EgyptianPhoneSvg className="w-4 h-4" />
           </div>
           <input
+            id="register-parent-phone"
             type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             dir="ltr"
             required
             maxLength={11}
             placeholder="010xxxxxxxx"
             value={parentPhone}
             onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, ""))}
-            className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"
+            className="w-full min-h-[42px] ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
         </div>
         <p className="text-[10px] text-emerald-700 font-bold">
@@ -61,7 +64,7 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
 
       {/* Password */}
       <div className="space-y-1.5 text-right">
-        <label className="block text-xs font-black text-slate-700">
+        <label htmlFor="register-password" className="block text-xs font-black text-slate-700 cursor-pointer">
           كلمة المرور (8 أحرف أو أرقام على الأقل)
         </label>
         <div className="relative">
@@ -69,18 +72,21 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             <SecurityLockSvg className="w-4 h-4" />
           </div>
           <input
+            id="register-password"
             type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
             dir="ltr"
             required
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full ps-10 pe-10 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"
+            className="w-full min-h-[42px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute end-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg"
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-purple-600" />}
           </button>
@@ -89,7 +95,7 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
 
       {/* Confirm Password */}
       <div className="space-y-1.5 text-right">
-        <label className="block text-xs font-black text-slate-700">
+        <label htmlFor="register-confirm-password" className="block text-xs font-black text-slate-700 cursor-pointer">
           تأكيد كلمة المرور
         </label>
         <div className="relative">
@@ -97,18 +103,21 @@ export const RegisterStep2: React.FC<RegisterStep2Props> = ({
             <SecurityLockSvg className="w-4 h-4" />
           </div>
           <input
+            id="register-confirm-password"
             type={showConfirmPassword ? "text" : "password"}
+            autoComplete="new-password"
             dir="ltr"
             required
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full ps-10 pe-10 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"
+            className="w-full min-h-[42px] ps-10 pe-11 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-left transition-all"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute end-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            aria-label={showConfirmPassword ? "إخفاء تأكيد كلمة المرور" : "إظهار تأكيد كلمة المرور"}
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg"
           >
             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-purple-600" />}
           </button>

@@ -230,14 +230,16 @@ export function LiveSessionWidget({
         <form onSubmit={handleSendQuestion} className="flex gap-2">
           <input
             type="text"
+            aria-label="سؤالك للمحاضر ليجيب عنه في البث المباشر"
             placeholder="اكتب سؤالك للمحاضر ليجيب عنه في البث..."
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
-            className="flex-1 px-4 py-2 rounded-xl bg-purple-950/60 border border-purple-700/60 text-xs text-white placeholder:text-purple-300/50 focus:outline-none focus:border-purple-400"
+            className="flex-1 min-h-[40px] px-4 py-2 rounded-xl bg-purple-950/60 border border-purple-700/60 text-xs text-white placeholder:text-purple-300/50 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all"
           />
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            aria-label="إرسال السؤال للمحاضر"
+            className="min-h-[40px] px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
           >
             <Send className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">إرسال</span>

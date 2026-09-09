@@ -33,11 +33,12 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Grade Level */}
         <div className="space-y-1 text-right">
-          <label className="text-xs font-bold text-slate-700">المرحلة الدراسية</label>
+          <label htmlFor="voucher-grade-select" className="text-xs font-bold text-slate-700 cursor-pointer">المرحلة الدراسية</label>
           <select
+            id="voucher-grade-select"
             value={grade}
             onChange={(e) => onGradeChange(e.target.value)}
-            className="w-full p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
+            className="w-full min-h-[42px] p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all cursor-pointer"
           >
             <option value="1">الصف الأول الابتدائي (Grade 1)</option>
             <option value="2">الصف الثاني الابتدائي (Grade 2)</option>
@@ -50,11 +51,12 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
 
         {/* Quantity */}
         <div className="space-y-1 text-right">
-          <label className="text-xs font-bold text-slate-700">الكمية المراد توليدها</label>
+          <label htmlFor="voucher-quantity-select" className="text-xs font-bold text-slate-700 cursor-pointer">الكمية المراد توليدها</label>
           <select
+            id="voucher-quantity-select"
             value={quantity}
             onChange={(e) => onQuantityChange(Number(e.target.value))}
-            className="w-full p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
+            className="w-full min-h-[42px] p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all cursor-pointer"
           >
             <option value={10}>10 كروت (تجريبي)</option>
             <option value={20}>20 كارت (دفعة سنتر صغيرة)</option>
@@ -65,12 +67,14 @@ export const VoucherControlsForm: React.FC<VoucherControlsFormProps> = ({
 
         {/* Price */}
         <div className="space-y-1 text-right">
-          <label className="text-xs font-bold text-slate-700">سعر الكارت للمطبعة (ج.م)</label>
+          <label htmlFor="voucher-price-input" className="text-xs font-bold text-slate-700 cursor-pointer">سعر الكارت للمطبعة (ج.م)</label>
           <input
+            id="voucher-price-input"
             type="number"
+            min={0}
             value={price}
             onChange={(e) => onPriceChange(Number(e.target.value))}
-            className="w-full p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
+            className="w-full min-h-[42px] p-2.5 rounded-xl border border-purple-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all"
           />
         </div>
       </div>

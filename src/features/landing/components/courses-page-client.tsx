@@ -85,10 +85,11 @@ export function CoursesPageClient({ initialUnits, initialSettings }: CoursesPage
                 <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600" />
                 <input
                   type="text"
+                  aria-label="ابحث عن وحدة أو موضوع درس"
                   placeholder="ابحث عن وحدة أو موضوع درس..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full ps-10 pe-4 py-2.5 rounded-2xl bg-purple-50/60 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-purple-600 focus:bg-white transition-all shadow-2xs"
+                  className="w-full min-h-[42px] ps-10 pe-4 py-2.5 rounded-2xl bg-purple-50/60 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:bg-white transition-all shadow-2xs"
                 />
               </div>
 

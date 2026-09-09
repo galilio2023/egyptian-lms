@@ -15,7 +15,7 @@ export interface RegisterStep1Props {
   setGovernorate: (v: string) => void;
   gradeLevel: string;
   setGradeLevel: (v: string) => void;
-  onNext: (e: React.MouseEvent) => void;
+  onNext: (e?: React.SyntheticEvent) => void;
 }
 
 export const RegisterStep1: React.FC<RegisterStep1Props> = ({
@@ -33,8 +33,10 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
     <div className="space-y-4 text-right">
       {/* Full Name */}
       <Input
+        id="register-student-fullname"
         label="اسم الطالب ثلاثياً باللغة العربية"
         required
+        autoComplete="name"
         placeholder="مثال: يوسف أحمد محمود"
         value={fullname}
         onChange={(e) => setFullname(e.target.value)}
@@ -42,26 +44,23 @@ export const RegisterStep1: React.FC<RegisterStep1Props> = ({
       />
 
       {/* Student Phone */}
-      <div className="space-y-1.5 text-right">
-        <label className="block text-xs font-black text-slate-700">
-          رقم موبايل الطالب (اسم المستخدم للدخول)
-        </label>
-        <div className="relative">
-          <div className="absolute start-3.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
-            <EgyptianPhoneSvg className="w-4 h-4" />
-          </div>
-          <input
-            type="tel"
-            dir="ltr"
-            required
-            maxLength={11}
-            placeholder="010xxxxxxxx"
-            value={studentPhone}
-            onChange={(e) => setStudentPhone(e.target.value.replace(/\D/g, ""))}
-            className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-purple-50/40 border border-purple-200 text-slate-900 placeholder-slate-400 text-xs font-mono font-bold focus:outline-none focus:border-purple-600 text-right"
-          />
-        </div>
-        <p className="text-[10px] text-slate-400 font-medium">
+      <div>
+        <Input
+          id="register-student-phone"
+          label="رقم موبايل الطالب (اسم المستخدم للدخول)"
+          type="tel"
+          inputMode="tel"
+          dir="ltr"
+          required
+          maxLength={11}
+          autoComplete="username"
+          placeholder="010xxxxxxxx"
+          value={studentPhone}
+          onChange={(e) => setStudentPhone(e.target.value.replace(/\D/g, ""))}
+          icon={<EgyptianPhoneSvg className="w-4 h-4" />}
+          className="font-mono font-bold text-left"
+        />
+        <p className="text-[10px] text-slate-400 font-medium mt-1">
           سيتم استخدام رقم الموبايل لتسجيل الدخول إلى المنصة لاحقاً.
         </p>
       </div>

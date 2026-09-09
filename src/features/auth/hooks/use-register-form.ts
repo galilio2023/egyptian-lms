@@ -38,11 +38,20 @@ export function useRegisterForm() {
     return true;
   };
 
-  const handleNextStep = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleNextStep = (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
     if (validateStep1()) {
       setStep(2);
     }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step === 1) {
+      handleNextStep(e);
+      return;
+    }
+    await handleRegister(e);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -157,6 +166,7 @@ export function useRegisterForm() {
     showConfirmPassword,
     setShowConfirmPassword,
     handleNextStep,
+    handleFormSubmit,
     handleRegister,
   };
 }

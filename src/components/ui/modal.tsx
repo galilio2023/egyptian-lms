@@ -32,18 +32,74 @@ export const Modal: React.FC<ModalProps> = ({
   backdropClassName,
 }) => {
   const effectiveMaxWidth = size || maxWidth || "lg";
+  const titleId = React.useId();
+  const descId = React.useId();
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const previousActiveElement = React.useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+
+    // Move initial focus into dialog
+    const focusTimer = setTimeout(() => {
+      if (dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) {
+          focusable[0].focus();
+        } else {
+          dialogRef.current.focus();
+        }
+      }
+    }, 50);
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => el.offsetParent !== null);
+
+        if (focusable.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = focusable[0];
+        const lastElement = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
     };
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
-    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
+      clearTimeout(focusTimer);
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement.current?.focus?.();
     };
   }, [isOpen, onClose]);
 
@@ -65,14 +121,21 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
+        aria-hidden="true"
         className={cn("fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity", backdropClassName)}
         onClick={onClose}
       />
 
       {/* Dialog Shell */}
       <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descId : undefined}
         className={cn(
-          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col",
+          "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col focus:outline-none",
           maxWidthStyles[effectiveMaxWidth],
           className
         )}
@@ -84,12 +147,12 @@ export const Modal: React.FC<ModalProps> = ({
               {icon && <div className="text-purple-600 shrink-0">{icon}</div>}
               <div>
                 {title && (
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                  <h3 id={titleId} className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                     {title}
                   </h3>
                 )}
                 {description && (
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p id={descId} className="text-xs text-slate-500 font-medium mt-0.5">
                     {description}
                   </p>
                 )}
@@ -97,8 +160,10 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer shrink-0"
+              aria-label="إغلاق النافذة"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
