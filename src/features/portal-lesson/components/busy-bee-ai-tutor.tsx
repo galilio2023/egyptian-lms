@@ -239,6 +239,7 @@ export function BusyBeeAiTutor({
             <div className="p-3 bg-white border-t border-amber-200 flex items-center gap-2">
               <input
                 type="text"
+                aria-label="اسأل النحلة النشيطة عن كلمة أو قاعدة في الدرس"
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -248,7 +249,7 @@ export function BusyBeeAiTutor({
                   }
                 }}
                 placeholder="اسأل النحلة عن كلمة أو قاعدة في الدرس..."
-                className="flex-1 py-2 px-3.5 rounded-xl border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/40 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400"
+                className="flex-1 min-h-[40px] py-2 px-3.5 rounded-xl border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/40 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400"
               />
 
               <button

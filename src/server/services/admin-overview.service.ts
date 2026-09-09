@@ -35,3 +35,28 @@ export async function getAdminOverviewData(isAssistant = false) {
     return null;
   }
 }
+
+/**
+ * Executes a lightweight database ping query to measure connection health and latency.
+ */
+export async function checkDatabaseHealth(): Promise<{
+  connected: boolean;
+  latencyMs: number;
+  error?: string;
+}> {
+  const start = Date.now();
+  try {
+    await db.execute(sql`SELECT 1`);
+    return {
+      connected: true,
+      latencyMs: Date.now() - start,
+    };
+  } catch (error) {
+    return {
+      connected: false,
+      latencyMs: Date.now() - start,
+      error: (error as Error)?.message || "فشل الاتصال بقاعدة البيانات",
+    };
+  }
+}
+

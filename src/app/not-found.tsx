@@ -169,15 +169,16 @@ export default function NotFound() {
         <form onSubmit={handleSearchSubmit} className="max-w-md mx-auto relative">
           <input
             type="text"
+            aria-label="ابحث عن وحدة، درس، أو مغامرة تعليمية"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="ابحث عن وحدة، درس، أو مغامرة تعليمية..."
-            className="w-full py-3 ps-11 pe-24 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 text-xs sm:text-sm font-bold backdrop-blur-md outline-hidden transition-all shadow-lg"
+            className="w-full py-3 ps-11 pe-24 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border-2 border-white/20 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40 text-white placeholder-purple-300/60 text-xs sm:text-sm font-bold backdrop-blur-md outline-none transition-all shadow-lg"
           />
           <Search className="w-4 h-4 text-purple-300 absolute start-4 top-1/2 -translate-y-1/2" />
           <button
             type="submit"
-            className="absolute end-2 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black transition-all hover:scale-105 cursor-pointer shadow-md"
+            className="absolute end-2 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-purple-950 text-xs font-black transition-all hover:scale-105 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
           >
             بحث 🚀
           </button>

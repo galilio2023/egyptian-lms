@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/auth";
+import { requireAdminAuth } from "@/server/auth/guards";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import type { StudentUploadedPage } from "@/lib/db/schema";
@@ -146,18 +145,12 @@ function parseGeminiResult(rawText: string): Omit<AiPregradeResponse, "success">
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdminAuth();
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const userRole = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined;
-    const isAuthorized = userRole === "admin" || userRole === "teacher" || userRole === "assistant";
-
-    if (!session || !isAuthorized) {
-      return NextResponse.json(
-        { error: "غير مصرح لك باستخدام مصحح الذكاء الاصطناعي. يتطلب صلاحية معلم أو مشرف." },
-        { status: 403 }
-      );
-    }
-
     const body = (await request.json()) as { submissionId?: unknown; pageNumber?: unknown };
     if (typeof body.submissionId !== "string" || !UUID_PATTERN.test(body.submissionId)) {
       return NextResponse.json({ error: "معرف تسليم الواجب غير صالح." }, { status: 400 });

@@ -494,46 +494,51 @@ export function MinistryIntakeModal({
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="intake-unit-title-en" className="block text-xs font-bold text-slate-700 mb-1 cursor-pointer">
                       عنوان الوحدة بالإنجليزية:
                     </label>
                     <input
+                      id="intake-unit-title-en"
                       type="text"
+                      dir="ltr"
                       value={unitTitleEnglish}
                       onChange={(e) => setUnitTitleEnglish(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:outline-none"
+                      className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="intake-unit-title-ar" className="block text-xs font-bold text-slate-700 mb-1 cursor-pointer">
                       عنوان الوحدة بالعربية:
                     </label>
                     <input
+                      id="intake-unit-title-ar"
                       type="text"
                       value={unitTitleArabic}
                       onChange={(e) => setUnitTitleArabic(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:outline-none"
+                      className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="intake-unit-price" className="block text-xs font-bold text-slate-700 mb-1 cursor-pointer">
                       سعر الاشتراك المقترح (ج.م):
                     </label>
                     <input
+                      id="intake-unit-price"
                       type="number"
+                      min={0}
                       value={unitPrice}
                       onChange={(e) => setUnitPrice(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:outline-none"
+                      className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <span className="block text-xs font-bold text-slate-700 mb-1">
                       ملف الـ PDF المرفق للطلاب:
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-mono font-bold flex items-center gap-2 border border-slate-200">
+                    </span>
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-mono font-bold flex items-center gap-2 border border-slate-200 min-h-[42px]">
                       <FileText className="w-4 h-4 text-purple-600" />
                       <span className="truncate">{parsedData.pdfFileName}</span>
                     </div>
@@ -541,14 +546,15 @@ export function MinistryIntakeModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label htmlFor="intake-unit-desc" className="block text-xs font-bold text-slate-700 mb-1 cursor-pointer">
                     الوصف ونواتج التعلم:
                   </label>
                   <textarea
+                    id="intake-unit-desc"
                     rows={3}
                     value={unitDescription}
                     onChange={(e) => setUnitDescription(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-300 text-xs font-medium focus:border-purple-600 focus:outline-none leading-relaxed"
+                    className="w-full p-3 rounded-xl border border-slate-300 text-xs font-medium focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none leading-relaxed transition-all"
                   />
                 </div>
               </div>

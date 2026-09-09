@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
-import { auth } from "@/lib/auth/auth";
+import { requireAdminAuth } from "@/server/auth/guards";
 import { extractTextFromPdfBuffer } from "@/lib/ai/pdf-parser";
 import { parseCurriculumWithAi, CurriculumTrack } from "@/lib/ai/curriculum-intake-parser";
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdminAuth();
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+
   try {
-    const headerList = await headers();
-    const session = await auth.api.getSession({ headers: headerList });
-
-    const userRole = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined;
-    const isAuthorized = userRole === "admin" || userRole === "teacher" || userRole === "assistant";
-
-    if (!session || !isAuthorized) {
-      return NextResponse.json(
-        { error: "غير مصرح لك بالوصول. يتطلب حساب المشرف أو المعلم." },
-        { status: 403 }
-      );
-    }
 
     const contentType = request.headers.get("content-type") || "";
 

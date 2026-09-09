@@ -1,12 +1,17 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
+import { validateEgyptianPhone } from "@/lib/utils";
 
 export interface GradeHomeworkPayload {
   submissionId?: string;
   score?: number;
   feedbackNotes?: string;
   annotatedImages?: Array<{ pageIndex: number; dataUrl: string }>;
+  studentName?: string;
+  assignmentTitle?: string;
 }
 
 export async function getAdminHomeworkData() {
@@ -60,50 +65,118 @@ export async function getAdminHomeworkData() {
 }
 
 export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: string) {
-  const { submissionId, score, feedbackNotes, annotatedImages } = payload;
+  const { submissionId, score, feedbackNotes, annotatedImages, studentName, assignmentTitle } = payload;
 
   if (!submissionId) {
     throw new Error("معرف تسليم الواجب مطلوب");
   }
 
-  const safeScore = Math.max(0, Math.min(10, Math.round(score ?? 10)));
-  const earnedXp = safeScore >= 8 ? 30 : 15;
-
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(submissionId);
-  if (isUUID) {
-    const [updated] = await db
-      .update(schema.homeworkSubmission)
-      .set({
-        score: safeScore,
-        feedbackNotes: feedbackNotes?.trim() || null,
-        annotatedImages,
-        status: "graded",
-        gradedAt: new Date(),
-        gradedByUserId: actorUserId,
-      })
-      .where(eq(schema.homeworkSubmission.id, submissionId))
-      .returning({ userId: schema.homeworkSubmission.userId });
+  if (!isUUID) {
+    throw new Error("معرف تسليم الواجب غير صالح.");
+  }
 
-    if (updated?.userId) {
+  // 1. Fetch submission with its assignment to obtain dynamic maxScore
+  const [existingSub] = await db
+    .select({
+      id: schema.homeworkSubmission.id,
+      userId: schema.homeworkSubmission.userId,
+      assignmentId: schema.homeworkSubmission.assignmentId,
+      assignmentTitle: schema.homeworkAssignment.title,
+      assignmentMaxScore: schema.homeworkAssignment.maxScore,
+    })
+    .from(schema.homeworkSubmission)
+    .leftJoin(schema.homeworkAssignment, eq(schema.homeworkSubmission.assignmentId, schema.homeworkAssignment.id))
+    .where(eq(schema.homeworkSubmission.id, submissionId))
+    .limit(1);
+
+  if (!existingSub) {
+    throw new Error("لم يتم العثور على تسليم الواجب المطلوب في قاعدة البيانات.");
+  }
+
+  const maxAssignmentScore = existingSub.assignmentMaxScore || 10;
+  const safeScore = Math.max(0, Math.min(maxAssignmentScore, Math.round(score ?? maxAssignmentScore)));
+  const scorePercentage = (safeScore / maxAssignmentScore) * 100;
+  const earnedXp = scorePercentage >= 80 ? 30 : 15;
+
+  // 2. Persist updated score
+  const [updated] = await db
+    .update(schema.homeworkSubmission)
+    .set({
+      score: safeScore,
+      feedbackNotes: feedbackNotes?.trim() || null,
+      annotatedImages,
+      status: "graded",
+      gradedAt: new Date(),
+      gradedByUserId: actorUserId,
+    })
+    .where(eq(schema.homeworkSubmission.id, submissionId))
+    .returning({ userId: schema.homeworkSubmission.userId });
+
+  if (updated?.userId) {
+    const [profile] = await db
+      .select()
+      .from(schema.studentProfile)
+      .where(eq(schema.studentProfile.userId, updated.userId))
+      .limit(1);
+
+    if (profile) {
+      await db
+        .update(schema.studentProfile)
+        .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
+        .where(eq(schema.studentProfile.userId, updated.userId));
+    }
+  }
+
+  // 3. Automated WhatsApp dispatch to parent
+  let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
+  let whatsappUrl: string | null = null;
+
+  if (existingSub.userId) {
+    try {
       const [profile] = await db
-        .select()
+        .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
         .from(schema.studentProfile)
-        .where(eq(schema.studentProfile.userId, updated.userId))
+        .where(eq(schema.studentProfile.userId, existingSub.userId))
         .limit(1);
 
-      if (profile) {
-        await db
-          .update(schema.studentProfile)
-          .set({ xpPoints: (profile.xpPoints || 0) + earnedXp })
-          .where(eq(schema.studentProfile.userId, updated.userId));
+      const cleanParentPhone = profile?.parentPhoneNumber ? validateEgyptianPhone(profile.parentPhoneNumber) : null;
+      if (cleanParentPhone) {
+        const settings = await getPlatformSettings();
+        const effectiveAssignmentTitle = existingSub.assignmentTitle || assignmentTitle || "كراسة التدريبات";
+        const rawTextMessage = 
+          `🌟 *تقرير تصحيح كراسة الواجب - ${settings.academyNameArabic}*\n` +
+          `👤 *اسم البطل:* ${studentName || "بطل الأكاديمية"}\n` +
+          `📝 *الواجب:* ${effectiveAssignmentTitle}\n` +
+          `🎯 *الدرجة المستحقة:* ${safeScore} من ${maxAssignmentScore} (%${Math.round(scorePercentage)})\n` +
+          `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
+          `✍️ *ملاحظات ${settings.teacherNameArabic}:* ${feedbackNotes || "ممتاز يا بطل!"}\n` +
+          `يمكنكم مشاهدة صفحات الكراسة المصححة بالقلم الأحمر في حساب الطالب على المنصة 📜`;
+        const msg = encodeURIComponent(rawTextMessage);
+
+        try {
+          whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
+            to: cleanParentPhone,
+            message: rawTextMessage,
+          });
+        } catch (err) {
+          console.warn("Automated WhatsApp homework dispatch note:", err);
+        }
+
+        whatsappUrl = `https://wa.me/2${cleanParentPhone}?text=${msg}`;
       }
+    } catch (profileErr) {
+      console.warn("Could not query verified student profile for WhatsApp alert:", profileErr);
     }
   }
 
   return {
     success: true,
-    message: "تم حفظ ورصد درجات الواجب بنجاح في قاعدة البيانات.",
+    message: "تم حفظ ورصد درجات الواجب بنجاح وإرسال التنبيه.",
     score: safeScore,
+    maxScore: maxAssignmentScore,
     earnedXp,
+    whatsappAutoDelivery,
+    whatsappUrl,
   };
 }

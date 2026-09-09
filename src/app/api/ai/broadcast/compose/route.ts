@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
+import { requireAdminAuth } from "@/server/auth/guards";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from "@/lib/security/rate-limiter";
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdminAuth();
+  if (!authResult.authorized) {
+    return authResult.response;
+  }
+
+  const { context } = authResult;
+
   try {
     const reqHeaders = await headers();
     const clientIp = getClientIp(reqHeaders);
-    const session = await auth.api.getSession({ headers: reqHeaders });
-    const userRole = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined;
 
-    if (!session || (userRole !== "admin" && userRole !== "teacher" && userRole !== "assistant")) {
-      return NextResponse.json({ error: "غير مصرح لك باستخدام هذه الخدمة." }, { status: 403 });
-    }
-
-    const rateKey = `ai-broadcast:${session.user.id || clientIp}`;
+    const rateKey = `ai-broadcast:${context.userId || clientIp}`;
     const rateCheck = checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(rateCheck, "تم تجاوز الحد المسموح به لمحاولات الصياغة الذكية.");

@@ -1,31 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { INITIAL_QUIZ, ADVENTURE_QUIZZES_MAP } from "@/lib/db/mock-data";
-import { db } from "@/lib/db";
-import * as schema from "@/lib/db/schema";
-import { eq, and, or, isNull, gt, sql } from "drizzle-orm";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
-import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
-import { getPlatformSettings } from "@/lib/utils/platform-settings";
-
-// Deterministic seeded shuffle per student session matching quiz loader
-function seededShuffle<T>(arr: T[], seed: string): T[] {
-  const a = [...arr];
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash |= 0;
-  }
-  for (let i = a.length - 1; i > 0; i--) {
-    hash = (hash << 5) - hash + i;
-    hash |= 0;
-    const j = Math.abs(hash) % (i + 1);
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+import { gradeQuizForStudent } from "@/server/services/student-quiz.service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,13 +34,12 @@ export async function POST(request: NextRequest) {
       quizId, 
       answers, 
       studentName = session?.user?.name || "بطل أكاديمية إيليت",
-      studentPhone = (session?.user as Record<string, unknown>)?.phoneNumber as string | undefined,
+      studentPhone = (session?.user as Record<string, unknown> | undefined)?.phoneNumber as string | undefined,
       timeSpentSeconds = 0
     } = body as {
       quizId: string;
       answers: Record<string, string>;
       studentName?: string;
-      parentPhone?: string;
       studentPhone?: string;
       timeSpentSeconds?: number;
     };
@@ -74,262 +51,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Require session ownership for targetUserId (IDOR CWE-639 protection)
     const targetUserId = session?.user?.id || null;
 
-    // Attempt to load questions from database if UUID format, or fallback to adventure quiz map / initial quiz
-    let quiz = ADVENTURE_QUIZZES_MAP[quizId] || INITIAL_QUIZ;
-    let questionsList: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; explanation: string }> = quiz.questions;
-    let maxAttempts = 3;
-    let existingAttempts: Array<{ id: string; passed: boolean; score: number }> = [];
-
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(quizId);
-
-    if (isUUID) {
-      try {
-        const [dbQuiz] = await db
-          .select()
-          .from(schema.quiz)
-          .where(eq(schema.quiz.id, quizId))
-          .limit(1);
-
-        if (dbQuiz) {
-          maxAttempts = dbQuiz.maxAttempts ?? 3;
-
-          // 1. Enrollment Verification: If quiz belongs to a course unit, student must be enrolled
-          if (dbQuiz.unitId && targetUserId) {
-            const now = new Date();
-            const [activeEnrollment] = await db
-              .select({ id: schema.enrollment.id })
-              .from(schema.enrollment)
-              .where(
-                and(
-                  eq(schema.enrollment.userId, targetUserId),
-                  eq(schema.enrollment.unitId, dbQuiz.unitId),
-                  eq(schema.enrollment.isActive, true),
-                  or(isNull(schema.enrollment.expiresAt), gt(schema.enrollment.expiresAt, now))
-                )
-              )
-              .limit(1);
-
-            if (!activeEnrollment) {
-              return NextResponse.json(
-                { error: "يجب الاشتراك وتفعيل الوحدة الدراسية لتسجيل درجات الاختبار والتقدم." },
-                { status: 403 }
-              );
-            }
-          }
-
-          // 2. Max Attempts Check: Check how many attempts the student has already taken
-          if (targetUserId) {
-            existingAttempts = await db
-              .select({
-                id: schema.quizAttempt.id,
-                passed: schema.quizAttempt.passed,
-                score: schema.quizAttempt.score,
-              })
-              .from(schema.quizAttempt)
-              .where(
-                and(
-                  eq(schema.quizAttempt.quizId, dbQuiz.id),
-                  eq(schema.quizAttempt.userId, targetUserId)
-                )
-              );
-
-            if (existingAttempts.length >= maxAttempts) {
-              logSecurityEvent({
-                eventType: "quiz_max_attempts_blocked",
-                severity: "low",
-                userId: targetUserId,
-                studentPhone,
-                ipAddress: clientIp,
-                description: `محاولة أداء اختبار بعد استنفاذ الحد الأقصى للمحاولات (${maxAttempts} محاولات).`,
-                details: { quizId: dbQuiz.id, attemptsCount: existingAttempts.length, maxAttempts },
-              });
-
-              return NextResponse.json(
-                {
-                  error: `لقد استنفدت الحد الأقصى للمحاولات المسموح بها لهذا الاختبار (${maxAttempts} محاولات). يرجى مراجعة المعلم لإعادة فتح المحاولة.`,
-                  maxAttemptsReached: true,
-                  attemptsCount: existingAttempts.length,
-                  maxAttempts,
-                },
-                { status: 403 }
-              );
-            }
-          }
-
-          const dbQuestions = await db
-            .select()
-            .from(schema.quizQuestion)
-            .where(eq(schema.quizQuestion.quizId, dbQuiz.id));
-
-          // Deterministic student seed matching quiz loader
-          const studentSeed = `${targetUserId || clientIp || "guest"}_${dbQuiz.id}`;
-          let selectedQuestions = dbQuestions;
-          if (dbQuiz.poolSize && dbQuiz.poolSize > 0 && dbQuiz.poolSize < dbQuestions.length) {
-            const shuffled = seededShuffle(dbQuestions, studentSeed);
-            selectedQuestions = shuffled.slice(0, dbQuiz.poolSize);
-          }
-
-          if (selectedQuestions.length > 0) {
-            quiz = {
-              id: dbQuiz.id,
-              unitId: dbQuiz.unitId || "",
-              lessonId: dbQuiz.lessonId || undefined,
-              title: dbQuiz.title,
-              timeLimitMinutes: dbQuiz.timeLimitMinutes,
-              passPercentage: dbQuiz.passPercentage,
-              questions: selectedQuestions.map((q) => ({
-                id: q.id,
-                text: q.questionText,
-                audioUrl: q.questionAudioUrl || undefined,
-                options: q.options as Array<{ id: string; text: string; isCorrect: boolean }>,
-                explanation: q.explanation || "إجابة صحيحة وفقاً للمنهج.",
-              })),
-            };
-            questionsList = quiz.questions;
-          }
-        }
-      } catch (dbFetchErr) {
-        console.warn("Quiz DB fetch note:", dbFetchErr);
-      }
-    }
-
-    let correctCount = 0;
-    const results: Record<string, { correct: boolean; correctAnswerId: string; explanation: string }> = {};
-
-    questionsList.forEach((q) => {
-      const selectedId = answers[q.id];
-      const correctOption = q.options.find((opt) => opt.isCorrect);
-      const isCorrect = correctOption ? selectedId === correctOption.id : false;
-
-      if (isCorrect) correctCount++;
-
-      results[q.id] = {
-        correct: isCorrect,
-        correctAnswerId: correctOption?.id || "",
-        explanation: q.explanation,
-      };
+    const result = await gradeQuizForStudent({
+      quizId,
+      answers,
+      targetUserId,
+      studentName,
+      studentPhone,
+      timeSpentSeconds,
+      clientIp,
     });
 
-    const totalQuestions = questionsList.length || 1;
-    const percentage = Math.round((correctCount / totalQuestions) * 100);
-    const passed = percentage >= quiz.passPercentage;
-
-    // XP Guard: Only award points if the student hasn't already passed this quiz
-    const alreadyPassed = existingAttempts.some((a) => a.passed);
-    let earnedXp = 0;
-    if (!alreadyPassed) {
-      earnedXp = passed ? correctCount * 25 + 50 : correctCount * 10;
+    if (result.error) {
+      const status = result.maxAttemptsReached ? 403 : 400;
+      return NextResponse.json(result, { status });
     }
 
-    // Database attempt persistence & XP update (P0: Persistence must succeed before dispatching notifications)
-    if (targetUserId) {
-      try {
-        await db.transaction(async (tx) => {
-          // 1. Log attempt if quizId is a valid Postgres UUID
-          if (isUUID) {
-            await tx.insert(schema.quizAttempt).values({
-              quizId: quiz.id,
-              userId: targetUserId,
-              score: correctCount,
-              totalPossibleScore: totalQuestions,
-              passed,
-              timeSpentSeconds: timeSpentSeconds || 60,
-              userAnswers: answers,
-            });
-          }
-
-          // 2. Increment student profile XP only if earnedXp > 0 (prevents replay farming)
-          if (earnedXp > 0) {
-            await tx
-              .update(schema.studentProfile)
-              .set({
-                xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${earnedXp}`,
-              })
-              .where(eq(schema.studentProfile.userId, targetUserId));
-          }
-        });
-      } catch (txErr) {
-        console.warn("Quiz attempt persistence DB note:", txErr);
-      }
-    }
-
-    // Retrieve verified guardian phone from student profile (CWE-200 / CWE-532 privacy protection)
-    let verifiedParentPhone: string | null = null;
-    if (targetUserId) {
-      try {
-        const [profile] = await db
-          .select({ parentPhoneNumber: schema.studentProfile.parentPhoneNumber })
-          .from(schema.studentProfile)
-          .where(eq(schema.studentProfile.userId, targetUserId))
-          .limit(1);
-
-        if (profile?.parentPhoneNumber) {
-          const digits = profile.parentPhoneNumber.replace(/\D/g, "");
-          if (digits.length === 10 || digits.length === 11) {
-            verifiedParentPhone = digits;
-          }
-        }
-      } catch (profileErr) {
-        console.warn("Could not query verified student profile:", profileErr);
-      }
-    }
-
-    // Automated server-side dispatch to parent only if verified number exists
-    let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };
-    let parentNotification: { parentPhone: string; whatsappUrl: string; messageText: string } | null = null;
-
-    if (verifiedParentPhone) {
-      const settings = await getPlatformSettings();
-      const rawTextMessage = 
-        `🌟 *تقرير مستوى الطالب - ${settings.academyNameArabic}*\n` +
-        `👤 *اسم الطالب:* ${studentName}\n` +
-        `📝 *الاختبار:* ${quiz.title}\n` +
-        `🎯 *الدرجة:* ${correctCount} من ${totalQuestions} (%${percentage})\n` +
-        `📊 *الحالة:* ${passed ? "اجتاز الاختبار بنجاح وامتياز 🎉" : "يحتاج إلى مراجعة المحاضرة وإعادة المحاولة 💪"}\n` +
-        `⭐ *النقاط المكتسبة:* +${earnedXp} XP\n` +
-        `👨‍🏫 *المشرف:* ${settings.teacherNameArabic}`;
-      const whatsappMessage = encodeURIComponent(rawTextMessage);
-
-      try {
-        whatsappAutoDelivery = await sendAutomatedWhatsAppNotification({
-          to: verifiedParentPhone,
-          message: rawTextMessage,
-        });
-      } catch (err) {
-        console.warn("Automated WhatsApp dispatch note:", err);
-      }
-
-      parentNotification = {
-        parentPhone: verifiedParentPhone,
-        whatsappUrl: `https://wa.me/2${verifiedParentPhone}?text=${whatsappMessage}`,
-        messageText: rawTextMessage,
-      };
-    }
-
-    const remainingAttempts = Math.max(0, maxAttempts - (existingAttempts.length + 1));
-
-    return NextResponse.json({
-      success: true,
-      score: correctCount,
-      total: totalQuestions,
-      percentage,
-      passed,
-      earnedXp,
-      alreadyPassed,
-      remainingAttempts,
-      maxAttempts,
-      results,
-      whatsappAutoDelivery,
-      parentNotification,
-    });
+    return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Quiz grading error:", error);
+    const message = (error as Error)?.message || "حدث خطأ في تصحيح الاختبار";
+    const status = message.includes("يجب الاشتراك") ? 403 : 500;
     return NextResponse.json(
-      { error: "حدث خطأ في تصحيح الاختبار" },
-      { status: 500 }
+      { error: message },
+      { status }
     );
   }
 }

@@ -67,11 +67,15 @@ export function VideoBottomControls({
       <div className="w-full mb-2 sm:mb-3 flex items-center gap-2">
         <input
           type="range"
+          aria-label="شريط تقديم وتأخير الفيديو"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress || 0)}
           min="0"
           max="100"
           value={progress || 0}
           onChange={onSeek}
-          className="w-full h-2 sm:h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+          className="w-full h-2 sm:h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         />
       </div>
 

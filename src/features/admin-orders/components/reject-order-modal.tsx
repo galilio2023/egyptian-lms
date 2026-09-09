@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal, Button } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface RejectOrderModalProps {
   orderId: string | null;
@@ -50,8 +51,8 @@ export const RejectOrderModal: React.FC<RejectOrderModalProps> = ({
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
             إلغاء
           </Button>
-          <Button variant="danger" size="sm" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "جاري الرفض..." : "تأكيد الرفض"}
+          <Button variant="danger" size="sm" onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting}>
+            تأكيد الرفض
           </Button>
         </>
       }
@@ -75,12 +76,12 @@ export const RejectOrderModal: React.FC<RejectOrderModalProps> = ({
           ))}
         </div>
 
-        <textarea
+        <Textarea
+          label="سبب الرفض الموجه لولي الأمر"
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="أو اكتب سبب الرفض بالتفصيل..."
-          className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-purple-600 font-medium"
         />
       </div>
     </Modal>

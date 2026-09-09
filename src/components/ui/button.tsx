@@ -9,8 +9,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", isLoading, children, disabled, ...props }, ref) => {
-    const baseStyles = "inline-flex items-center justify-center font-black rounded-2xl transition-all cursor-pointer select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:transform-none gap-2";
+  ({ className, variant = "primary", size = "md", type = "button", isLoading, children, disabled, ...props }, ref) => {
+    const baseStyles = "inline-flex items-center justify-center font-black rounded-2xl transition-all cursor-pointer select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:transform-none gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:ring-offset-2";
 
     const variantStyles = {
       vibrant: "bg-gradient-vibrant hover:scale-[1.02] text-white shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/30",
@@ -23,15 +23,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizeStyles = {
-      sm: "px-3 py-1.5 text-xs rounded-xl",
-      md: "px-5 py-2.5 text-xs sm:text-sm",
-      lg: "px-8 py-3.5 text-sm sm:text-base",
-      icon: "p-2 rounded-xl",
+      sm: "px-3 py-1.5 text-xs rounded-xl min-h-[36px]",
+      md: "px-5 py-2.5 text-xs sm:text-sm min-h-[44px]",
+      lg: "px-8 py-3.5 text-sm sm:text-base min-h-[48px]",
+      icon: "p-2 rounded-xl min-w-[40px] min-h-[40px]",
     };
 
     return (
       <button
         ref={ref}
+        type={type}
         disabled={disabled || isLoading}
         className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
         {...props}

@@ -65,3 +65,96 @@ export async function requireAdminAuth(options?: {
     };
   }
 }
+
+export interface AuthenticatedStudentContext {
+  userId: string;
+  userName: string;
+  userRole: string;
+  phoneNumber?: string;
+  userEmail: string;
+  sessionId?: string;
+  sessionDeviceId?: string;
+  session: Record<string, unknown>;
+}
+
+export type StudentAuthCheckResult =
+  | { authorized: true; context: AuthenticatedStudentContext }
+  | { authorized: false; response: NextResponse };
+
+/**
+ * Server-side authorization guard for student-facing API routes.
+ * Ensures the student session is valid and active.
+ */
+export async function requireStudentAuth(customUnauthorizedMessage?: string): Promise<StudentAuthCheckResult> {
+  try {
+    const headerList = await headers();
+    const session = await auth.api.getSession({ headers: headerList });
+
+    if (!session?.user?.id) {
+      return {
+        authorized: false,
+        response: NextResponse.json(
+          { error: customUnauthorizedMessage || "يجب تسجيل الدخول بحساب الطالب للوصول إلى هذه الخدمة." },
+          { status: 401 }
+        ),
+      };
+    }
+
+    const sessionDeviceId = (session.session as { deviceId?: string } | undefined)?.deviceId;
+    const phoneNumber = (session.user as Record<string, unknown> | undefined)?.phoneNumber as string | undefined;
+
+    return {
+      authorized: true,
+      context: {
+        userId: session.user.id,
+        userName: session.user.name || "طالب الأكاديمية",
+        userRole: (session.user as Record<string, unknown> | undefined)?.role as string || "student",
+        phoneNumber,
+        userEmail: session.user.email,
+        sessionId: session.session?.id,
+        sessionDeviceId,
+        session: session as unknown as Record<string, unknown>,
+      },
+    };
+  } catch (error) {
+    console.error("Student authentication assertion failed:", error);
+    return {
+      authorized: false,
+      response: NextResponse.json(
+        { error: "فشل التحقق من جلسة المستخدم." },
+        { status: 401 }
+      ),
+    };
+  }
+}
+
+/**
+ * Optional session extractor for public or hybrid endpoints (e.g. public units or quizzes).
+ */
+export async function getOptionalSessionContext(): Promise<{
+  userId: string | null;
+  userName: string | null;
+  userRole: string | null;
+  phoneNumber?: string;
+  sessionDeviceId?: string;
+}> {
+  try {
+    const headerList = await headers();
+    const session = await auth.api.getSession({ headers: headerList });
+
+    if (!session?.user?.id) {
+      return { userId: null, userName: null, userRole: null };
+    }
+
+    return {
+      userId: session.user.id,
+      userName: session.user.name || null,
+      userRole: (session.user as Record<string, unknown> | undefined)?.role as string || "student",
+      phoneNumber: (session.user as Record<string, unknown> | undefined)?.phoneNumber as string | undefined,
+      sessionDeviceId: (session.session as { deviceId?: string } | undefined)?.deviceId,
+    };
+  } catch {
+    return { userId: null, userName: null, userRole: null };
+  }
+}
+

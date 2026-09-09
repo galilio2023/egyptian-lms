@@ -98,14 +98,15 @@ export function EgyptianCheckoutModal({
                 <input
                   type="text"
                   dir="ltr"
+                  aria-label="كود الخصم الترويجي"
                   placeholder="كود الخصم (e.g. WELCOME20)"
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-white border border-purple-200 text-slate-900 placeholder-slate-400 font-mono font-bold uppercase text-xs focus:outline-none focus:border-purple-600"
+                  className="flex-1 min-h-[40px] px-3 py-2 rounded-xl bg-white border border-purple-200 text-slate-900 placeholder-slate-400 font-mono font-bold uppercase text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition-colors cursor-pointer"
+                  className="min-h-[40px] px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:ring-offset-2 shrink-0"
                 >
                   تطبيق الكوبون
                 </button>

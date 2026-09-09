@@ -9,3 +9,4 @@ export * from "./input";
 export * from "./modal";
 export * from "./pwa-install-banner";
 export * from "./select";
+export * from "./textarea";

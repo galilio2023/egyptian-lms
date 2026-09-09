@@ -44,6 +44,9 @@ export const TusVideoUploaderModal: React.FC<TusVideoUploaderModalProps> = ({
     handleStartTusUpload,
     togglePauseUpload,
     handleSaveManualVideo,
+    handleCheckVideoStatus,
+    isCheckingStatus,
+    videoStatusInfo,
   } = useTusVideoUpload({ unit, onClose, onSuccess });
 
   if (!unit) return null;
@@ -102,9 +105,9 @@ export const TusVideoUploaderModal: React.FC<TusVideoUploaderModalProps> = ({
           disabled={uploadState.isUploading}
         />
 
-        {/* Upload Mode 1: Direct File */}
+        {/* Mode Body */}
         {uploadMode === "direct_file" ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <UploadDropzone
               selectedFile={selectedFile}
               onFileSelect={setSelectedFile}
@@ -137,6 +140,9 @@ export const TusVideoUploaderModal: React.FC<TusVideoUploaderModalProps> = ({
             manualVideoId={manualVideoId}
             onManualVideoIdChange={setManualVideoId}
             onSubmit={handleSaveManualVideo}
+            onCheckStatus={() => handleCheckVideoStatus()}
+            isCheckingStatus={isCheckingStatus}
+            videoStatusInfo={videoStatusInfo}
           />
         )}
       </div>

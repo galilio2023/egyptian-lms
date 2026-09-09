@@ -78,9 +78,11 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             إلغاء
           </Button>
           <Button
+            type="submit"
+            form="add-question-form"
             variant="vibrant"
             size="sm"
-            onClick={handleSubmit}
+            isLoading={isSubmitting}
             disabled={isSubmitting || !qText.trim()}
           >
             {isSubmitting ? "جاري الحفظ..." : "حفظ السؤال في البنك"}
@@ -88,87 +90,67 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-right">
-        <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1">
-            نص السؤال (بالإنجليزية)
-          </label>
+      <form id="add-question-form" onSubmit={handleSubmit} className="space-y-4 text-right">
+        <Input
+          label="نص السؤال (بالإنجليزية)"
+          value={qText}
+          onChange={(e) => setQText(e.target.value)}
+          placeholder="e.g. Which of the following words starts with the /b/ sound?"
+          required
+          dir="ltr"
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
-            value={qText}
-            onChange={(e) => setQText(e.target.value)}
-            placeholder="e.g. Which of the following words starts with the /b/ sound?"
+            label="الاختيار (A)"
+            value={opt1}
+            onChange={(e) => setOpt1(e.target.value)}
+            placeholder="Option A (e.g. Ball)"
             required
+            dir="ltr"
+          />
+          <Input
+            label="الاختيار (B)"
+            value={opt2}
+            onChange={(e) => setOpt2(e.target.value)}
+            placeholder="Option B (e.g. Cat)"
+            required
+            dir="ltr"
+          />
+          <Input
+            label="الاختيار (C)"
+            value={opt3}
+            onChange={(e) => setOpt3(e.target.value)}
+            placeholder="Option C (e.g. Apple)"
+            dir="ltr"
+          />
+          <Input
+            label="الاختيار (D)"
+            value={opt4}
+            onChange={(e) => setOpt4(e.target.value)}
+            placeholder="Option D (e.g. Dog)"
             dir="ltr"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">الاختيار (A)</label>
-            <Input
-              value={opt1}
-              onChange={(e) => setOpt1(e.target.value)}
-              placeholder="Option A (e.g. Ball)"
-              required
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">الاختيار (B)</label>
-            <Input
-              value={opt2}
-              onChange={(e) => setOpt2(e.target.value)}
-              placeholder="Option B (e.g. Cat)"
-              required
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">الاختيار (C)</label>
-            <Input
-              value={opt3}
-              onChange={(e) => setOpt3(e.target.value)}
-              placeholder="Option C (e.g. Apple)"
-              dir="ltr"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">الاختيار (D)</label>
-            <Input
-              value={opt4}
-              onChange={(e) => setOpt4(e.target.value)}
-              placeholder="Option D (e.g. Dog)"
-              dir="ltr"
-            />
-          </div>
-        </div>
+        <Select
+          label="الإجابة الصحيحة المعتمدة"
+          value={correctIdx.toString()}
+          onChange={(e) => setCorrectIdx(Number(e.target.value))}
+          options={[
+            { value: "0", label: "الاختيار (A)" },
+            { value: "1", label: "الاختيار (B)" },
+            { value: "2", label: "الاختيار (C)" },
+            { value: "3", label: "الاختيار (D)" },
+          ]}
+        />
 
-        <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1">
-            الإجابة الصحيحة المعتمدة
-          </label>
-          <Select
-            value={correctIdx.toString()}
-            onChange={(e) => setCorrectIdx(Number(e.target.value))}
-            options={[
-              { value: "0", label: "الاختيار (A)" },
-              { value: "1", label: "الاختيار (B)" },
-              { value: "2", label: "الاختيار (C)" },
-              { value: "3", label: "الاختيار (D)" },
-            ]}
-          />
-        </div>
-
-        <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1">
-            شرح وتوضيح الإجابة (يظهر للطالب بعد الحل)
-          </label>
-          <Input
-            value={explanation}
-            onChange={(e) => setExplanation(e.target.value)}
-            placeholder="مثال: كلمة Ball تبدأ بحرف الـ B وينطق /b/ كصوت انفجاري شفهي."
-          />
-        </div>
+        <Input
+          label="شرح وتوضيح الإجابة (يظهر للطالب بعد الحل)"
+          value={explanation}
+          onChange={(e) => setExplanation(e.target.value)}
+          placeholder="مثال: كلمة Ball تبدأ بحرف الـ B وينطق /b/ كصوت انفجاري شفهي."
+        />
       </form>
     </Modal>
   );

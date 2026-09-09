@@ -487,7 +487,7 @@ export function VibeThemeSection({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <label className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
+                <label htmlFor="toggle-hero-toys" className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
                   <div className="space-y-0.5 text-right">
                     <span className="text-xs font-bold text-slate-800 block">
                       مجسمات الألعاب الطافية 🦕
@@ -497,14 +497,16 @@ export function VibeThemeSection({
                     </span>
                   </div>
                   <input
+                    id="toggle-hero-toys"
                     type="checkbox"
+                    aria-label="مجسمات الألعاب الطافية"
                     checked={settings.enableHeroToys !== false}
                     onChange={(e) => onChange("enableHeroToys", e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
+                <label htmlFor="toggle-phonics-strip" className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
                   <div className="space-y-0.5 text-right">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
                       <span>شريط النطق الصوتي 🔊</span>
@@ -515,14 +517,16 @@ export function VibeThemeSection({
                     </span>
                   </div>
                   <input
+                    id="toggle-phonics-strip"
                     type="checkbox"
+                    aria-label="شريط النطق الصوتي"
                     checked={settings.enableHeroPhonicsStrip !== false}
                     onChange={(e) => onChange("enableHeroPhonicsStrip", e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
+                <label htmlFor="toggle-mascot-cards" className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-100 cursor-pointer hover:border-purple-300 transition-all">
                   <div className="space-y-0.5 text-right">
                     <span className="text-xs font-bold text-slate-800 block">
                       كروت أبطال التمائم الثلاثة 🏆
@@ -532,10 +536,12 @@ export function VibeThemeSection({
                     </span>
                   </div>
                   <input
+                    id="toggle-mascot-cards"
                     type="checkbox"
+                    aria-label="كروت أبطال التمائم الثلاثة"
                     checked={settings.enableMascotCards !== false}
                     onChange={(e) => onChange("enableMascotCards", e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
                   />
                 </label>
               </div>

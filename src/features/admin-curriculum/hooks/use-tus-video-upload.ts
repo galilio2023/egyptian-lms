@@ -247,6 +247,45 @@ export function useTusVideoUpload({ unit, onClose, onSuccess }: UseTusVideoUploa
     await handleSaveLessonRecord(cleanId);
   };
 
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [videoStatusInfo, setVideoStatusInfo] = useState<string | null>(null);
+
+  const handleCheckVideoStatus = async (targetId?: string) => {
+    let cleanId = (targetId || manualVideoId).trim();
+    if (cleanId.includes("iframe.mediadelivery.net/play/")) {
+      const parts = cleanId.split("/");
+      cleanId = parts[parts.length - 1];
+    }
+
+    if (!cleanId) {
+      toast.error("يرجى إدخال معرف الفيديو (Video GUID) أولاً لفحص حالته.");
+      return;
+    }
+
+    setIsCheckingStatus(true);
+    setVideoStatusInfo(null);
+    try {
+      const res = await fetch(`/api/admin/video/status?videoId=${encodeURIComponent(cleanId)}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const encodeProg = data.status?.encodeProgress;
+        const msg = encodeProg !== undefined
+          ? `حالة الفيديو: ${encodeProg === 100 ? "جاهز للبث السحابي ✅ (100%)" : `جاري المعالجة والترميز ⏳ (${encodeProg}%)`}`
+          : "الفيديو مسجل ومتاح للبث المشفر في Bunny Stream.";
+        setVideoStatusInfo(msg);
+        toast.success(msg);
+      } else {
+        const errorMsg = data.error || "تعذر التحقق من حالة الفيديو في مكتبة Bunny.";
+        setVideoStatusInfo(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch {
+      toast.error("فشل الاتصال بخدمة التحقق من حالة الفيديو.");
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
   return {
     uploadMode,
     setUploadMode,
@@ -271,5 +310,9 @@ export function useTusVideoUpload({ unit, onClose, onSuccess }: UseTusVideoUploa
     handleStartTusUpload,
     togglePauseUpload,
     handleSaveManualVideo,
+    handleCheckVideoStatus,
+    isCheckingStatus,
+    videoStatusInfo,
   };
 }
+

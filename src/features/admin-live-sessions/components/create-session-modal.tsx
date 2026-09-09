@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { INITIAL_GRADES } from "@/lib/db/mock-data";
 
 export interface CreateSessionModalProps {
@@ -124,15 +125,12 @@ export const CreateSessionModal: React.FC<CreateSessionModalProps> = ({
           required
         />
 
-        <div className="space-y-1 text-right">
-          <label className="font-bold text-slate-700 block mb-1">وصف الحصة وأهم محاورها:</label>
-          <textarea
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-2.5 rounded-xl bg-purple-50/50 border border-purple-200 text-slate-900 font-medium focus:outline-none focus:border-purple-600"
-          />
-        </div>
+        <Textarea
+          label="وصف الحصة وأهم محاورها:"
+          rows={2}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-purple-100">
           <Button

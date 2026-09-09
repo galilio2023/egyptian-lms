@@ -30,6 +30,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         <div className="relative border-2 border-dashed border-purple-200 hover:border-purple-500 rounded-3xl p-8 text-center bg-purple-50/20 hover:bg-purple-50/40 transition-all">
           <input
             type="file"
+            aria-label="ملف المحاضرة فيديو"
             accept="video/mp4,video/quicktime,video/x-matroska"
             disabled={disabled}
             onChange={handleInputChange}

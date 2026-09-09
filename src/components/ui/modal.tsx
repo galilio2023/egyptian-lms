@@ -32,6 +32,8 @@ export const Modal: React.FC<ModalProps> = ({
   backdropClassName,
 }) => {
   const effectiveMaxWidth = size || maxWidth || "lg";
+  const titleId = React.useId();
+  const descId = React.useId();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,12 +67,17 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
+        aria-hidden="true"
         className={cn("fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity", backdropClassName)}
         onClick={onClose}
       />
 
       {/* Dialog Shell */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descId : undefined}
         className={cn(
           "relative w-full bg-white rounded-3xl border-2 border-purple-100 shadow-2xl z-10 overflow-hidden transform transition-all duration-200 animate-in fade-in zoom-in-95 my-auto max-h-[92dvh] flex flex-col",
           maxWidthStyles[effectiveMaxWidth],
@@ -84,12 +91,12 @@ export const Modal: React.FC<ModalProps> = ({
               {icon && <div className="text-purple-600 shrink-0">{icon}</div>}
               <div>
                 {title && (
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                  <h3 id={titleId} className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                     {title}
                   </h3>
                 )}
                 {description && (
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p id={descId} className="text-xs text-slate-500 font-medium mt-0.5">
                     {description}
                   </p>
                 )}
@@ -97,8 +104,10 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer shrink-0"
+              aria-label="إغلاق النافذة"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-purple-200 transition-colors cursor-pointer shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
