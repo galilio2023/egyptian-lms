@@ -3,8 +3,10 @@ import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { INITIAL_PLATFORM_SETTINGS, INITIAL_UNITS, type MockUnit } from "@/lib/db/mock-data";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
-export async function getLandingPageData() {
+const fetchLandingDataFromDb = async () => {
   try {
     const [dbUnits, dbLessons, settings] = await Promise.all([
       db
@@ -65,4 +67,25 @@ export async function getLandingPageData() {
       settings: INITIAL_PLATFORM_SETTINGS,
     };
   }
-}
+};
+
+/**
+ * Cached landing page data getter (unstable_cache).
+ * Purged on-demand via revalidateTag('landing-data') or revalidateTag('curriculum').
+ */
+const getCachedLandingPageData = unstable_cache(
+  fetchLandingDataFromDb,
+  ["landing-page-data-key"],
+  {
+    revalidate: 300, // 5 minutes
+    tags: ["landing-data", "curriculum", "platform-settings"],
+  }
+);
+
+/**
+ * Request-memoized landing page data getter.
+ * Deduplicates multiple calls between generateMetadata and page components.
+ */
+export const getLandingPageData = cache(async () => {
+  return getCachedLandingPageData();
+});

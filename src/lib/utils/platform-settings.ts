@@ -2,22 +2,19 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { INITIAL_PLATFORM_SETTINGS, type MockPlatformSettings } from "@/lib/db/mock-data";
+import { unstable_cache, revalidateTag } from "next/cache";
+import { cache } from "react";
 
 export type PlatformSettingsData = MockPlatformSettings;
 
-let cachedSettings: MockPlatformSettings | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 15000; // 15 seconds in-memory cache
+let localMemSettings: MockPlatformSettings | null = null;
+let localMemTimestamp = 0;
+const MEM_CACHE_TTL_MS = 60000; // 60 seconds local process fallback
 
-/**
- * Retrieves the platform branding, teacher information, and contact phone settings.
- * First checks an in-memory cache, then queries the platform_settings table in PostgreSQL,
- * falling back gracefully to sensible generic defaults.
- */
-export async function getPlatformSettings(): Promise<MockPlatformSettings> {
+const fetchPlatformSettingsFromDb = async (): Promise<MockPlatformSettings> => {
   const now = Date.now();
-  if (cachedSettings && now - cacheTimestamp < CACHE_TTL_MS) {
-    return cachedSettings;
+  if (localMemSettings && now - localMemTimestamp < MEM_CACHE_TTL_MS) {
+    return localMemSettings;
   }
 
   try {
@@ -28,7 +25,7 @@ export async function getPlatformSettings(): Promise<MockPlatformSettings> {
       .limit(1);
 
     if (dbSettings) {
-      cachedSettings = {
+      localMemSettings = {
         id: dbSettings.id,
         academyNameArabic: dbSettings.academyNameArabic || INITIAL_PLATFORM_SETTINGS.academyNameArabic,
         academyNameEnglish: dbSettings.academyNameEnglish || INITIAL_PLATFORM_SETTINGS.academyNameEnglish,
@@ -53,20 +50,48 @@ export async function getPlatformSettings(): Promise<MockPlatformSettings> {
         customBackgroundUrl: dbSettings.customBackgroundUrl ?? INITIAL_PLATFORM_SETTINGS.customBackgroundUrl,
         cardVibeStyle: (dbSettings.cardVibeStyle as MockPlatformSettings['cardVibeStyle']) || INITIAL_PLATFORM_SETTINGS.cardVibeStyle,
       };
-      cacheTimestamp = now;
-      return cachedSettings;
+      localMemTimestamp = now;
+      return localMemSettings;
     }
   } catch (err) {
     console.warn("Platform settings fetch DB fallback:", err);
   }
 
   return INITIAL_PLATFORM_SETTINGS;
-}
+};
 
 /**
- * Invalidates the in-memory cache so subsequent reads immediately reflect updates.
+ * Cached platform settings getter using Next.js Data Cache (unstable_cache).
+ * Revalidates every 10 minutes or instantly via revalidateTag('platform-settings').
+ */
+const getCachedPlatformSettings = unstable_cache(
+  fetchPlatformSettingsFromDb,
+  ["platform-settings-key"],
+  {
+    revalidate: 600, // 10 minutes
+    tags: ["platform-settings"],
+  }
+);
+
+/**
+ * Request-memoized and Data-Cache optimized getter for platform settings.
+ * Safe to call across metadata generators, server components, and layout shells simultaneously.
+ */
+export const getPlatformSettings = cache(async (): Promise<MockPlatformSettings> => {
+  return getCachedPlatformSettings();
+});
+
+/**
+ * Invalidates both the Next.js Data Cache tag and the process-local cache
+ * so updates immediately propagate across all running instances.
  */
 export function invalidatePlatformSettingsCache(): void {
-  cachedSettings = null;
-  cacheTimestamp = 0;
+  localMemSettings = null;
+  localMemTimestamp = 0;
+  try {
+    revalidateTag("platform-settings", { expire: 0 });
+    revalidateTag("landing-data", { expire: 0 });
+  } catch (err) {
+    console.warn("Tag revalidation note:", err);
+  }
 }

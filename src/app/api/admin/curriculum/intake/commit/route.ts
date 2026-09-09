@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { ParsedCurriculumUnit } from "@/lib/ai/curriculum-intake-parser";
+import { revalidateCurriculumCache } from "@/lib/data-curriculum";
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,6 +124,12 @@ export async function POST(request: NextRequest) {
       };
       lessonsCreatedCount = parsedUnit.lessons.length;
       questionsCreatedCount = parsedUnit.quizQuestions.length;
+    }
+
+    if (createdUnitRecord?.slug) {
+      revalidateCurriculumCache({ unitSlug: createdUnitRecord.slug });
+    } else {
+      revalidateCurriculumCache();
     }
 
     return NextResponse.json({

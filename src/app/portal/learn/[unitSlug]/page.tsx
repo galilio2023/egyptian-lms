@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { INITIAL_UNITS, INITIAL_LESSONS, INITIAL_QUIZ } from "@/lib/db/mock-data";
+import { getCachedCurriculumUnit } from "@/lib/data-curriculum";
 import { UnitLearnClient } from "@/features/portal-learn";
 
 export async function generateMetadata({
@@ -9,16 +9,16 @@ export async function generateMetadata({
   params: Promise<{ unitSlug: string }>;
 }): Promise<Metadata> {
   const { unitSlug } = await params;
-  const unit = INITIAL_UNITS.find((u) => u.slug === unitSlug);
-  if (!unit) return { title: "الوحدة التعليمية" };
+  const data = await getCachedCurriculumUnit(unitSlug);
+  if (!data?.unit) return { title: "الوحدة التعليمية" };
 
   return {
-    title: `${unit.title} (${unit.gradeTitle})`,
-    description: unit.description,
+    title: `${data.unit.title} (${data.unit.gradeTitle})`,
+    description: data.unit.description,
     openGraph: {
-      title: `${unit.title} | ${unit.gradeTitle}`,
-      description: unit.description,
-      images: unit.thumbnailUrl ? [{ url: unit.thumbnailUrl }] : [],
+      title: `${data.unit.title} | ${data.unit.gradeTitle}`,
+      description: data.unit.description,
+      images: data.unit.thumbnailUrl ? [{ url: data.unit.thumbnailUrl }] : [],
     },
   };
 }
@@ -29,20 +29,17 @@ export default async function UnitLearnPage({
   params: Promise<{ unitSlug: string }>;
 }) {
   const { unitSlug } = await params;
-  const unit = INITIAL_UNITS.find((u) => u.slug === unitSlug);
+  const data = await getCachedCurriculumUnit(unitSlug);
 
-  if (!unit) {
+  if (!data || !data.unit) {
     notFound();
   }
 
-  const lessons = INITIAL_LESSONS.filter((l) => l.unitId === unit.id);
-  const quizId = INITIAL_QUIZ.id;
-
   return (
     <UnitLearnClient
-      unit={unit}
-      lessons={lessons}
-      quizId={quizId}
+      unit={data.unit}
+      lessons={data.lessons}
+      quizId={data.quizId}
       unitSlug={unitSlug}
     />
   );
