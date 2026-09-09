@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import { INITIAL_UNITS, INITIAL_GRADES, INITIAL_PLATFORM_SETTINGS } from "@/lib/db/mock-data";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 
 export async function GET() {
   try {
-    // Concurrently fetch units, lessons, leaderboard, and platform settings
+    // Concurrently fetch units, lessons count, leaderboard, and platform settings
     const [dbUnits, dbLessons, topStudents, settings] = await Promise.all([
       db
         .select({
@@ -30,10 +30,11 @@ export async function GET() {
 
       db
         .select({
-          id: schema.lesson.id,
           unitId: schema.lesson.unitId,
+          lessonCount: count(schema.lesson.id),
         })
-        .from(schema.lesson),
+        .from(schema.lesson)
+        .groupBy(schema.lesson.unitId),
 
       db
         .select({
@@ -53,8 +54,10 @@ export async function GET() {
       getPlatformSettings(),
     ]);
 
+    const lessonCountMap = new Map(dbLessons.map((l) => [l.unitId, Number(l.lessonCount)]));
+
     const formattedUnits = dbUnits.map((u) => {
-      const lessonCount = dbLessons.filter((l) => l.unitId === u.id).length;
+      const lessonCount = lessonCountMap.get(u.id);
       return {
         id: u.id,
         gradeId: u.gradeId,
@@ -65,7 +68,7 @@ export async function GET() {
         description: u.description || "وحدة دراسية متكاملة بالصوتيات والاختبارات.",
         thumbnailUrl: u.thumbnailUrl || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=60",
         priceEgp: u.priceEgp || 250,
-        lessonsCount: lessonCount || 4,
+        lessonsCount: lessonCount !== undefined ? lessonCount : 4,
         quizzesCount: 1,
         isPublished: u.isPublished,
       };
