@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (!isHmacValid) {
       // CWE-400 DoS Protection: Rate limit failed HMAC audit inserts to prevent DB capacity exhaustion
       const hmacRateKey = `paymob-invalid-hmac:${clientIp}`;
-      const rateCheck = checkRateLimit(hmacRateKey, "paymobInvalidHmac");
+      const rateCheck = await checkRateLimit(hmacRateKey, "paymobInvalidHmac");
       if (rateCheck.success) {
         logSecurityEvent({
           eventType: "rate_limit_triggered",

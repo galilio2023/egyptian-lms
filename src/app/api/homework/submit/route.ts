@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(reqHeaders);
 
     const rateKey = `homework-submit:${context.userId || clientIp}`;
-    const rateCheck = checkRateLimit(rateKey, "homeworkSubmit");
+    const rateCheck = await checkRateLimit(rateKey, "homeworkSubmit");
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,

@@ -12,7 +12,6 @@ import {
   Medal, 
   Star, 
   GraduationCap,
-  ArrowRight,
   ArrowLeft
 } from "lucide-react";
 import { Header } from "@/components/layout/header";

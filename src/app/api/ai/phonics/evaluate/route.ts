@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { diagnoseEgyptianPhoneme } from "@/features/phonics/components/phonics-sound-board";
 import { awardPracticeXp } from "@/server/services/student-progress.service";
+import { getGeminiGenerateContentUrl } from "@/lib/ai/constants";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10MB limit
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting: 20 speech checks per 5 minutes per user/IP
     const rateKey = `speech-eval:${session.user.id}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,
@@ -127,7 +128,7 @@ Return JSON in this EXACT schema:
 }`;
 
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+          getGeminiGenerateContentUrl(geminiApiKey),
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

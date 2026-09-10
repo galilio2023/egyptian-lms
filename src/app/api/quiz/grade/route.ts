@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     // Rate Limiting: max 12 submissions per 5 minutes per user/IP
     const rateKey = `quiz-grade:${session?.user?.id || clientIp}`;
-    const rateCheck = checkRateLimit(rateKey, "quizGrade");
+    const rateCheck = await checkRateLimit(rateKey, "quizGrade");
     if (!rateCheck.success) {
       logSecurityEvent({
         eventType: "rate_limit_triggered",

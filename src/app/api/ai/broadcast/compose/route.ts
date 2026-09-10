@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { requireAdminAuth } from "@/server/auth/guards";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from "@/lib/security/rate-limiter";
+import { getGeminiGenerateContentUrl } from "@/lib/ai/constants";
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdminAuth();
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(reqHeaders);
 
     const rateKey = `ai-broadcast:${context.userId || clientIp}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateKey, { maxRequests: 20, windowMs: 5 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(rateCheck, "تم تجاوز الحد المسموح به لمحاولات الصياغة الذكية.");
     }
@@ -55,7 +56,7 @@ Guidelines:
 }`;
 
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+          getGeminiGenerateContentUrl(geminiApiKey),
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

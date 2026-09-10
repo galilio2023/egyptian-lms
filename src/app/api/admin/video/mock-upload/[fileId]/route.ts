@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function HEAD() {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -13,6 +17,10 @@ export async function HEAD() {
 }
 
 export async function PATCH(request: NextRequest) {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const currentOffset = request.headers.get("upload-offset") || "0";
   const body = await request.arrayBuffer().catch(() => new ArrayBuffer(0));
   const newOffset = Number(currentOffset) + body.byteLength;

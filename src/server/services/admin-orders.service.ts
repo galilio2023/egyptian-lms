@@ -4,7 +4,7 @@ import { eq, desc, and, inArray } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { sendAutomatedWhatsAppNotification } from "@/lib/utils/whatsapp";
-import { DomainError, NotFoundError, ConflictError } from "@/server/errors";
+import { DomainError, ConflictError } from "@/server/errors";
 
 export interface ApproveOrderPayload {
   orderId?: string;

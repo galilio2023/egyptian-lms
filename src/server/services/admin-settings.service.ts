@@ -17,7 +17,10 @@ export async function getAdminSettingsData() {
 
 export async function updatePlatformSettings(payload: UpdateSettingsPayload) {
   // Strip immutable / reserved fields from payload
-  const { id: _ignoredId, updatedAt: _ignoredUpdatedAt, createdAt: _ignoredCreatedAt, ...safePayload } = payload as Record<string, unknown>;
+  const safePayload = { ...(payload as Record<string, unknown>) };
+  delete safePayload.id;
+  delete safePayload.updatedAt;
+  delete safePayload.createdAt;
 
   const [existing] = await db
     .select()

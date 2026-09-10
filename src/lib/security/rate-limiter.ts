@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 interface RateLimitRecord {
   count: number;
@@ -15,16 +17,57 @@ export interface RateLimitResult {
   limit: number;
   remaining: number;
   resetSeconds: number;
+  provider?: "upstash" | "memory";
 }
 
 declare global {
   var __rateLimitStore: Map<string, RateLimitRecord> | undefined;
   var __rateLimitGcInterval: ReturnType<typeof setInterval> | undefined;
+  var __upstashRatelimitMap: Map<string, Ratelimit> | undefined;
+  var __upstashRedisClient: Redis | undefined;
 }
 
 // In-memory sliding window cache (persists across HMR reloads without memory leaks)
 const rateLimitStore = globalThis.__rateLimitStore ?? new Map<string, RateLimitRecord>();
 globalThis.__rateLimitStore = rateLimitStore;
+
+// Upstash Redis Client initialization (lazy, singleton across reloads)
+function getUpstashRedis(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+
+  if (!globalThis.__upstashRedisClient) {
+    globalThis.__upstashRedisClient = new Redis({
+      url,
+      token,
+    });
+  }
+  return globalThis.__upstashRedisClient;
+}
+
+const upstashRatelimitMap = globalThis.__upstashRatelimitMap ?? new Map<string, Ratelimit>();
+globalThis.__upstashRatelimitMap = upstashRatelimitMap;
+
+function getUpstashLimiter(config: RateLimitConfig): Ratelimit | null {
+  const redis = getUpstashRedis();
+  if (!redis) return null;
+
+  const key = `${config.maxRequests}_${config.windowMs}`;
+  const existing = upstashRatelimitMap.get(key);
+  if (existing) return existing;
+
+  const windowSeconds = Math.max(1, Math.round(config.windowMs / 1000));
+  const limiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(config.maxRequests, `${windowSeconds} s`),
+    analytics: false,
+    prefix: "elite_lms",
+  });
+
+  upstashRatelimitMap.set(key, limiter);
+  return limiter;
+}
 
 // Automatic garbage collection every 5 minutes, single active interval instance
 if (typeof setInterval !== "undefined") {
@@ -91,9 +134,9 @@ export function getClientIp(headers: Headers): string {
 }
 
 /**
- * Checks and records rate limit for a given key
+ * Synchronous in-memory rate limiter fallback (sliding window)
  */
-export function checkRateLimit(
+export function checkRateLimitInMemory(
   key: string,
   presetOrConfig: keyof typeof RATE_LIMIT_PRESETS | RateLimitConfig
 ): RateLimitResult {
@@ -117,6 +160,7 @@ export function checkRateLimit(
       limit: config.maxRequests,
       remaining: config.maxRequests - 1,
       resetSeconds: Math.ceil(config.windowMs / 1000),
+      provider: "memory",
     };
   }
 
@@ -127,6 +171,7 @@ export function checkRateLimit(
       limit: config.maxRequests,
       remaining: 0,
       resetSeconds: remainingTimeSeconds,
+      provider: "memory",
     };
   }
 
@@ -138,7 +183,42 @@ export function checkRateLimit(
     limit: config.maxRequests,
     remaining: config.maxRequests - existing.count,
     resetSeconds: remainingTimeSeconds,
+    provider: "memory",
   };
+}
+
+/**
+ * Checks and records rate limit for a given key.
+ * Uses Upstash Redis when UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set.
+ * Automatically falls back to in-memory sliding window when Upstash is not configured or offline.
+ */
+export async function checkRateLimit(
+  key: string,
+  presetOrConfig: keyof typeof RATE_LIMIT_PRESETS | RateLimitConfig
+): Promise<RateLimitResult> {
+  const config: RateLimitConfig =
+    typeof presetOrConfig === "string"
+      ? RATE_LIMIT_PRESETS[presetOrConfig] || RATE_LIMIT_PRESETS.publicApi
+      : presetOrConfig;
+
+  try {
+    const upstashLimiter = getUpstashLimiter(config);
+    if (upstashLimiter) {
+      const { success, limit, remaining, reset } = await upstashLimiter.limit(key);
+      const resetSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+      return {
+        success,
+        limit,
+        remaining,
+        resetSeconds,
+        provider: "upstash",
+      };
+    }
+  } catch (error) {
+    console.warn("⚠️ Upstash rate limiting failed, falling back to in-memory cache:", error);
+  }
+
+  return checkRateLimitInMemory(key, config);
 }
 
 /**

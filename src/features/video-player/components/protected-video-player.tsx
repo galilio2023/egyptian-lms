@@ -108,7 +108,7 @@ export function ProtectedVideoPlayer({
         vid.addEventListener("loadedmetadata", performSeek, { once: true });
       }
     }
-  }, [initialSeekSeconds]);
+  }, [initialSeekSeconds, searchParams]);
 
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, {

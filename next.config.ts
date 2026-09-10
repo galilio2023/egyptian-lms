@@ -25,6 +25,22 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(self), microphone=(self), geolocation=(), browsing-topics=()",
   },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' blob: data: https://images.unsplash.com https://img.youtube.com https://*.bunnycdn.com https://*.b-cdn.net",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.b-cdn.net https://*.bunnycdn.com https://video.bunnycdn.com https://accept.paymob.com https://generativelanguage.googleapis.com https://*.upstash.io https://test-streams.mux.dev https://api.wasapi.io",
+      "media-src 'self' blob: data: https://*.b-cdn.net https://*.bunnycdn.com https://test-streams.mux.dev",
+      "frame-src 'self' https://accept.paymob.com https://www.youtube.com https://www.youtube-nocookie.com https://iframe.mediadelivery.net",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://accept.paymob.com",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {

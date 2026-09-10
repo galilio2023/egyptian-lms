@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { and, eq, gt, inArray, isNull, or, desc } from "drizzle-orm";
 import { INITIAL_HOMEWORK_ASSIGNMENTS, INITIAL_HOMEWORK_SUBMISSIONS, type MockHomeworkSubmission } from "@/lib/db/mock-data";
-import { DomainError, NotFoundError, ForbiddenError } from "@/server/errors";
+import { NotFoundError, ForbiddenError } from "@/server/errors";
 
 export interface StudentHomeworkAssignmentDto {
   id: string;
