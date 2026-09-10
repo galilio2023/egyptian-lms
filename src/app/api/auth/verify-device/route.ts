@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, desc } from "drizzle-orm";
 import { validateEgyptianPhone } from "@/lib/utils";
 import { getClientIp, checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
 import { logSecurityEvent } from "@/lib/security/audit-logger";
@@ -278,18 +278,19 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // 3. Bind current session to deviceId
+      // 3. Bind session to deviceId
       if (session?.session?.id) {
         await db
           .update(schema.session)
           .set({ deviceId, updatedAt: new Date() })
           .where(eq(schema.session.id, session.session.id));
-      } else {
-        // Update the most recently created session for this user
+      } else if (session?.user?.id) {
+        // Authenticated user: bind to newest active session
         const [latestSession] = await db
           .select()
           .from(schema.session)
           .where(eq(schema.session.userId, targetUserId))
+          .orderBy(desc(schema.session.createdAt))
           .limit(1);
 
         if (latestSession) {

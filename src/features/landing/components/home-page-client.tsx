@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFloatingButton } from "@/components/layout/whatsapp-floating-btn";
 import { EgyptianCheckoutModal } from "@/features/checkout";
-import type { MockUnit, MockPlatformSettings } from "@/lib/db/mock-data";
+import type { MockUnit, MockPlatformSettings, MockGradeChampion } from "@/lib/db/mock-data";
 import {
   HeroSection,
   PreviewVideoSection,
@@ -21,9 +21,10 @@ import {
 interface HomePageClientProps {
   initialUnits: MockUnit[];
   initialSettings: MockPlatformSettings;
+  initialChampions?: Record<string, MockGradeChampion[]>;
 }
 
-export function HomePageClient({ initialUnits, initialSettings }: HomePageClientProps) {
+export function HomePageClient({ initialUnits, initialSettings, initialChampions }: HomePageClientProps) {
   const [selectedUnit, setSelectedUnit] = useState<MockUnit | null>(null);
   const [activeGradeFilter, setActiveGradeFilter] = useState<string>("all");
   const [units] = useState<MockUnit[]>(initialUnits);
@@ -95,7 +96,7 @@ export function HomePageClient({ initialUnits, initialSettings }: HomePageClient
         academyName={settings.academyNameArabic}
       />
       <FeaturesGridSection />
-      <HonorBoardSection />
+      <HonorBoardSection champions={initialChampions} />
       <AdventureQuizzesSection />
       <CoursesCatalogSection
         units={units}

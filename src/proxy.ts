@@ -31,6 +31,10 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
+
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
   }
 
   // Teacher & Assistant CMS Route (/admin/*)
@@ -47,13 +51,6 @@ export function proxy(request: NextRequest) {
     response.headers.set("X-Content-Type-Options", "nosniff");
     response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     response.headers.set("X-XSS-Protection", "1; mode=block");
-    response.headers.set("X-Robots-Tag", "noindex, nofollow");
-    return response;
-  }
-
-  // Protected portal routes
-  if (pathname.startsWith("/portal")) {
-    const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
     return response;
   }

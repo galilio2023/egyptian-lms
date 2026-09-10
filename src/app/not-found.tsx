@@ -44,7 +44,7 @@ const QUICK_LINKS = [
     badge: "Login",
   },
   {
-    href: "https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%20%D9%88%D8%A7%D8%AC%D9%87%D8%AA%20%D8%B5%D9%81%D8%AD%D8%A9%20%D8%BA%D9%8A%D8%B1%20%D9%85%D9%88%D8%AC%D9%88%D8%AF%D8%A9%20404%20%D9%81%D9%8A%20%D8%A7%D9%84%D9%85%D9%86%D8%B5%D8%A9",
+    href: `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201000000000"}?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%20%D9%88%D8%A7%D8%AC%D9%87%D8%AA%20%D8%B5%D9%81%D8%AD%D8%A9%20%D8%BA%D9%8A%D8%B1%20%D9%85%D9%88%D8%AC%D9%88%D8%AF%D8%A9%20404%20%D9%81%D9%8A%20%D8%A7%D9%84%D9%85%D9%86%D8%B5%D8%A9`,
     title: "الدعم الفني عبر واتساب",
     subtitle: "تواصل مع فريق المتابعة الفورية",
     icon: MessageCircle,

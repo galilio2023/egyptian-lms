@@ -106,28 +106,30 @@ export async function gradeHomework(payload: GradeHomeworkPayload, actorUserId: 
   const isFirstGrading = existingSub.status !== "graded";
   const earnedXp = isFirstGrading ? (scorePercentage >= 80 ? 30 : 15) : 0;
 
-  // 2. Persist updated score
-  const [updated] = await db
-    .update(schema.homeworkSubmission)
-    .set({
-      score: safeScore,
-      feedbackNotes: feedbackNotes?.trim() || null,
-      annotatedImages,
-      status: "graded",
-      gradedAt: new Date(),
-      gradedByUserId: actorUserId,
-    })
-    .where(eq(schema.homeworkSubmission.id, submissionId))
-    .returning({ userId: schema.homeworkSubmission.userId });
-
-  if (updated?.userId && isFirstGrading && earnedXp > 0) {
-    await db
-      .update(schema.studentProfile)
+  // 2. Persist updated score and award XP atomically
+  await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(schema.homeworkSubmission)
       .set({
-        xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${earnedXp}`,
+        score: safeScore,
+        feedbackNotes: feedbackNotes?.trim() || null,
+        annotatedImages,
+        status: "graded",
+        gradedAt: new Date(),
+        gradedByUserId: actorUserId,
       })
-      .where(eq(schema.studentProfile.userId, updated.userId));
-  }
+      .where(eq(schema.homeworkSubmission.id, submissionId))
+      .returning({ userId: schema.homeworkSubmission.userId });
+
+    if (updated?.userId && isFirstGrading && earnedXp > 0) {
+      await tx
+        .update(schema.studentProfile)
+        .set({
+          xpPoints: sql`COALESCE(${schema.studentProfile.xpPoints}, 0) + ${earnedXp}`,
+        })
+        .where(eq(schema.studentProfile.userId, updated.userId));
+    }
+  });
 
   // 3. Automated WhatsApp dispatch to parent
   let whatsappAutoDelivery: { success: boolean; simulated?: boolean } = { success: false };

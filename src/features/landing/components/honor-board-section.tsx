@@ -5,14 +5,22 @@ import Link from "next/link";
 import { Trophy, Crown, ArrowLeft } from "lucide-react";
 import { 
   INITIAL_GRADES, 
-  INITIAL_GRADE_CHAMPIONS 
+  INITIAL_GRADE_CHAMPIONS,
+  type MockGradeChampion
 } from "@/lib/db/mock-data";
 import { ChampionCupSvg, XpGemSvg } from "@/components/ui/illustrated-icons";
 
-export const HonorBoardSection: React.FC = () => {
+interface HonorBoardSectionProps {
+  champions?: Record<string, MockGradeChampion[]>;
+}
+
+export const HonorBoardSection: React.FC<HonorBoardSectionProps> = ({ champions }) => {
   const [activeHonorGrade, setActiveHonorGrade] = useState<string>("grade-3");
 
-  const currentChampions = INITIAL_GRADE_CHAMPIONS[activeHonorGrade] || INITIAL_GRADE_CHAMPIONS["grade-3"];
+  const currentChampions =
+    champions?.[activeHonorGrade] ||
+    INITIAL_GRADE_CHAMPIONS[activeHonorGrade] ||
+    INITIAL_GRADE_CHAMPIONS["grade-3"];
   const champ1 = currentChampions.find((c) => c.rank === 1);
   const champ2 = currentChampions.find((c) => c.rank === 2);
   const champ3 = currentChampions.find((c) => c.rank === 3);

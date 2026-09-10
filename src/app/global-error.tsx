@@ -49,7 +49,7 @@ export default function GlobalError({
             </button>
 
             <a
-              href={`https://wa.me/201000000000?text=${whatsappMsg}`}
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201000000000"}?text=${whatsappMsg}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-3 rounded-2xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"

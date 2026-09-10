@@ -28,14 +28,18 @@ import { ChampionCupSvg, XpGemSvg } from "@/components/ui/illustrated-icons";
 
 interface HonorBoardPageClientProps {
   settings: MockPlatformSettings;
+  initialChampions?: Record<string, MockGradeChampion[]>;
 }
 
-export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
+export function HonorBoardPageClient({ settings, initialChampions }: HonorBoardPageClientProps) {
   const [activeGrade, setActiveGrade] = useState<string>("grade-3");
   const pathname = usePathname();
 
   const champions: MockGradeChampion[] =
-    INITIAL_GRADE_CHAMPIONS[activeGrade] || INITIAL_GRADE_CHAMPIONS["grade-3"] || [];
+    initialChampions?.[activeGrade] ||
+    INITIAL_GRADE_CHAMPIONS[activeGrade] ||
+    INITIAL_GRADE_CHAMPIONS["grade-3"] ||
+    [];
 
   const champ1 = champions.find((c) => c.rank === 1);
   const champ2 = champions.find((c) => c.rank === 2);

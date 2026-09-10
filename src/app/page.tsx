@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HomePageClient } from "@/features/landing/components/home-page-client";
-import { getLandingPageData } from "@/lib/data-landing";
+import { getLandingPageData, getHonorBoardChampions } from "@/lib/data-landing";
 
 export const revalidate = 60; // Revalidate every 60 seconds (ISR)
 
@@ -21,12 +21,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { units, settings } = await getLandingPageData();
+  const [{ units, settings }, champions] = await Promise.all([
+    getLandingPageData(),
+    getHonorBoardChampions(),
+  ]);
 
   return (
     <HomePageClient
       initialUnits={units}
       initialSettings={settings}
+      initialChampions={champions}
     />
   );
 }

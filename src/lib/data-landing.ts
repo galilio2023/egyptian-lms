@@ -1,7 +1,13 @@
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
-import { INITIAL_PLATFORM_SETTINGS, INITIAL_UNITS, type MockUnit } from "@/lib/db/mock-data";
+import { eq, count, desc, and } from "drizzle-orm";
+import {
+  INITIAL_PLATFORM_SETTINGS,
+  INITIAL_UNITS,
+  INITIAL_GRADE_CHAMPIONS,
+  type MockUnit,
+  type MockGradeChampion,
+} from "@/lib/db/mock-data";
 import { getPlatformSettings } from "@/lib/utils/platform-settings";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
@@ -112,3 +118,64 @@ const getCachedLandingPageData = unstable_cache(
 export const getLandingPageData = cache(async () => {
   return getCachedLandingPageData();
 });
+
+/**
+ * Retrieves the top 3 students by XP per grade level for the honor roll.
+ * Queries live student profiles from the database and falls back to INITIAL_GRADE_CHAMPIONS.
+ */
+export const getHonorBoardChampions = cache(async (): Promise<Record<string, MockGradeChampion[]>> => {
+  try {
+    const topStudents = await db
+      .select({
+        name: schema.user.name,
+        gradeLevel: schema.studentProfile.gradeLevel,
+        schoolName: schema.studentProfile.schoolName,
+        governorate: schema.studentProfile.governorate,
+        xpPoints: schema.studentProfile.xpPoints,
+      })
+      .from(schema.studentProfile)
+      .innerJoin(schema.user, eq(schema.studentProfile.userId, schema.user.id))
+      .where(
+        and(
+          eq(schema.studentProfile.isBanned, false),
+          eq(schema.user.role, "student")
+        )
+      )
+      .orderBy(desc(schema.studentProfile.xpPoints))
+      .limit(60);
+
+    if (topStudents.length === 0) {
+      return INITIAL_GRADE_CHAMPIONS;
+    }
+
+    const championsMap: Record<string, MockGradeChampion[]> = { ...INITIAL_GRADE_CHAMPIONS };
+
+    for (let gradeNum = 1; gradeNum <= 6; gradeNum++) {
+      const gradeSlug = `grade-${gradeNum}`;
+      const gradeStudents = topStudents.filter((s) => s.gradeLevel === gradeNum);
+      if (gradeStudents.length > 0) {
+        championsMap[gradeSlug] = gradeStudents.slice(0, 3).map((s, idx) => {
+          const nameParts = s.name.trim().split(/\s+/);
+          const initials = nameParts.length >= 2
+            ? `${nameParts[0][0]}.${nameParts[nameParts.length - 1][0]}`
+            : s.name.slice(0, 2);
+          return {
+            rank: (idx + 1) as 1 | 2 | 3,
+            name: s.name,
+            initials,
+            gradeBadge: `Grade ${gradeNum}`,
+            schoolName: s.schoolName || "مدرسة لغات",
+            city: s.governorate || "القاهرة",
+            xpPoints: s.xpPoints,
+          };
+        });
+      }
+    }
+
+    return championsMap;
+  } catch (err) {
+    console.warn("Honor board champions DB query fallback:", err);
+    return INITIAL_GRADE_CHAMPIONS;
+  }
+});
+

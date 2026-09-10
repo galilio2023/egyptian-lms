@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HonorBoardPageClient } from "@/features/landing/components/honor-board-page-client";
-import { getLandingPageData } from "@/lib/data-landing";
+import { getLandingPageData, getHonorBoardChampions } from "@/lib/data-landing";
 
 export const revalidate = 60; // Revalidate every 60 seconds (ISR)
 
@@ -21,7 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HonorBoardPage() {
-  const { settings } = await getLandingPageData();
+  const [{ settings }, champions] = await Promise.all([
+    getLandingPageData(),
+    getHonorBoardChampions(),
+  ]);
 
-  return <HonorBoardPageClient settings={settings} />;
+  return <HonorBoardPageClient settings={settings} initialChampions={champions} />;
 }
