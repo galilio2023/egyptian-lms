@@ -65,28 +65,32 @@ export function useWatermarkCanvas({
         minute: "2-digit",
       });
 
-      // Draw subtle, non-intrusive ghost watermark (18% opacity)
-      // Legible on screen recording leaks without straining or fatiguing the student's eyes
+      // Fixed subtle corner stamp: Teacher & Platform Copyright Notice
       ctx.save();
-      ctx.font = "500 12px system-ui, -apple-system, sans-serif";
+      ctx.font = "500 10px system-ui, -apple-system, sans-serif";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.fillText("© جميع الحقوق محفوظة للمعلم والمنصة", 16, 22);
+
+      // Draw subtle ghost student license fingerprint (18% opacity)
+      // Clearly indicates this is the student's personal viewing license to deter piracy
+      ctx.font = "500 11px system-ui, -apple-system, sans-serif";
       ctx.strokeStyle = "rgba(0, 0, 0, 0.20)";
       ctx.lineWidth = 1.5;
-      ctx.strokeText(`${studentName}`, pos.x, pos.y);
+      ctx.strokeText(`رخصة مشاهدة: ${studentName}`, pos.x, pos.y);
       ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
-      ctx.fillText(`${studentName}`, pos.x, pos.y);
+      ctx.fillText(`رخصة مشاهدة: ${studentName}`, pos.x, pos.y);
 
       ctx.font = "500 10px monospace";
       ctx.strokeStyle = "rgba(0, 0, 0, 0.20)";
       ctx.lineWidth = 1.5;
-      ctx.strokeText(`${studentPhone} • ${liveTime}`, pos.x, pos.y + 14);
+      ctx.strokeText(`${studentPhone} • جلسة ${liveTime}`, pos.x, pos.y + 14);
       ctx.fillStyle = "rgba(255, 255, 255, 0.20)";
-      ctx.fillText(`${studentPhone} • ${liveTime}`, pos.x, pos.y + 14);
+      ctx.fillText(`${studentPhone} • جلسة ${liveTime}`, pos.x, pos.y + 14);
 
-      // Faint corner watermark for anti-cropping defense
+      // Faint corner watermark for forensic tracking
       ctx.font = "400 9px monospace";
       ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.fillText(`ID:${studentPhone.slice(-6)}`, 16, 20);
-      ctx.fillText(`ID:${studentPhone.slice(-6)}`, canvas.width - 80, 20);
+      ctx.fillText(`LIC-${studentPhone.slice(-6)}`, canvas.width - 85, 22);
       ctx.restore();
 
       animationId = requestAnimationFrame(renderWatermark);

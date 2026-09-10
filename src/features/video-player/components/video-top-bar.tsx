@@ -21,7 +21,7 @@ export function VideoTopBar({ title, visible }: VideoTopBarProps) {
         <div>
           <h4 className="text-xs font-bold text-white">{title}</h4>
           <span className="text-[10px] text-emerald-400 font-semibold">
-            أكاديمية إيليت • بث HLS آمن ومحمي
+            أكاديمية إيليت • حقوق النشر محفوظة للمعلم والمنصة ©
           </span>
         </div>
       </div>
