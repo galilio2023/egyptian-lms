@@ -3,4 +3,5 @@ export { QuestionCard } from "./components/question-card";
 export { QuestionsList } from "./components/questions-list";
 export { AddQuestionModal } from "./components/add-question-modal";
 export { useAdminQuizzes } from "./hooks/use-admin-quizzes";
+export { AdminQuizzesClient } from "./components/admin-quizzes-client";
 export type { MockQuestion, MockQuiz } from "./types";

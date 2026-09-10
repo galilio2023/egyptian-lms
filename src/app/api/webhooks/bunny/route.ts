@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -30,9 +31,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (configuredSecret && process.env.NODE_ENV === "production") {
-      const isAuthorized =
-        authHeader === configuredSecret ||
-        authHeader === `Bearer ${configuredSecret}`;
+      const normalizedHeader = authHeader?.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : authHeader;
+
+      let isAuthorized = false;
+      if (normalizedHeader && normalizedHeader.length === configuredSecret.length) {
+        try {
+          isAuthorized = crypto.timingSafeEqual(
+            Buffer.from(normalizedHeader),
+            Buffer.from(configuredSecret)
+          );
+        } catch {
+          isAuthorized = false;
+        }
+      }
 
       if (!isAuthorized) {
         logSecurityEvent({

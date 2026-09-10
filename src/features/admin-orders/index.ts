@@ -7,4 +7,5 @@ export { VoucherControlsForm } from "./components/voucher-controls-form";
 export { VoucherPrintGrid } from "./components/voucher-print-grid";
 export { useOrdersManagement } from "./hooks/use-orders-management";
 export { useBatchVouchers } from "./hooks/use-batch-vouchers";
+export { AdminOrdersClient } from "./components/admin-orders-client";
 export type { MockOrder, GeneratedVoucher } from "./types";

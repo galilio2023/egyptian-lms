@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Play, RotateCcw, RotateCw } from "lucide-react";
 import { useHlsStream } from "../hooks/use-hls-stream";
@@ -54,6 +55,7 @@ export function ProtectedVideoPlayer({
 
   const [savedTime, setSavedTime] = useState<number | null>(null);
   const [qualityMode, setQualityMode] = useState<"auto" | "low" | "high">("auto");
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,9 +86,7 @@ export function ProtectedVideoPlayer({
 
   // Diagnostic Remediation Helper: Auto-seek to targeted concept timestamp
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const urlParams = new URLSearchParams(window.location.search);
-    const tParam = urlParams.get("t");
+    const tParam = searchParams.get("t");
     const targetSeek = initialSeekSeconds ?? (tParam ? parseFloat(tParam) : null);
 
     if (targetSeek && targetSeek > 0) {

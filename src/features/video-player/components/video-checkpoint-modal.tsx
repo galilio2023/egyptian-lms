@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import confetti from "canvas-confetti";
 import { Sparkles, CheckCircle2, XCircle, Trophy, ArrowRight, HelpCircle } from "lucide-react";
 import type { VideoCheckpoint } from "@/lib/db/mock-data";
 
@@ -35,13 +34,15 @@ export function VideoCheckpointModal({
     setIsCorrect(correct);
 
     if (correct) {
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.6 },
-        });
-      } catch {}
+      import("canvas-confetti")
+        .then(({ default: confetti }) => {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.6 },
+          });
+        })
+        .catch(() => {});
       onAnswerCorrect(checkpoint.rewardXp || 10);
     }
   };

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { Trash2 } from "lucide-react";
 
 export interface SubmissionThumbnailGridProps {
@@ -25,11 +26,13 @@ export const SubmissionThumbnailGrid: React.FC<SubmissionThumbnailGridProps> = (
             key={idx}
             className="relative group rounded-2xl border-2 border-purple-200 overflow-hidden bg-slate-100 aspect-[3/4] shadow-sm"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={img.imageUrl}
               alt={`صفحة ${idx + 1}`}
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              sizes="(max-width: 640px) 50vw, 33vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button

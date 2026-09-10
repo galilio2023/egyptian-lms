@@ -5,4 +5,5 @@ export { QuizQuestionCard } from "./components/quiz-question-card";
 export { QuizNavFooter } from "./components/quiz-nav-footer";
 export { QuizResultsCard } from "./components/quiz-results-card";
 export { InteractiveQuizEngine } from "./components/interactive-quiz-engine";
+export { QuizRoomClient } from "./components/quiz-room-client";
 export type { InteractiveQuizEngineProps, ServerGradeResult } from "./types";

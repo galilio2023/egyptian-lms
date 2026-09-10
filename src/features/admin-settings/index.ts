@@ -5,3 +5,4 @@ export { CarouselLecturesSection } from "./components/carousel-lectures-section"
 export { VibeThemeSection } from "./components/vibe-theme-section";
 export { AddSampleLectureModal } from "./components/add-sample-lecture-modal";
 export { useAdminSettings } from "./hooks/use-admin-settings";
+export { AdminSettingsClient } from "./components/admin-settings-client";

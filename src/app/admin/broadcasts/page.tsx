@@ -1,11 +1,15 @@
-"use client";
-
+import type { Metadata } from "next";
 import { AdminPageHeader } from "@/components/shared/admin-page-header";
 import { 
   BroadcastMegaphoneSvg, 
   WhatsAppBubbleSvg 
 } from "@/components/ui/illustrated-icons";
 import { BroadcastComposerForm } from "@/features/admin-broadcasts";
+
+export const metadata: Metadata = {
+  title: "مركز رسائل الواتساب الجماعية | Broadcasts",
+  description: "إرسال تنبيهات المواعيد، جداول الامتحانات، والإعلانات الهامة مباشرة إلى هواتف أولياء الأمور.",
+};
 
 export default function AdminBroadcastsPage() {
   return (

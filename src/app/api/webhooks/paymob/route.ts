@@ -136,6 +136,16 @@ export async function POST(request: NextRequest) {
         .where(eq(schema.order.gatewayOrderId, gatewayOrderId))
         .limit(1);
       targetOrder = foundByGatewayId;
+
+      // Cross-validate: if merchantOrderId is present but doesn't match the order found by signed gatewayOrderId
+      if (targetOrder && merchantOrderId && targetOrder.id !== merchantOrderId) {
+        logSecurityEvent({
+          eventType: "unauthorized_portal_access",
+          severity: "high",
+          description: `⚠️ Paymob webhook merchantOrderId mismatch: payload says ${merchantOrderId} but gatewayOrderId ${gatewayOrderId} maps to order ${targetOrder.id}`,
+          details: { merchantOrderId, gatewayOrderId, actualOrderId: targetOrder.id },
+        });
+      }
     }
 
     if (!targetOrder && merchantOrderId) {

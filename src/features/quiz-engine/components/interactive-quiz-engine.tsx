@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/auth-client";
 import {
@@ -84,11 +83,15 @@ export function InteractiveQuizEngine({
 
           if (data.passed) {
             playChimeSound("complete");
-            confetti({
-              particleCount: 140,
-              spread: 90,
-              origin: { y: 0.6 },
-            });
+            import("canvas-confetti")
+              .then(({ default: confetti }) => {
+                confetti({
+                  particleCount: 140,
+                  spread: 90,
+                  origin: { y: 0.6 },
+                });
+              })
+              .catch(() => {});
             const xpMsg = data.earnedXp > 0 ? `وحصلت على +${data.earnedXp} XP` : `(تم تسجيل اجتيازك)`;
             toast.success(`🎉 مبروك! لقد اجتزت الاختبار بنجاح ${xpMsg}`);
           } else {

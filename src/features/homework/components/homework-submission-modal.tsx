@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { UploadCloud, BookOpen } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -123,11 +124,13 @@ export function HomeworkSubmissionModal({
           title="تصحيح المعلم المشرف ✓"
         >
           <div className="max-h-[75vh] overflow-auto flex items-center justify-center bg-slate-950 rounded-2xl p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={existingSubmission.annotatedImages[0]?.dataUrl}
               alt="كراسة الواجب المصححة"
-              className="max-h-[70vh] rounded-xl object-contain"
+              width={1200}
+              height={1600}
+              unoptimized
+              className="max-h-[70vh] w-auto rounded-xl object-contain"
             />
           </div>
         </Modal>
