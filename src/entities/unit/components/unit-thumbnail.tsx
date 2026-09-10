@@ -11,6 +11,22 @@ export interface UnitThumbnailProps {
   className?: string;
 }
 
+const isOptimizableThumbnail = (url: string): boolean => {
+  if (!url) return false;
+  if (url.startsWith("/")) return true;
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === "images.unsplash.com" ||
+      hostname === "img.youtube.com" ||
+      hostname.endsWith(".bunnycdn.com") ||
+      hostname.endsWith(".b-cdn.net")
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const UnitThumbnail: React.FC<UnitThumbnailProps> = ({
   thumbnailUrl,
   title,
@@ -19,6 +35,8 @@ export const UnitThumbnail: React.FC<UnitThumbnailProps> = ({
   isLocked = false,
   className = "",
 }) => {
+  const isOptimized = isOptimizableThumbnail(thumbnailUrl);
+
   return (
     <div className={`relative h-44 sm:h-48 w-full overflow-hidden bg-slate-100 ${className}`}>
       {/* Thumbnail Image */}
@@ -26,6 +44,7 @@ export const UnitThumbnail: React.FC<UnitThumbnailProps> = ({
         src={thumbnailUrl}
         alt={title}
         fill
+        unoptimized={!isOptimized}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         className="object-cover group-hover:scale-105 transition-transform duration-500"
       />

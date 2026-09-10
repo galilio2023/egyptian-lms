@@ -95,7 +95,6 @@ export function useHlsStream(
           // عند اكتمال تحميل قائمة مستويات الجودة
           hls.on(HlsClass.Events.MANIFEST_PARSED, (_event, data) => {
             setAvailableLevels(data.levels as Level[]);
-            applyQualityMode(hls, qualityMode);
           });
 
           // متابعة تغيير المستوى الفعلي عند التكيف التلقائي
@@ -137,7 +136,7 @@ export function useHlsStream(
         hlsRef.current = null;
       }
     };
-  }, [src, videoRef, onQualityModeChange, qualityMode, applyQualityMode]);
+  }, [src, videoRef, onQualityModeChange]);
 
   // تطبيق تغيير وضع الجودة على الـ hls الحالي دون إعادة تهيئة البث
   useEffect(() => {

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/shared/admin-page-header";
 import { EgyptianWalletSvg } from "@/components/ui/illustrated-icons";
-import { INITIAL_ORDERS } from "@/lib/db/mock-data";
 import {
   OverviewKpiCards,
   PendingOrdersCallout,
@@ -12,9 +11,6 @@ import {
 } from "@/features/admin-overview";
 
 export function AdminOverviewClient() {
-  const [pendingOrders] = useState(() =>
-    INITIAL_ORDERS.filter((o) => o.status === "manual_review")
-  );
   const [stats, setStats] = useState<{
     totalStudents: number;
     totalUnits: number;
@@ -56,7 +52,7 @@ export function AdminOverviewClient() {
             className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-[1.02] text-white font-black text-xs shadow-md shadow-emerald-500/20 flex items-center gap-2 transition-all"
           >
             <EgyptianWalletSvg className="w-5 h-5" />
-            <span>مراجعة الإيصالات ({pendingOrders.length} معلق)</span>
+            <span>مراجعة الإيصالات ({stats.pendingOrders} معلق)</span>
           </Link>
         }
       />
@@ -65,7 +61,7 @@ export function AdminOverviewClient() {
       <OverviewKpiCards stats={stats} />
 
       {/* Pending InstaPay Review Callout */}
-      <PendingOrdersCallout pendingCount={pendingOrders.length} />
+      <PendingOrdersCallout pendingCount={stats.pendingOrders} />
 
       {/* Grade Quick View */}
       <GradesQuickGrid />

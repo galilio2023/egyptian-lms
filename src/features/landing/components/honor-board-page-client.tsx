@@ -45,7 +45,10 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
   const currentGradeObj = INITIAL_GRADES.find((g) => g.slug === activeGrade) || INITIAL_GRADES[2];
 
   const handleShareWhatsApp = () => {
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}${pathname}`;
+    const origin =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    const shareUrl = origin ? new URL(pathname, origin).toString() : pathname;
     const text = encodeURIComponent(
       `🏆 شاهد لوحة الشرف وأبطال التميز في أكاديمية ${settings.academyNameArabic || "المنصة التعليمية"} لـ ${currentGradeObj.titleArabic}!\n\nرابط لوحة الشرف: ${shareUrl}`
     );
