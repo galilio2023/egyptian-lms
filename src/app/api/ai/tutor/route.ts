@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/security/rate-limiter";
+import { getGeminiGenerateContentUrl } from "@/lib/ai/constants";
 
 interface TutorMessage {
   role: "user" | "model";
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Rate Limiting: 25 questions per 5 minutes per user/IP
     const rateKey = `ai-tutor:${session.user.id}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 25, windowMs: 5 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateKey, { maxRequests: 25, windowMs: 5 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,
@@ -105,7 +106,7 @@ Pedagogical Rules:
         ];
 
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+          getGeminiGenerateContentUrl(geminiApiKey),
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

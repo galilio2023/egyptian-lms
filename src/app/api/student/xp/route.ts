@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     // Strict Rate Limiting: max 4 practice XP awards per 10 minutes per student
     const rateKey = `student-xp:${userId}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 4, windowMs: 10 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateKey, { maxRequests: 4, windowMs: 10 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,

@@ -36,6 +36,9 @@ export function isBunnyConfigured(): boolean {
  */
 export async function createBunnyVideo(title: string): Promise<{ guid: string; title: string }> {
   if (!isBunnyConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Bunny.net Stream is not configured in production. Set BUNNY_STREAM_API_KEY and BUNNY_STREAM_LIBRARY_ID.");
+    }
     // Return a mock GUID for local development/testing without credentials
     const mockGuid = `mock-bunny-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
     return {
@@ -72,10 +75,12 @@ export async function createBunnyVideo(title: string): Promise<{ guid: string; t
  * Generates an authorized TUS resumable upload ticket for direct client-to-Bunny upload
  */
 export function generateBunnyUploadTicket(videoId: string): BunnyUploadTicket {
-  const isDemo = !isBunnyConfigured();
   const expiresAt = Math.floor(Date.now() / 1000) + 86400; // 24 hours validity
 
-  if (isDemo) {
+  if (!isBunnyConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Bunny.net Stream is not configured in production. Set BUNNY_STREAM_API_KEY and BUNNY_STREAM_LIBRARY_ID.");
+    }
     return {
       success: true,
       provider: "bunny",

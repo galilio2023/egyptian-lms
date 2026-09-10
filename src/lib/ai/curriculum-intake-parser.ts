@@ -4,6 +4,7 @@
  */
 
 import { ExtractedPdfDocument } from "./pdf-parser";
+import { getGeminiGenerateContentUrl } from "./constants";
 
 export type CurriculumTrack = "connect" | "connect_plus";
 
@@ -664,7 +665,7 @@ Return a strictly valid JSON object matching this schema:
 }`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    getGeminiGenerateContentUrl(apiKey),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

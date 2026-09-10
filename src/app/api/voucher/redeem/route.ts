@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const userAgent = reqHeaders.get("user-agent") || undefined;
 
     // Rate Limiting: max 5 redemption attempts per 10 minutes per IP
-    const rateCheck = checkRateLimit(`voucher:${clientIp}`, "voucherRedeem");
+    const rateCheck = await checkRateLimit(`voucher:${clientIp}`, "voucherRedeem");
     if (!rateCheck.success) {
       logSecurityEvent({
         eventType: "voucher_rate_limited",

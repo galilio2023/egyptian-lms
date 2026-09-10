@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, BookOpen, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import { Search, BookOpen, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFloatingButton } from "@/components/layout/whatsapp-floating-btn";

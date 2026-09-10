@@ -227,7 +227,6 @@ export async function processOrderSubmission(params: {
   }
 
   let insertedOrderId: string | null = null;
-  const fallbackOrderId = `ord-${Date.now().toString().slice(-6)}`;
 
   // Intelligent AI & OCR Receipt Verification for manual transfers
   let computedReceiptHash: string | null = null;

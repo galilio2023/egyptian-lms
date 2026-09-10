@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const uploadLength = request.headers.get("upload-length") || "1000000";
   return new NextResponse(null, {
     status: 201,
@@ -14,6 +18,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function OPTIONS() {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   return new NextResponse(null, {
     status: 204,
     headers: {

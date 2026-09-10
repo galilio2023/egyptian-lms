@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const userAgent = headerList.get("user-agent") || undefined;
 
     // Rate Limiting: max 6 device-transfer/verification attempts per 15 minutes per IP
-    const rateCheck = checkRateLimit(`device-verify:${clientIp}`, "deviceVerify");
+    const rateCheck = await checkRateLimit(`device-verify:${clientIp}`, "deviceVerify");
     if (!rateCheck.success) {
       logSecurityEvent({
         eventType: "rate_limit_triggered",

@@ -5,6 +5,7 @@ import * as schema from './schema';
 // Only load dotenv in non-Next.js standalone CLI environments (e.g. tsx scripts) when DATABASE_URL is not set
 if (!process.env.DATABASE_URL) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const dotenv = require('dotenv');
     dotenv.config({ path: '.env.local' });
     dotenv.config();

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import type { StudentUploadedPage } from "@/lib/db/schema";
 import type { Stroke } from "@/features/canvas-grader/types";
+import { getGeminiGenerateContentUrl } from "@/lib/ai/constants";
 
 interface AiPregradeResponse {
   success: boolean;
@@ -227,7 +228,7 @@ Return JSON in this EXACT format:
 
     try {
       const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+        getGeminiGenerateContentUrl(geminiApiKey),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

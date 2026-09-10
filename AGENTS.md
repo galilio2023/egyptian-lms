@@ -55,6 +55,11 @@ This document provides non-negotiable architectural mandates, coding patterns, a
 9. **Student Learning Route Privacy:**
    - Private student learning segments (`src/app/portal/lesson/[lessonSlug]/layout.tsx` and `src/app/portal/quiz/[quizId]/layout.tsx`) **MUST** maintain `robots: { index: false, follow: false }` to protect proprietary curriculum from web crawlers.
 
+10. **Google Gemini AI Model Versioning Standard:**
+    - The standard AI model across all generative endpoints (Busy Bee AI Tutor, Phonics Speech Evaluation, Homework Pre-Grading, Receipt OCR, Curriculum Intake, and Broadcast Composer) is **strictly `gemini-3.5-flash-lite`**.
+    - **NEVER** downgrade or revert endpoints to legacy models (such as `gemini-1.5-flash` or `gemini-2.0-flash`).
+    - All Gemini API calls **MUST** route through the centralized configuration helper in `src/lib/ai/constants.ts` (`DEFAULT_GEMINI_MODEL` and `getGeminiGenerateContentUrl()`) to ensure single-source-of-truth model management.
+
 ---
 
 ## 2. Directory Structure & Architecture

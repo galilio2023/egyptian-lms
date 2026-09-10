@@ -33,7 +33,6 @@ export const RegisterCard: React.FC = () => {
     setShowConfirmPassword,
     handleNextStep,
     handleFormSubmit,
-    handleRegister,
   } = useRegisterForm();
 
   return (

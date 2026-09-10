@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     // Rate Limiting: max 8 order submissions per 10 minutes per IP/User
     const rateKey = `order-submit:${session?.user?.id || clientIp}`;
-    const rateCheck = checkRateLimit(rateKey, { maxRequests: 8, windowMs: 10 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateKey, { maxRequests: 8, windowMs: 10 * 60 * 1000 });
     if (!rateCheck.success) {
       return createRateLimitResponse(
         rateCheck,
