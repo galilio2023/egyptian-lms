@@ -4,8 +4,11 @@ import { z } from "zod";
 import { db } from "../db";
 import * as schema from "../db/schema";
 
-if (!process.env.BETTER_AUTH_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("FATAL: BETTER_AUTH_SECRET is not configured in production environment variables.");
+if (!process.env.BETTER_AUTH_SECRET) {
+  throw new Error(
+    "FATAL: BETTER_AUTH_SECRET is not configured. " +
+    "Generate a secure key with: openssl rand -base64 32"
+  );
 }
 
 export const auth = betterAuth({
@@ -52,6 +55,6 @@ export const auth = betterAuth({
     window: 60, // 1 minute window
     max: 10,    // Max 10 requests per window
   },
-  secret: process.env.BETTER_AUTH_SECRET || "elite-academy-dev-secret-key-2026-local",
+  secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 });

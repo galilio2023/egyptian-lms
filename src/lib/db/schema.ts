@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex, AnyPgColumn } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp, boolean, integer, jsonb, pgEnum, uuid, index, uniqueIndex, check, AnyPgColumn } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 // Enums
 export const roleEnum = pgEnum('user_role', ['student', 'parent', 'assistant', 'teacher', 'admin']);
@@ -57,7 +57,9 @@ export const account = pgTable('account', {
   password: text('password'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('account_user_id_idx').on(table.userId),
+]);
 
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),
@@ -111,6 +113,7 @@ export const courseUnit = pgTable('course_unit', {
   index('course_unit_grade_id_idx').on(table.gradeId),
   uniqueIndex('course_unit_slug_unique_idx').on(table.slug),
   index('course_unit_published_order_idx').on(table.isPublished, table.orderIndex),
+  check('course_unit_price_check', sql`${table.price} >= 0`),
 ]);
 
 export interface VideoCheckpointOption {
@@ -226,9 +229,9 @@ export const quizAttempt = pgTable('quiz_attempt', {
   userAnswers: jsonb('user_answers').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
-  index('quiz_attempt_user_id_idx').on(table.userId),
   index('quiz_attempt_quiz_id_idx').on(table.quizId),
   index('quiz_attempt_user_quiz_idx').on(table.userId, table.quizId),
+  check('quiz_attempt_score_check', sql`${table.score} >= 0 AND ${table.score} <= ${table.totalPossibleScore}`),
 ]);
 
 // Enrollments & Orders
@@ -277,6 +280,7 @@ export const order = pgTable('order', {
   index('order_receipt_hash_idx').on(table.receiptHash),
   index('order_status_created_idx').on(table.paymentStatus, table.createdAt),
   index('order_created_at_idx').on(table.createdAt),
+  check('order_amount_check', sql`${table.amountEgp} >= 0`),
 ]);
 
 // Center Scratch Card / Voucher Codes (كروت شحن السناتر والمكتبات)

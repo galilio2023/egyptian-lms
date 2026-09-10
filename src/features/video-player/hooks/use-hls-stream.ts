@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import Hls, { Level } from "hls.js";
+import type Hls from "hls.js";
+import type { Level } from "hls.js";
 
 export type QualityMode = "auto" | "low" | "high";
 
@@ -23,11 +24,16 @@ export function useHlsStream(
   const [isHlsSupported, setIsHlsSupported] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsHlsSupported(Hls.isSupported());
-    }, 0);
+    let active = true;
+    import("hls.js")
+      .then(({ default: HlsClass }) => {
+        if (active) setIsHlsSupported(HlsClass.isSupported());
+      })
+      .catch(() => {});
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+    };
   }, []);
 
   // تطبيق وضع جودة التشغيل على مستوى hls الحالي
@@ -71,56 +77,67 @@ export function useHlsStream(
       hlsRef.current = null;
     }
 
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-      });
-      hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
+    let isCancelled = false;
 
-      // عند اكتمال تحميل قائمة مستويات الجودة
-      hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
-        setAvailableLevels(data.levels as Level[]);
-        applyQualityMode(hls, qualityMode);
-      });
+    import("hls.js")
+      .then(({ default: HlsClass }) => {
+        if (isCancelled || !videoRef.current) return;
 
-      // متابعة تغيير المستوى الفعلي عند التكيف التلقائي
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
-        setCurrentLevel(data.level);
-      });
+        if (HlsClass.isSupported()) {
+          const hls = new HlsClass({
+            enableWorker: true,
+            lowLatencyMode: true,
+          });
+          hlsRef.current = hls;
+          hls.loadSource(src);
+          hls.attachMedia(videoRef.current);
 
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
-              break;
-            default:
-              hls.destroy();
-              break;
-          }
+          // عند اكتمال تحميل قائمة مستويات الجودة
+          hls.on(HlsClass.Events.MANIFEST_PARSED, (_event, data) => {
+            setAvailableLevels(data.levels as Level[]);
+            applyQualityMode(hls, qualityMode);
+          });
+
+          // متابعة تغيير المستوى الفعلي عند التكيف التلقائي
+          hls.on(HlsClass.Events.LEVEL_SWITCHED, (_event, data) => {
+            setCurrentLevel(data.level);
+          });
+
+          hls.on(HlsClass.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              switch (data.type) {
+                case HlsClass.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case HlsClass.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+        } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+          onQualityModeChange?.("auto");
+          try {
+            localStorage.removeItem("elite_data_saver");
+          } catch {}
+          videoRef.current.src = src;
         }
+      })
+      .catch((err) => {
+        console.warn("HLS dynamic load error:", err);
       });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      onQualityModeChange?.("auto");
-      try {
-        localStorage.removeItem("elite_data_saver");
-      } catch {}
-      video.src = src;
-    }
 
     return () => {
+      isCancelled = true;
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
     };
-  }, [src, videoRef, onQualityModeChange]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [src, videoRef, onQualityModeChange, qualityMode, applyQualityMode]);
 
   // تطبيق تغيير وضع الجودة على الـ hls الحالي دون إعادة تهيئة البث
   useEffect(() => {

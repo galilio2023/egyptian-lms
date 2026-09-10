@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
 import { getLandingPageData } from "@/lib/data-landing";
-import { getStudentDashboardData } from "@/lib/data-dashboard";
+import { getStudentDashboardData, type StudentDashboardServerData } from "@/lib/data-dashboard";
+import { INITIAL_PLATFORM_SETTINGS } from "@/lib/db/mock-data";
 import { StudentDashboardClient } from "@/features/portal-dashboard/components/student-dashboard-client";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +31,8 @@ export default async function StudentDashboardPage() {
   const userId = session?.user?.id || "student-dev-primary";
 
   // Parallel data fetch — gracefully handle local DB unavailability in dev mode
-  let landingData: Awaited<ReturnType<typeof getLandingPageData>> = { units: [], settings: {} as any };
-  let dashboardData: any = {
+  let landingData: Awaited<ReturnType<typeof getLandingPageData>> = { units: [], settings: INITIAL_PLATFORM_SETTINGS };
+  let dashboardData: StudentDashboardServerData = {
     profile: null,
     enrolledUnitIds: ["u-101"],
     nextLesson: null,

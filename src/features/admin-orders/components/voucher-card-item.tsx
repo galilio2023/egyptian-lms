@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import QRCode from "qrcode";
+import Image from "next/image";
 import { EliteLogoBadge } from "@/components/ui/illustrated-icons";
 import type { GeneratedVoucher } from "../types";
 
@@ -12,14 +14,17 @@ export const VoucherCardItem: React.FC<VoucherCardItemProps> = ({ voucher }) => 
 
   useEffect(() => {
     let isMounted = true;
-    QRCode.toDataURL(voucher.code, {
-      margin: 1,
-      width: 120,
-      color: {
-        dark: "#0f172a",
-        light: "#ffffff",
-      },
-    })
+    import("qrcode")
+      .then(({ default: QRCode }) => {
+        return QRCode.toDataURL(voucher.code, {
+          margin: 1,
+          width: 120,
+          color: {
+            dark: "#0f172a",
+            light: "#ffffff",
+          },
+        });
+      })
       .then((url) => {
         if (isMounted) setQrDataUrl(url);
       })
@@ -66,10 +71,12 @@ export const VoucherCardItem: React.FC<VoucherCardItemProps> = ({ voucher }) => 
         {/* QR Code generated locally without third-party network exposure (CWE-200 fix) */}
         <div className="flex flex-col items-center shrink-0 border border-purple-200 bg-white p-1 rounded-xl shadow-xs print:border-slate-800">
           {qrDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={qrDataUrl}
               alt="QR Code"
+              width={48}
+              height={48}
+              unoptimized
               className="w-12 h-12 print:w-14 print:h-14 object-contain"
             />
           ) : (

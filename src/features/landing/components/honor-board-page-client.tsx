@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
   Trophy, 
@@ -31,6 +32,7 @@ interface HonorBoardPageClientProps {
 
 export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
   const [activeGrade, setActiveGrade] = useState<string>("grade-3");
+  const pathname = usePathname();
 
   const champions: MockGradeChampion[] =
     INITIAL_GRADE_CHAMPIONS[activeGrade] || INITIAL_GRADE_CHAMPIONS["grade-3"] || [];
@@ -43,8 +45,9 @@ export function HonorBoardPageClient({ settings }: HonorBoardPageClientProps) {
   const currentGradeObj = INITIAL_GRADES.find((g) => g.slug === activeGrade) || INITIAL_GRADES[2];
 
   const handleShareWhatsApp = () => {
+    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}${pathname}`;
     const text = encodeURIComponent(
-      `🏆 شاهد لوحة الشرف وأبطال التميز في أكاديمية ${settings.academyNameArabic || "المنصة التعليمية"} لـ ${currentGradeObj.titleArabic}!\n\nرابط لوحة الشرف: ${typeof window !== "undefined" ? window.location.href : ""}`
+      `🏆 شاهد لوحة الشرف وأبطال التميز في أكاديمية ${settings.academyNameArabic || "المنصة التعليمية"} لـ ${currentGradeObj.titleArabic}!\n\nرابط لوحة الشرف: ${shareUrl}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank", "noopener,noreferrer");
   };

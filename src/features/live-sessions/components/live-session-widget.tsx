@@ -116,7 +116,8 @@ export function LiveSessionWidget({
         newWindow.opener = null;
         newWindow.location.href = targetUrl;
       } else {
-        window.location.href = targetUrl;
+        // Open external meeting URL (Zoom/YouTube) without reloading the LMS SPA
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
       }
     } catch {
       if (newWindow) newWindow.close();

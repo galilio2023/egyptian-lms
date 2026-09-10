@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Development-only session bypass route.
+ * Returns 404 in production builds to eliminate attack surface entirely.
+ */
 export async function GET(request: NextRequest) {
+  // Defense-in-depth: unconditionally reject in production even if accidentally deployed
   if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Only available in development" }, { status: 403 });
+    return new NextResponse(null, { status: 404 });
   }
 
   const { searchParams } = request.nextUrl;
