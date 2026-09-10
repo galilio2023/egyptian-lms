@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function OPTIONS() {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
   return new NextResponse(null, {
     status: 204,
     headers: {

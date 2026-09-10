@@ -57,12 +57,12 @@ function getUpstashLimiter(config: RateLimitConfig): Ratelimit | null {
   const existing = upstashRatelimitMap.get(key);
   if (existing) return existing;
 
-  const windowSeconds = Math.max(1, Math.round(config.windowMs / 1000));
   const limiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(config.maxRequests, `${windowSeconds} s`),
+    limiter: Ratelimit.slidingWindow(config.maxRequests, `${config.windowMs} ms`),
     analytics: false,
     prefix: "elite_lms",
+    timeout: 2000,
   });
 
   upstashRatelimitMap.set(key, limiter);
@@ -204,12 +204,16 @@ export async function checkRateLimit(
   try {
     const upstashLimiter = getUpstashLimiter(config);
     if (upstashLimiter) {
-      const { success, limit, remaining, reset } = await upstashLimiter.limit(key);
-      const resetSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+      const res = await upstashLimiter.limit(key);
+      if (res.reason === "timeout") {
+        console.warn("⚠️ Upstash rate limit timed out, falling back to in-memory limiter for key:", key);
+        return checkRateLimitInMemory(key, config);
+      }
+      const resetSeconds = Math.max(1, Math.ceil((res.reset - Date.now()) / 1000));
       return {
-        success,
-        limit,
-        remaining,
+        success: res.success,
+        limit: res.limit,
+        remaining: res.remaining,
         resetSeconds,
         provider: "upstash",
       };

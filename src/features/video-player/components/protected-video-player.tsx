@@ -84,9 +84,10 @@ export function ProtectedVideoPlayer({
     return () => clearTimeout(timer);
   }, []);
 
+  const tParam = searchParams.get("t");
+
   // Diagnostic Remediation Helper: Auto-seek to targeted concept timestamp
   useEffect(() => {
-    const tParam = searchParams.get("t");
     const targetSeek = initialSeekSeconds ?? (tParam ? parseFloat(tParam) : null);
 
     if (targetSeek && targetSeek > 0) {
@@ -106,9 +107,12 @@ export function ProtectedVideoPlayer({
         performSeek();
       } else {
         vid.addEventListener("loadedmetadata", performSeek, { once: true });
+        return () => {
+          vid.removeEventListener("loadedmetadata", performSeek);
+        };
       }
     }
-  }, [initialSeekSeconds, searchParams]);
+  }, [initialSeekSeconds, tParam]);
 
   // HLS stream management
   const { hlsRef, isHlsSupported } = useHlsStream(videoRef, src, {
